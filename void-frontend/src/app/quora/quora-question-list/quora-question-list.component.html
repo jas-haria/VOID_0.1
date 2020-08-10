@@ -1,0 +1,67 @@
+<div class="row">
+    <div class="col-6">
+        <div class="btn-group float-left">
+            <button *ngFor="let division of divisionArray" class="btn" (click)="modifySelectedDivisions(division)"
+                [ngClass]="selectedDivisions.includes(division.id)? 'btn-danger': 'btn-outline-danger'">
+                {{ division.division }}
+            </button>
+        </div>
+    </div>
+    <div class="col-6">
+        <div class="btn-group float-right">
+            <button *ngFor="let timePeriod of timePeriodEnumArray" class="btn"
+                (click)="modifySelectedTimePeriod(timePeriod)"
+                [ngClass]="timePeriod==selectedTimePeriod? 'btn-danger': 'btn-outline-danger'">
+                {{ "Past " + timePeriod }}
+            </button>
+        </div>
+    </div>
+    <!-- <div class="col-2">
+        <div class="d-flex flex-row pt-2 float-right">
+            <span>Evaluated&nbsp;</span>
+            <label class="custom-toggle">
+                <input type="checkbox" [checked]="selectedEvaluation" (change)="$event ? toggleEvaluation() : null">
+                <span class="custom-toggle-slider rounded-circle"></span>
+            </label>
+        </div>
+    </div> -->
+</div>
+
+<div class="row mt-2" *ngIf="dataSource && dataSource.length > 0">
+    <div class="col-6"></div>
+    <div class="col-4">
+        <button class="btn btn-outline-default float-right" *ngIf="selectedQuestions?.length > 0">
+            <span>{{ 'Delete '+ selectedQuestions.length + ' Question(s)' }}</span>&nbsp;<i class="fas fa-trash-alt"
+                style="vertical-align:middle;"></i>
+        </button>
+    </div>
+    <div class="col-2">
+        <div ngbDropdown placement="left" class="float-right">
+            <button class="btn btn-outline-default" ngbDropdownToggle>
+                <span>Download</span>&nbsp;<i class="ni ni-cloud-download-95" style="vertical-align:middle;"></i>
+            </button>
+            <div ngbDropdownMenu class=" dropdown-menu-right dropdown-menu-arrow">
+                <a class="dropdown-item" (click)="downloadQuestionsExcel(true)">Current page</a>
+                <a class="dropdown-item" (click)="downloadQuestionsExcel(false)">{{ "Past " + selectedTimePeriod + " for selected Divisions" }}</a>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="card mt-2">
+    <div class="card-body">
+        <div *ngIf="dataSource && dataSource.length > 0; else noQuestions" class="d-flex flex-row">
+            <app-table [displayedColumns]="displayedColumns" [displayedColumnsHeaders]="displayedColumnsHeaders"
+                [displayedColumnsWidth]="displayedColumnsWidth" [dataSource]="dataSource" [totalLength]="totalLength"
+                [pageSizeOptions]="pageSizeOptions" [isCheckbox]="'true'" [pageIndex]="selectedPage"
+                [pageSize]="selectedSize" [showFirstLastButtons]="'true'" [clearSelect]="clearSelect.asObservable()"
+                (pageUpdateEvent)="pageUpdateEvent($event)" (selectionEvent)="selectionEvent($event)">
+            </app-table>
+        </div>
+        <ng-template #noQuestions>
+            <div class="pt-4">
+                <span>Oops! No questions fulfilled your search criteria</span>
+            </div>
+        </ng-template>
+    </div>
+</div>
