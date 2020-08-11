@@ -1,4 +1,4 @@
-import { Component, OnInit, OnDestroy, ViewChild, TemplateRef } from '@angular/core';
+import { Component, OnInit, OnDestroy } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
 import { QuoraService } from '../quora.service';
 import { DivisionService } from 'src/app/division/division.service';
@@ -34,7 +34,6 @@ export class QuoraQuestionListComponent implements OnInit, OnDestroy {
 
   selectedDivisions: number[] = [];
   selectedTimePeriod: TimePeriod = TimePeriod.WEEK;
-  selectedEvaluation: boolean = false;
   selectedPage: number = 1;
   selectedSize: number = this.pageSizeOptions[0];
   selectedQuestions: QuoraQuestion[] = [];
@@ -58,14 +57,13 @@ export class QuoraQuestionListComponent implements OnInit, OnDestroy {
     this.subscription.add(
       this._route.queryParams.subscribe(params => {
         if (null == params['page'] || null == params['size'] || null == params['divisions']
-          || null == params['evaluated'] || null == params['timePeriod']) {
+          || null == params['timePeriod']) {
           this.refreshPage(1);
         }
         else {
           this.selectedSize = this.pageSizeOptions.includes(Number(params['size']))? Number(params['size']): this.pageSizeOptions[0];
           this.selectedPage = Number(params['page']) > 0? Number(params['page']) - 1: 0; // -1 because first page on server is 0
           this.selectedDivisions = JSON.parse(params['divisions']);
-          this.selectedEvaluation = params['evaluated'] == 'false'? false: true;
           this.selectedTimePeriod = this.getTimePeriod(params['timePeriod']);
           this.refreshDataSource();
         }
@@ -75,7 +73,7 @@ export class QuoraQuestionListComponent implements OnInit, OnDestroy {
 
   refreshDataSource(): void {
     this.subscription.add(
-      this._quoraService.getQuestions(this.selectedPage, this.selectedSize, this.selectedDivisions, this.selectedEvaluation, this.selectedTimePeriod).subscribe((response: Page<QuoraQuestion>) => {
+      this._quoraService.getQuestions(this.selectedPage, this.selectedSize, this.selectedDivisions, this.selectedTimePeriod).subscribe((response: Page<QuoraQuestion>) => {
         this.dataSource = response.content.map(question =>  this.mapQuestionForTable(question));
         this.totalLength = response.totalLength;
       })
@@ -84,16 +82,15 @@ export class QuoraQuestionListComponent implements OnInit, OnDestroy {
 
   refreshPage(pageNumber?: number): void {
     this.clearSelect.next();
-    let parameters = this.setUrlParameters(pageNumber? pageNumber: 1, this.selectedSize, this.selectedDivisions, this.selectedEvaluation, this.selectedTimePeriod);
+    let parameters = this.setUrlParameters(pageNumber? pageNumber: 1, this.selectedSize, this.selectedDivisions, this.selectedTimePeriod);
     this._router.navigate([this._router.url.split('?')[0]], {queryParams: parameters});
   }
 
-  setUrlParameters(page: number, size: number, divisionIds: number[], evaluated: boolean, timePeriod: TimePeriod): any {
+  setUrlParameters(page: number, size: number, divisionIds: number[], timePeriod: TimePeriod): any {
     return {
       'page': page,
       'size': size,
       'divisions': JSON.stringify(divisionIds),
-      'evaluated': evaluated,
       'timePeriod': timePeriod
     }
   }
@@ -141,10 +138,10 @@ export class QuoraQuestionListComponent implements OnInit, OnDestroy {
     this.refreshPage();
   }
 
-  toggleEvaluation(): void {
-    this.selectedEvaluation = !this.selectedEvaluation;
-    this.refreshPage();
-  }
+  // toggleEvaluation(): void {
+  //   this.selectedEvaluation = !this.selectedEvaluation;
+  //   this.refreshPage();
+  // }
 
   mapQuestionForTable(question: QuoraQuestion): any {
     return {
@@ -152,7 +149,6 @@ export class QuoraQuestionListComponent implements OnInit, OnDestroy {
       'question_text': question.question_text,
       'question_url': question.question_url,
       'division_name': this.divisionArray.filter(division => division.id == question.division_id)[0].division,
-      'evaluated': question.evaluated,
       'asked_on': formatDate(question.asked_on, 'MMM dd, yyyy', 'en-US')
     }
   }

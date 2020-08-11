@@ -22,13 +22,14 @@ def fill_all_missing_dates():
 def delete_questions():
     return Response(json.dumps(quora_service.delete_questions(ast.literal_eval(request.args.get('questionIds')))), status=200, mimetype='application/json')
 
+#to be changed
 @app.route(base_url+'/evaluate', methods=['PUT'])
 def mark_as_evaluated():
     return Response(json.dumps(quora_service.update_evaluated(ast.literal_eval(request.args.get('questionIds')), bool(strtobool(request.args.get('evaluated'))))), status=200, mimetype='application/json')
 
 @app.route(base_url, methods=['GET'])
 def get_questions():
-    return Response(json.dumps(quora_service.get_questions(ast.literal_eval(request.args.get('divisions')), request.args.get('timePeriod'), bool(strtobool(request.args.get('evaluated'))), request.args.get('pageNumber'), request.args.get('pageSize'))), status=200, mimetype='application/json')
+    return Response(json.dumps(quora_service.get_questions(ast.literal_eval(request.args.get('divisions')), request.args.get('timePeriod'), request.args.get('pageNumber'), request.args.get('pageSize'))), status=200, mimetype='application/json')
 
 @app.route(base_url+'/refreshAccountsData', methods=['GET'])
 def refresh_accounts_data():

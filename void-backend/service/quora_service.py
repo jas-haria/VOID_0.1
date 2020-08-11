@@ -6,8 +6,8 @@ from selenium.webdriver.common.keys import Keys
 import time
 import pandas
 
-from model.model import Division, QuoraKeyword, QuoraQuestion, Script, QuoraAccount, ExecutionLog, QuoraQuestionAccountDetails, QuoraAccountStats, QuoraAskedQuestionStats
-from model.enum import TimePeriod
+from model.model import Division, QuoraKeyword, QuoraQuestion, Script, QuoraAccount, ExecutionLog, QuoraQuestionAccountDetails, QuoraQuestionAccountActions, QuoraAccountStats, QuoraAskedQuestionStats
+from model.enum import TimePeriod, QuoraQuestionAccountAction
 from service.util_service import get_new_session, scroll_to_bottom, get_driver, paginate, replace_all
 
 LOAD_TIME = 3
@@ -69,7 +69,7 @@ def get_time_interval(time):
 
 def fill_missing_dates():
     session = get_new_session()
-    question_list = session.query(QuoraQuestion).filter_by(asked_on=None, evaluated=False).all()
+    question_list = session.query(QuoraQuestion).filter_by(asked_on=None, disregard=False).all()
 
     session.bulk_save_objects(fill_dates(question_list, False, session))
     session.commit()
@@ -118,22 +118,26 @@ def fill_dates(question_list, put_todays_date, session):
     return question_list
 
 def delete_questions(question_ids_list):
-    print(question_ids_list)
     session = get_new_session()
-    session.query(QuoraQuestion).filter(QuoraQuestion.id.in_(question_ids_list)).delete(synchronize_session=False)
+    #session.query(QuoraQuestion).filter(QuoraQuestion.id.in_(question_ids_list)).delete(synchronize_session=False)
+    questions = session.query(QuoraQuestion).filter(QuoraQuestion.id.in_(question_ids_list)).all()
+    for question in questions:
+        question.disregard = True
+        session.add(question)
     session.commit()
     return {}
 
+#to be changed
 def update_evaluated(question_ids_list, evaluated):
     session = get_new_session()
     session.query(QuoraQuestion).filter(QuoraQuestion.id.in_(question_ids_list)).update({QuoraQuestion.evaluated: evaluated}, synchronize_session=False)
     session.commit()
     return {}
 
-def get_questions(division_ids, time, evaluated, page_number, page_size):
+def get_questions(division_ids, time, page_number, page_size):
     session = get_new_session()
     query = session.query(QuoraQuestion).filter(QuoraQuestion.division_id.in_(division_ids))\
-        .filter(QuoraQuestion.asked_on > get_time_interval(time)).filter((QuoraQuestion.evaluated).is_(evaluated))
+        .filter(QuoraQuestion.asked_on > get_time_interval(time)).filter((QuoraQuestion.disregard).is_(False))
     return paginate(query=query, page_number=int(page_number), page_limit=int(page_size))
 
 # METHOD TO REFRESH QUESTIONS ANSWERED AND FOLLOWERS FOR EVERY ACCOUNT (WITHOUT LOGIN)
@@ -142,6 +146,7 @@ def refresh_accounts_data():
     script = session.query(Script).filter(Script.name == 'Refresh_Quora_Accounts_Data').first()
     execution_log = session.query(ExecutionLog).filter(ExecutionLog.script_id == script.id).first()
     accounts = session.query(QuoraAccount).all()
+    answered_action = session.query(QuoraQuestionAccountActions).filter(QuoraQuestionAccountActions.action == QuoraQuestionAccountAction.ANSWERED).first()
     driver = get_driver()
     for account in accounts:
         driver.get(account.link)
@@ -167,14 +172,14 @@ def refresh_accounts_data():
                     #SAVE QUESTION AS ANSWERED IN DB (TO DO)
                     question = session.query(QuoraQuestion).filter(QuoraQuestion.question_url == question_link).first()
                     if question is not None:
-                        qqad = session.query(QuoraQuestionAccountDetails).filter(QuoraQuestionAccountDetails.account == account).filter(QuoraQuestionAccountDetails.question == question).first()
+                        qqad = session.query(QuoraQuestionAccountDetails).filter(QuoraQuestionAccountDetails.account == account).filter(QuoraQuestionAccountDetails.question == question)\
+                            .filter(QuoraQuestionAccountDetails.action == answered_action).first()
                         if qqad is None:
                             qqad = QuoraQuestionAccountDetails()
                             qqad.account = account
                             qqad.question = question
-                        qqad.answered = True
-                        session.add(qqad)
-
+                            qqad.action = answered_action
+                            session.add(qqad)
         # GET FOLLOWERS COUNT
         count = 0
         for i in soup.findAll('div', attrs={'class': 'q-box qu-display--flex'}):
@@ -214,6 +219,7 @@ def refresh_requested_questions():
     session = get_new_session()
     accounts = session.query(QuoraAccount).all()
     default_division = session.query(Division).filter(Division.division == 'Vidyalankar').first()
+    requested_action = session.query(QuoraQuestionAccountActions).filter(QuoraQuestionAccountActions.action == QuoraQuestionAccountAction.REQUESTED).first()
     for account in accounts:
         driver = get_driver()
         login_to_account(driver, account)
@@ -231,19 +237,21 @@ def refresh_requested_questions():
                 question.division = default_division
                 question.asked_on = datetime.now().date() #DATE DOES NOT MATTER FOR THIS QUESTION
                 session.add(question)
-            qqad = session.query(QuoraQuestionAccountDetails).filter(QuoraQuestionAccountDetails.account == account).filter(QuoraQuestionAccountDetails.question == question).first()
+            qqad = session.query(QuoraQuestionAccountDetails).filter(QuoraQuestionAccountDetails.account == account).filter(QuoraQuestionAccountDetails.question == question)\
+                .filter(QuoraQuestionAccountDetails.action == requested_action).first()
             if qqad is None:
                 qqad = QuoraQuestionAccountDetails()
                 qqad.account = account
                 qqad.question = question
-            qqad.requested = True
-            session.add(qqad)
+                qqad.action = requested_action
+                session.add(qqad)
         driver.quit()
     session.commit()
     return {}
 
 def add_asked_question(question_asked, account_id):
     session = get_new_session()
+    asked_action = session.query(QuoraQuestionAccountActions).filter(QuoraQuestionAccountActions.action == QuoraQuestionAccountAction.ASKED).first()
     question = QuoraQuestion()
     question.question_url = question_asked.get('question_url')
     question.question_text = question_asked.get('question_text')
@@ -253,7 +261,7 @@ def add_asked_question(question_asked, account_id):
     qqad = QuoraQuestionAccountDetails()
     qqad.account_id = account_id
     qqad.question = question
-    qqad.asked = True
+    qqad.action = asked_action
     session.add(qqad)
     session.commit()
     return {}

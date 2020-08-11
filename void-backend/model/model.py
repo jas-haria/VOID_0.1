@@ -81,7 +81,7 @@ class QuoraQuestion(Base):
     question_text = Column('question_text', String)
     division_id = Column('division', Integer, ForeignKey('void_dev.divisions.id'), nullable=False)
     asked_on = Column('asked_on', Date)
-    evaluated = Column('evaluated', Boolean, default=False)
+    disregard = Column('disregard', Boolean, default=False)
 
     division = relationship('Division')
     accounts = relationship('QuoraQuestionAccountDetails', back_populates='question')
@@ -93,19 +93,24 @@ class QuoraQuestion(Base):
         return _asdictmethod(self)
 
 
+class QuoraQuestionAccountActions(Base):
+    __tablename__ = "quora_question_account_actions"
+    __table_args__ = schema
+
+    id = Column('id', Integer, primary_key=True, nullable=False, autoincrement=True)
+    action = Column('action_name', String(20), nullable=False)
+
 class QuoraQuestionAccountDetails(Base):
     __tablename__ = "quora_question_account_details"
     __table_args__ = schema
 
     question_id = Column('question_id', Integer, ForeignKey('void_dev.quora_questions.id'), primary_key=True)
     account_id = Column('quora_account_id', Integer, ForeignKey('void_dev.quora_accounts.id'), primary_key=True)
-    assigned = Column('assigned', Boolean, default=False)
-    answered = Column('answered', Boolean, default=False)
-    requested = Column('requested', Boolean, default=False)
-    asked = Column('asked', Boolean, default=False)
+    action_id = Column('action_id', Integer, ForeignKey('void_dev.quora_question_account_actions.id'), primary_key=True)
 
     question = relationship('QuoraQuestion', back_populates='accounts')
     account = relationship('QuoraAccount', back_populates='questions')
+    action = relationship('QuoraQuestionAccountActions')
 
     def __repr__(self):
         return '<Question - Account {}>'.format(self.question_id - self.account_id)
