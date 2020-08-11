@@ -92,7 +92,6 @@ class QuoraQuestion(Base):
     def _asdict(self):
         return _asdictmethod(self)
 
-
 class QuoraQuestionAccountActions(Base):
     __tablename__ = "quora_question_account_actions"
     __table_args__ = schema

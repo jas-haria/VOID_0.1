@@ -18,7 +18,7 @@ def refresh_questions_data():
 def fill_all_missing_dates():
     return Response(json.dumps(quora_service.fill_missing_dates()), status=200, mimetype='application/json')
 
-@app.route(base_url, methods=['DELETE'])
+@app.route(base_url+'/disregard', methods=['PUT'])
 def delete_questions():
     return Response(json.dumps(quora_service.delete_questions(ast.literal_eval(request.args.get('questionIds')))), status=200, mimetype='application/json')
 

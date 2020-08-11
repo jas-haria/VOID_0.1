@@ -31,10 +31,10 @@ export class QuoraService {
     { params: this._apiService.getParameters(parameters) });
   }
 
-  deleteQuestions(questionIds: number[]): Observable<any> {
+  disregardQuestion(questionIds: number[]): Observable<any> {
     let parameters = {};
     parameters['questionIds'] = questionIds;
-    return this._http.delete<any>(this._apiService.getBackendUrl() + '/quora',
+    return this._http.put<any>(this._apiService.getBackendUrl() + '/quora/disregard', {},
     { params: this._apiService.getParameters(parameters) });
   }
 

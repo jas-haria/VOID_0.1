@@ -36,7 +36,7 @@ export class QuoraQuestionListComponent implements OnInit, OnDestroy {
   selectedTimePeriod: TimePeriod = TimePeriod.WEEK;
   selectedPage: number = 1;
   selectedSize: number = this.pageSizeOptions[0];
-  selectedQuestions: QuoraQuestion[] = [];
+  selectedQuestions: any[] = [];
 
 
   constructor(private _route: ActivatedRoute,
@@ -72,6 +72,7 @@ export class QuoraQuestionListComponent implements OnInit, OnDestroy {
   }
 
   refreshDataSource(): void {
+    this.clearSelect.next();
     this.subscription.add(
       this._quoraService.getQuestions(this.selectedPage, this.selectedSize, this.selectedDivisions, this.selectedTimePeriod).subscribe((response: Page<QuoraQuestion>) => {
         this.dataSource = response.content.map(question =>  this.mapQuestionForTable(question));
@@ -81,7 +82,6 @@ export class QuoraQuestionListComponent implements OnInit, OnDestroy {
   }
 
   refreshPage(pageNumber?: number): void {
-    this.clearSelect.next();
     let parameters = this.setUrlParameters(pageNumber? pageNumber: 1, this.selectedSize, this.selectedDivisions, this.selectedTimePeriod);
     this._router.navigate([this._router.url.split('?')[0]], {queryParams: parameters});
   }
@@ -180,6 +180,12 @@ export class QuoraQuestionListComponent implements OnInit, OnDestroy {
         saveAS(new Blob([data], {type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'}), filename);
       })
     );
+  }
+
+  disregardSelectedQuestions(): void {
+    this._quoraService.disregardQuestion(this.getIdsFromArray(this.selectedQuestions)).subscribe(response => {
+      this.refreshDataSource(); //since url parameters haven't changed
+    });
   }
 
 }

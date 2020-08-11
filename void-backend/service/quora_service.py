@@ -120,6 +120,7 @@ def fill_dates(question_list, put_todays_date, session):
 def delete_questions(question_ids_list):
     session = get_new_session()
     #session.query(QuoraQuestion).filter(QuoraQuestion.id.in_(question_ids_list)).delete(synchronize_session=False)
+    #session.query(QuoraQuestion).filter(QuoraQuestion.id.in_(question_ids_list)).update({QuoraQuestion.disregard: True}, synchronize_session=False)
     questions = session.query(QuoraQuestion).filter(QuoraQuestion.id.in_(question_ids_list)).all()
     for question in questions:
         question.disregard = True

@@ -30,7 +30,7 @@
 <div class="row mt-2" *ngIf="dataSource && dataSource.length > 0">
     <div class="col-6"></div>
     <div class="col-4">
-        <button class="btn btn-outline-default float-right" *ngIf="selectedQuestions?.length > 0">
+        <button class="btn btn-outline-default float-right mr-2" *ngIf="selectedQuestions?.length > 0" (click)="disregardSelectedQuestions()">
             <span>{{ 'Delete '+ selectedQuestions.length + ' Question(s)' }}</span>&nbsp;<i class="fas fa-trash-alt"
                 style="vertical-align:middle;"></i>
         </button>
