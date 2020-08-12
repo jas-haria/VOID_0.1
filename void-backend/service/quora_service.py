@@ -1,4 +1,4 @@
-from sqlalchemy import asc
+from sqlalchemy import asc, desc
 from bs4 import BeautifulSoup
 from datetime import datetime
 from dateutil.relativedelta import relativedelta
@@ -8,7 +8,7 @@ import pandas
 
 from model.model import Division, QuoraKeyword, QuoraQuestion, Script, QuoraAccount, ExecutionLog, QuoraQuestionAccountDetails, QuoraQuestionAccountActions, QuoraAccountStats, QuoraAskedQuestionStats
 from model.enum import TimePeriod, QuoraQuestionAccountAction
-from service.util_service import get_new_session, scroll_to_bottom, get_driver, paginate, replace_all
+from service.util_service import get_new_session, scroll_to_bottom, get_driver, paginate, replace_all, convert_list_to_json
 
 LOAD_TIME = 3
 encoding = 'utf-8'
@@ -135,11 +135,20 @@ def update_evaluated(question_ids_list, evaluated):
     session.commit()
     return {}
 
-def get_questions(division_ids, time, page_number, page_size):
+def get_questions(division_ids, time, page_number, page_size, action):
     session = get_new_session()
-    query = session.query(QuoraQuestion).filter(QuoraQuestion.division_id.in_(division_ids))\
-        .filter(QuoraQuestion.asked_on > get_time_interval(time)).filter((QuoraQuestion.disregard).is_(False))
-    return paginate(query=query, page_number=int(page_number), page_limit=int(page_size))
+    if action == QuoraQuestionAccountAction.NEW.__str__():
+        query = session.query(QuoraQuestion).filter(QuoraQuestion.division_id.in_(division_ids)).filter(QuoraQuestion.asked_on > get_time_interval(time))\
+            .filter((QuoraQuestion.disregard).is_(False)).filter(~QuoraQuestion.accounts.any()).order_by(desc(QuoraQuestion.id))
+        length, paginated_query = paginate(query=query, page_number=int(page_number), page_limit=int(page_size))
+        return {'totalLength': length, 'content': convert_list_to_json(paginated_query.all())}
+    else:
+        query = session.query(QuoraQuestionAccountDetails.question_id).join(QuoraQuestion).join(QuoraQuestionAccountActions).filter(QuoraQuestion.division_id.in_(division_ids))\
+            .filter(QuoraQuestion.asked_on > get_time_interval(time)).filter((QuoraQuestion.disregard).is_(False)).filter(QuoraQuestionAccountActions.action.like(action)).order_by(desc(QuoraQuestion.id))
+        length, paginated_query = paginate(query=query, page_number=int(page_number), page_limit=int(page_size))
+        question_ids = paginated_query.all()
+        questions = session.query(QuoraQuestion).filter(QuoraQuestion.id.in_(question_ids)).all()
+        return {'totalLength': length, 'content': convert_list_to_json(questions)}
 
 # METHOD TO REFRESH QUESTIONS ANSWERED AND FOLLOWERS FOR EVERY ACCOUNT (WITHOUT LOGIN)
 def refresh_accounts_data():
@@ -270,14 +279,14 @@ def add_asked_question(question_asked, account_id):
 def refresh_asked_questions_stats():
     session = get_new_session()
     driver = get_driver()
-    questions_details = session.query(QuoraQuestionAccountDetails).filter(QuoraQuestionAccountDetails.asked == True).all()
+    questions_details = session.query(QuoraQuestionAccountDetails).join(QuoraQuestionAccountActions).filter(QuoraQuestionAccountActions.action == QuoraQuestionAccountAction.ASKED).all()
     for question_detail in questions_details:
         driver.get(question_detail.question.question_url)
         soup = BeautifulSoup(driver.page_source, 'html.parser')
-        qaqs = session.query(QuoraAskedQuestionStats).filter(QuoraAskedQuestionStats.question == question_detail.question).filter(QuoraAskedQuestionStats.recorded_on == datetime.now().date()).first()
+        qaqs = session.query(QuoraAskedQuestionStats).filter(QuoraAskedQuestionStats.question_id == question_detail.question_id).filter(QuoraAskedQuestionStats.recorded_on == datetime.now().date()).first()
         if qaqs is None:
             qaqs = QuoraAskedQuestionStats()
-            qaqs.question = question_detail.question
+            qaqs.question_id = question_detail.question_id
             qaqs.recorded_on = datetime.now().date()
         # GET NUMBER OF ANSWERS
         for i in soup.findAll('div', attrs={'class': 'q-text qu-medium qu-fontSize--regular qu-color--gray_dark qu-passColorToLinks'}):
@@ -418,3 +427,8 @@ def generate_questions_df_for_excel(question_ids_list, current_page, division_id
     for question in questions:
         data.append({'id': question.id, 'question': question.question_text, 'url': question.question_url, 'division': question.division.division, 'approx date asked': question.asked_on})
     return pandas.DataFrame(data)
+
+def get_all_accounts():
+    session = get_new_session()
+    accounts = session.query(QuoraAccount).order_by(asc(QuoraAccount.id)).all()
+    return convert_list_to_json(accounts)

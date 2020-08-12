@@ -99,6 +99,12 @@ class QuoraQuestionAccountActions(Base):
     id = Column('id', Integer, primary_key=True, nullable=False, autoincrement=True)
     action = Column('action_name', String(20), nullable=False)
 
+    def __repr__(self):
+        return '<Action{}>'.format(self.action)
+
+    def _asdict(self):
+        return _asdictmethod(self)
+
 class QuoraQuestionAccountDetails(Base):
     __tablename__ = "quora_question_account_details"
     __table_args__ = schema

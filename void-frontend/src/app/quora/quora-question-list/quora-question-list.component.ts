@@ -10,6 +10,7 @@ import { formatDate } from '@angular/common';
 import { Page } from 'src/app/shared/models/page.model';
 import { PageEvent } from '@angular/material/paginator';
 import * as saveAS from 'file-saver';
+import { QuoraQuestionAccountAction } from 'src/app/shared/models/enums/quora-question-account-action.enum';
 
 @Component({
   selector: 'app-quora-question-list',
@@ -31,7 +32,7 @@ export class QuoraQuestionListComponent implements OnInit, OnDestroy {
   divisionArray: Division[] = [];
   timePeriodEnumArray: TimePeriod[] = Object.values(TimePeriod);
   
-
+  selectedType: QuoraQuestionAccountAction = QuoraQuestionAccountAction.NEW;
   selectedDivisions: number[] = [];
   selectedTimePeriod: TimePeriod = TimePeriod.WEEK;
   selectedPage: number = 1;
@@ -55,18 +56,21 @@ export class QuoraQuestionListComponent implements OnInit, OnDestroy {
 
   routeListner(): void {
     this.subscription.add(
-      this._route.queryParams.subscribe(params => {
-        if (null == params['page'] || null == params['size'] || null == params['divisions']
-          || null == params['timePeriod']) {
-          this.refreshPage(1);
-        }
-        else {
-          this.selectedSize = this.pageSizeOptions.includes(Number(params['size']))? Number(params['size']): this.pageSizeOptions[0];
-          this.selectedPage = Number(params['page']) > 0? Number(params['page']) - 1: 0; // -1 because first page on server is 0
-          this.selectedDivisions = JSON.parse(params['divisions']);
-          this.selectedTimePeriod = this.getTimePeriod(params['timePeriod']);
-          this.refreshDataSource();
-        }
+      this._route.paramMap.subscribe(params=> {
+        this.selectedType = this.getTypeFromParam(params.get('type'));
+        this._route.queryParams.subscribe(params => {
+          if (null == params['page'] || null == params['size'] || null == params['divisions']
+            || null == params['timePeriod']) {
+            this.refreshPage(1);
+          }
+          else {
+            this.selectedSize = this.pageSizeOptions.includes(Number(params['size']))? Number(params['size']): this.pageSizeOptions[0];
+            this.selectedPage = Number(params['page']) > 0? Number(params['page']) - 1: 0; // -1 because first page on server is 0
+            this.selectedDivisions = JSON.parse(params['divisions']);
+            this.selectedTimePeriod = this.getTimePeriod(params['timePeriod']);
+            this.refreshDataSource();
+          }
+        })
       })
     );
   }
@@ -74,7 +78,7 @@ export class QuoraQuestionListComponent implements OnInit, OnDestroy {
   refreshDataSource(): void {
     this.clearSelect.next();
     this.subscription.add(
-      this._quoraService.getQuestions(this.selectedPage, this.selectedSize, this.selectedDivisions, this.selectedTimePeriod).subscribe((response: Page<QuoraQuestion>) => {
+      this._quoraService.getQuestions(this.selectedPage, this.selectedSize, this.selectedDivisions, this.selectedTimePeriod, this.selectedType).subscribe((response: Page<QuoraQuestion>) => {
         this.dataSource = response.content.map(question =>  this.mapQuestionForTable(question));
         this.totalLength = response.totalLength;
       })
@@ -83,7 +87,7 @@ export class QuoraQuestionListComponent implements OnInit, OnDestroy {
 
   refreshPage(pageNumber?: number): void {
     let parameters = this.setUrlParameters(pageNumber? pageNumber: 1, this.selectedSize, this.selectedDivisions, this.selectedTimePeriod);
-    this._router.navigate([this._router.url.split('?')[0]], {queryParams: parameters});
+    this._router.navigate([this._router.url.substr(0, this._router.url.lastIndexOf('/'))+"/"+this.selectedType.toLowerCase()], {queryParams: parameters});
   }
 
   setUrlParameters(page: number, size: number, divisionIds: number[], timePeriod: TimePeriod): any {
@@ -130,6 +134,16 @@ export class QuoraQuestionListComponent implements OnInit, OnDestroy {
       case 'day': return TimePeriod.DAY
       case 'month': return TimePeriod.MONTH
       default: return TimePeriod.WEEK
+    }
+  }
+
+  getTypeFromParam(type: string): QuoraQuestionAccountAction {
+    switch (type) {
+      case 'asked': return QuoraQuestionAccountAction.ASKED
+      case 'answered' : return QuoraQuestionAccountAction.ANSWERED
+      case 'requested' : return QuoraQuestionAccountAction.REQUESTED
+      case 'evaluated' : return QuoraQuestionAccountAction.EVALUATED
+      default : return QuoraQuestionAccountAction.NEW
     }
   }
 

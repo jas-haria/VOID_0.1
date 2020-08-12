@@ -29,7 +29,7 @@ def mark_as_evaluated():
 
 @app.route(base_url, methods=['GET'])
 def get_questions():
-    return Response(json.dumps(quora_service.get_questions(ast.literal_eval(request.args.get('divisions')), request.args.get('timePeriod'), request.args.get('pageNumber'), request.args.get('pageSize'))), status=200, mimetype='application/json')
+    return Response(json.dumps(quora_service.get_questions(ast.literal_eval(request.args.get('divisions')), request.args.get('timePeriod'), request.args.get('pageNumber'), request.args.get('pageSize'), request.args.get('action'))), status=200, mimetype='application/json')
 
 @app.route(base_url+'/refreshAccountsData', methods=['GET'])
 def refresh_accounts_data():
@@ -53,7 +53,10 @@ def refresh_accounts_stats():
 
 @app.route(base_url+'/getExcel', methods=['GET'])
 def generate_questions_excel():
-    print("here")
     return send_file(util_service.generate_excel(quora_service.generate_questions_df_for_excel(
         ast.literal_eval(request.args.get('questionIds')), bool(strtobool(request.args.get('currentPage'))), ast.literal_eval(request.args.get('divisions')), request.args.get('timePeriod') )),
                      as_attachment=True, attachment_filename='excel.xlsx')
+
+@app.route(base_url+'/getAccounts', methods=['GET'])
+def get_accounts():
+    return Response(json.dumps(quora_service.get_all_accounts()), status=200, mimetype='application/json')

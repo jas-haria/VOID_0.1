@@ -51,7 +51,7 @@ def paginate(query, page_number, page_limit):
     if page_number > 0:
         query = query.offset((page_number)*page_limit)
     query = query.limit(page_limit)
-    return {'totalLength': length, 'content': convert_list_to_json(query.all())}
+    return length, query
 
 def replace_all(text, dict):
     for i, j in dict.items():

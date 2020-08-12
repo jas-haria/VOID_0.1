@@ -5,6 +5,8 @@ import { ApiService } from '../shared/services/api.service';
 import { QuoraQuestion } from '../shared/models/quora-question.model';
 import { Page } from '../shared/models/page.model';
 import { TimePeriod } from '../shared/models/enums/time-period.enum';
+import { QuoraAccount } from '../shared/models/quora-account.model';
+import { QuoraQuestionAccountAction } from '../shared/models/enums/quora-question-account-action.enum';
 
 @Injectable({
   providedIn: 'root'
@@ -13,12 +15,13 @@ export class QuoraService {
   
   constructor(private _http: HttpClient, private _apiService: ApiService) {}
 
-  getQuestions(pageNumber: number, pageSize: number, divisions: number[], timePeriod: TimePeriod): Observable<Page<QuoraQuestion>> {
+  getQuestions(pageNumber: number, pageSize: number, divisions: number[], timePeriod: TimePeriod, qqaa: QuoraQuestionAccountAction): Observable<Page<QuoraQuestion>> {
     let parameters = {};
     parameters['pageNumber'] = pageNumber;
     parameters['pageSize'] = pageSize;
     parameters['divisions'] = divisions;
     parameters['timePeriod'] = timePeriod;
+    parameters['action'] = qqaa
     return this._http.get<Page<QuoraQuestion>>(this._apiService.getBackendUrl() + '/quora', 
     { params: this._apiService.getParameters(parameters) });
   }
@@ -46,5 +49,9 @@ export class QuoraService {
     parameters['timePeriod'] = timePeriod;
     return this._http.get(this._apiService.getBackendUrl() + '/quora/getExcel',
     { params: this._apiService.getParameters(parameters), responseType: "arraybuffer" });
+  }
+
+  getAccounts(): Observable<QuoraAccount[]> {
+    return this._http.get<QuoraAccount[]>(this._apiService.getBackendUrl() + '/quora/getAccounts');
   }
 }

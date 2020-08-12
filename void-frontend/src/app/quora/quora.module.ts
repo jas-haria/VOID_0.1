@@ -8,7 +8,7 @@ import { SharedModule } from '../shared/shared.module';
 
 export const QuoraRoutes: Routes = [
   { path: 'quora', children: [
-      { path: 'questions-list', component: QuoraQuestionListComponent, pathMatch: 'full' }
+      { path: 'questions-list/:type', component: QuoraQuestionListComponent, pathMatch: 'full' }
     ]
   }
 ];

@@ -1,0 +1,51 @@
+<nav class="navbar navbar-vertical navbar-expand-md navbar-light bg-white" id="sidenav-main">
+    <a class="navbar-brand pt-0" routerLinkActive="active" [routerLink]="['/dashboard']">
+        <img src="./assets/img/brand/red.png" class="navbar-brand-img" alt="...">
+    </a>
+    <hr class="my-3">
+    <li class="navbar-nav">
+        <a class="nav-link" style="cursor: pointer;" (click)="expandedQuora=!expandedQuora">
+            Quora &nbsp;
+            <i class="ni ni-bold-right" *ngIf="!expandedQuora"></i>
+            <i class="ni ni-bold-down" *ngIf="expandedQuora"></i>
+        </a>
+    </li>
+    <div *ngIf="expandedQuora">
+        <li class="nav-link" style="cursor: pointer;">
+            <a class="nav-link-inner--text">
+                <i class="fas fa-chart-pie nav-link-icon"></i>
+                &nbsp; Summary
+            </a>
+        </li>
+        <li class="nav-link" style="cursor: pointer;" (click)="expandedQuoraQuestions=!expandedQuoraQuestions">
+            <a class="nav-link-inner--text">
+                <i class="fas fa-question-circle nav-link-icon"></i>
+                &nbsp; Questions &nbsp;
+                <i class="ni ni-bold-right" *ngIf="!expandedQuoraQuestions"></i>
+                <i class="ni ni-bold-down" *ngIf="expandedQuoraQuestions"></i>
+            </a>
+        </li>
+        <div *ngIf="expandedQuoraQuestions">
+            <li class="nav-link">
+                <a class="nav-link-inner--text" (click)="navigate('/quora/questions-list/new')">
+                     &nbsp; New Questions
+                </a>
+            </li>
+            <li class="nav-link">
+                <a class="nav-link-inner--text" (click)="navigate('/quora/questions-list/requested')">
+                     &nbsp; Requested Questions
+                </a>
+            </li>
+            <li class="nav-link">
+                <a class="nav-link-inner--text" (click)="navigate('/quora/questions-list/asked')">
+                     &nbsp; Asked Questions
+                </a>
+            </li>
+            <!-- <li class="nav-link" *ngFor="let account of quoraAccounts">
+                <a class="nav-link-inner--text">
+                     &nbsp; {{ account.first_name + " " + account.last_name }}
+                </a>
+            </li> -->
+        </div>
+    </div>
+</nav>
