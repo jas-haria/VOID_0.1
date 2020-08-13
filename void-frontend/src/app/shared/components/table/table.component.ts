@@ -78,7 +78,7 @@ export class TableComponent implements OnInit, OnDestroy {
     if (column && this.displayedColumnsWidth && this.displayedColumnsWidth[column]) {
       return this.displayedColumnsWidth[column];
     }
-    return 10;
+    return 5;
   }
 
   paginationChange(pageEvent: PageEvent): void {

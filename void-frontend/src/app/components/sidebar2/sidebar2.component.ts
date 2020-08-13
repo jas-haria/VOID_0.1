@@ -3,6 +3,7 @@ import { Subscription } from 'rxjs';
 import { QuoraService } from 'src/app/quora/quora.service';
 import { QuoraAccount } from 'src/app/shared/models/quora-account.model';
 import { Router } from '@angular/router';
+import { QuoraQuestionAccountAction } from 'src/app/shared/models/enums/quora-question-account-action.enum';
 
 @Component({
   selector: 'app-sidebar2',
@@ -16,6 +17,8 @@ export class Sidebar2Component implements OnInit {
   isCollapsed: boolean = false;
   expandedQuora: boolean = false;
   expandedQuoraQuestions: boolean = false;
+  expandedQuoraQuestionsTab: string[] = [QuoraQuestionAccountAction.NEW, QuoraQuestionAccountAction.REQUESTED, QuoraQuestionAccountAction.ASKED];
+  expandedQuoraAccounts: boolean = false;
   quoraAccounts: QuoraAccount[] = [];
 
   constructor(private _quoraService: QuoraService,

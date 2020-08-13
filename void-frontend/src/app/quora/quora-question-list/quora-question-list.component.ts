@@ -11,6 +11,7 @@ import { Page } from 'src/app/shared/models/page.model';
 import { PageEvent } from '@angular/material/paginator';
 import * as saveAS from 'file-saver';
 import { QuoraQuestionAccountAction } from 'src/app/shared/models/enums/quora-question-account-action.enum';
+import { QuoraAskedQuestionStats } from 'src/app/shared/models/quora-asked-question-stats.model';
 
 @Component({
   selector: 'app-quora-question-list',
@@ -19,9 +20,12 @@ import { QuoraQuestionAccountAction } from 'src/app/shared/models/enums/quora-qu
 })
 export class QuoraQuestionListComponent implements OnInit, OnDestroy {
 
-  displayedColumns = ["id", "question_text", "division_name", "asked_on" ];
-  displayedColumnsWidth = {"id": 10, "question_text": 50, "division_name": 15, "asked_on": 15}; //remaining 5 for checkbox
-  displayedColumnsHeaders = ["ID", "Question", "Division", "Asked On"];
+
+  displayedColumns: string[] = [];
+  displayedColumnsWidth: any = {};
+  displayedColumnsHeaders: string[] = [];
+  isCheckbox: boolean = false;
+
   dataSource: any[] = [];
   totalLength: number = 0;
   pageSizeOptions: number[] = [10, 15, 20];
@@ -31,7 +35,7 @@ export class QuoraQuestionListComponent implements OnInit, OnDestroy {
   subscription: Subscription = new Subscription();
   divisionArray: Division[] = [];
   timePeriodEnumArray: TimePeriod[] = Object.values(TimePeriod);
-  
+
   selectedType: QuoraQuestionAccountAction = QuoraQuestionAccountAction.NEW;
   selectedDivisions: number[] = [];
   selectedTimePeriod: TimePeriod = TimePeriod.WEEK;
@@ -56,16 +60,17 @@ export class QuoraQuestionListComponent implements OnInit, OnDestroy {
 
   routeListner(): void {
     this.subscription.add(
-      this._route.paramMap.subscribe(params=> {
+      this._route.paramMap.subscribe(params => {
         this.selectedType = this.getTypeFromParam(params.get('type'));
+        this.setDisplayedColumnsInfo();
         this._route.queryParams.subscribe(params => {
           if (null == params['page'] || null == params['size'] || null == params['divisions']
             || null == params['timePeriod']) {
             this.refreshPage(1);
           }
           else {
-            this.selectedSize = this.pageSizeOptions.includes(Number(params['size']))? Number(params['size']): this.pageSizeOptions[0];
-            this.selectedPage = Number(params['page']) > 0? Number(params['page']) - 1: 0; // -1 because first page on server is 0
+            this.selectedSize = this.pageSizeOptions.includes(Number(params['size'])) ? Number(params['size']) : this.pageSizeOptions[0];
+            this.selectedPage = Number(params['page']) > 0 ? Number(params['page']) - 1 : 0; // -1 because first page on server is 0
             this.selectedDivisions = JSON.parse(params['divisions']);
             this.selectedTimePeriod = this.getTimePeriod(params['timePeriod']);
             this.refreshDataSource();
@@ -79,15 +84,24 @@ export class QuoraQuestionListComponent implements OnInit, OnDestroy {
     this.clearSelect.next();
     this.subscription.add(
       this._quoraService.getQuestions(this.selectedPage, this.selectedSize, this.selectedDivisions, this.selectedTimePeriod, this.selectedType).subscribe((response: Page<QuoraQuestion>) => {
-        this.dataSource = response.content.map(question =>  this.mapQuestionForTable(question));
+        if (this.selectedType == QuoraQuestionAccountAction.ASKED) {
+          this._quoraService.getAskedQuestionsStats(this.getIdsFromArray(response.content)).subscribe((stats: QuoraAskedQuestionStats[]) => {
+            this.dataSource = response.content.map(question => this.mapQuestionForTable(question,
+              stats.find((stat: QuoraAskedQuestionStats) => stat.question_id == question.id)
+            ));
+          })
+        }
+        else {
+          this.dataSource = response.content.map((question: QuoraQuestion) => this.mapQuestionForTable(question, null));
+        }
         this.totalLength = response.totalLength;
       })
     );
   }
 
   refreshPage(pageNumber?: number): void {
-    let parameters = this.setUrlParameters(pageNumber? pageNumber: 1, this.selectedSize, this.selectedDivisions, this.selectedTimePeriod);
-    this._router.navigate([this._router.url.substr(0, this._router.url.lastIndexOf('/'))+"/"+this.selectedType.toLowerCase()], {queryParams: parameters});
+    let parameters = this.setUrlParameters(pageNumber ? pageNumber : 1, this.selectedSize, this.selectedDivisions, this.selectedTimePeriod);
+    this._router.navigate([this._router.url.substr(0, this._router.url.lastIndexOf('/')) + "/" + this.selectedType.toLowerCase()], { queryParams: parameters });
   }
 
   setUrlParameters(page: number, size: number, divisionIds: number[], timePeriod: TimePeriod): any {
@@ -96,6 +110,21 @@ export class QuoraQuestionListComponent implements OnInit, OnDestroy {
       'size': size,
       'divisions': JSON.stringify(divisionIds),
       'timePeriod': timePeriod
+    }
+  }
+
+  setDisplayedColumnsInfo(): void {
+    if (this.selectedType == QuoraQuestionAccountAction.ASKED) {
+      this.isCheckbox = true;
+      this.displayedColumns = ["id", "question_text", "views", "followers", "answers", "recorded_on"];
+      this.displayedColumnsWidth = { "id": 10, "question_text": 45, "views": 10, "followers": 10, "answers": 10, "recorded_on": 15 }; //remaining 5 for checkbox
+      this.displayedColumnsHeaders = ["Id", "Question", "Views", "Followers", "Answers", "Recorded On"];
+    }
+    else {
+      this.isCheckbox = true;
+      this.displayedColumns = ["id", "question_text", "division_name", "asked_on"];
+      this.displayedColumnsWidth = { "id": 10, "question_text": 55, "division_name": 15, "asked_on": 15 }; //remaining 5 for checkbox
+      this.displayedColumnsHeaders = ["Id", "Question", "Division", "Asked On"];
     }
   }
 
@@ -140,10 +169,10 @@ export class QuoraQuestionListComponent implements OnInit, OnDestroy {
   getTypeFromParam(type: string): QuoraQuestionAccountAction {
     switch (type) {
       case 'asked': return QuoraQuestionAccountAction.ASKED
-      case 'answered' : return QuoraQuestionAccountAction.ANSWERED
-      case 'requested' : return QuoraQuestionAccountAction.REQUESTED
-      case 'evaluated' : return QuoraQuestionAccountAction.EVALUATED
-      default : return QuoraQuestionAccountAction.NEW
+      case 'answered': return QuoraQuestionAccountAction.ANSWERED
+      case 'requested': return QuoraQuestionAccountAction.REQUESTED
+      case 'evaluated': return QuoraQuestionAccountAction.EVALUATED
+      default: return QuoraQuestionAccountAction.NEW
     }
   }
 
@@ -157,7 +186,18 @@ export class QuoraQuestionListComponent implements OnInit, OnDestroy {
   //   this.refreshPage();
   // }
 
-  mapQuestionForTable(question: QuoraQuestion): any {
+  mapQuestionForTable(question: QuoraQuestion, askedQuestionStats: QuoraAskedQuestionStats): any {
+    if (this.selectedType == QuoraQuestionAccountAction.ASKED) {
+      return {
+        'id': question.id,
+        'question_text': question.question_text,
+        'question_url' : question.question_url,
+        'views': askedQuestionStats.view_count,
+        'followers' : askedQuestionStats.follower_count,
+        'answers' : askedQuestionStats.answer_count,
+        'recorded_on' : askedQuestionStats.recorded_on
+      }
+    }
     return {
       'id': question.id,
       'question_text': question.question_text,
@@ -191,7 +231,7 @@ export class QuoraQuestionListComponent implements OnInit, OnDestroy {
     }
     this.subscription.add(
       this._quoraService.downloadExcel(currentPage, this.getIdsFromArray(this.dataSource), this.selectedDivisions, this.selectedTimePeriod).subscribe(data => {
-        saveAS(new Blob([data], {type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'}), filename);
+        saveAS(new Blob([data], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' }), filename);
       })
     );
   }

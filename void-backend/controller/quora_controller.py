@@ -31,6 +31,10 @@ def mark_as_evaluated():
 def get_questions():
     return Response(json.dumps(quora_service.get_questions(ast.literal_eval(request.args.get('divisions')), request.args.get('timePeriod'), request.args.get('pageNumber'), request.args.get('pageSize'), request.args.get('action'))), status=200, mimetype='application/json')
 
+@app.route(base_url+'/askedQuestionsStats', methods=['GET'])
+def get_asked_questions_stats():
+    return Response(json.dumps(quora_service.get_asked_questions_stats(ast.literal_eval(request.args.get('questionIds')))), status=200, mimetype='application/json')
+
 @app.route(base_url+'/refreshAccountsData', methods=['GET'])
 def refresh_accounts_data():
     return Response(json.dumps(quora_service.refresh_accounts_data()), status=200, mimetype='application/json')
@@ -51,12 +55,12 @@ def refresh_asked_questions_stats():
 def refresh_accounts_stats():
     return Response(json.dumps(quora_service.refresh_accounts_stats('week')), status=200, mimetype='application/json')
 
-@app.route(base_url+'/getExcel', methods=['GET'])
+@app.route(base_url+'/excel', methods=['GET'])
 def generate_questions_excel():
     return send_file(util_service.generate_excel(quora_service.generate_questions_df_for_excel(
         ast.literal_eval(request.args.get('questionIds')), bool(strtobool(request.args.get('currentPage'))), ast.literal_eval(request.args.get('divisions')), request.args.get('timePeriod') )),
                      as_attachment=True, attachment_filename='excel.xlsx')
 
-@app.route(base_url+'/getAccounts', methods=['GET'])
+@app.route(base_url+'/accounts', methods=['GET'])
 def get_accounts():
     return Response(json.dumps(quora_service.get_all_accounts()), status=200, mimetype='application/json')

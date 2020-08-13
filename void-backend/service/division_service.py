@@ -1,6 +1,6 @@
 from sqlalchemy import asc
 
-from model.model import Division
+from model.quora_model import Division
 from service.util_service import get_new_session, convert_list_to_json
 
 def getAllDivisions():

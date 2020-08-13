@@ -6,7 +6,9 @@ from selenium.webdriver.common.keys import Keys
 import time
 import pandas
 
-from model.model import Division, QuoraKeyword, QuoraQuestion, Script, QuoraAccount, ExecutionLog, QuoraQuestionAccountDetails, QuoraQuestionAccountActions, QuoraAccountStats, QuoraAskedQuestionStats
+from model.quora_model import Division, QuoraKeyword, QuoraQuestion, Script, QuoraAccount, ExecutionLog, \
+    QuoraQuestionAccountDetails, QuoraQuestionAccountActions, QuoraAccountStats, QuoraAskedQuestionStats, \
+    QuestionDetails
 from model.enum import TimePeriod, QuoraQuestionAccountAction
 from service.util_service import get_new_session, scroll_to_bottom, get_driver, paginate, replace_all, convert_list_to_json
 
@@ -149,6 +151,14 @@ def get_questions(division_ids, time, page_number, page_size, action):
         question_ids = paginated_query.all()
         questions = session.query(QuoraQuestion).filter(QuoraQuestion.id.in_(question_ids)).all()
         return {'totalLength': length, 'content': convert_list_to_json(questions)}
+
+def get_asked_questions_stats(question_ids):
+    session = get_new_session()
+    response = []
+    for id in question_ids:
+        question_stat = session.query(QuoraAskedQuestionStats).filter(QuoraAskedQuestionStats.question_id == id).order_by(desc(QuoraAskedQuestionStats.recorded_on)).first()
+        response.append(question_stat)
+    return convert_list_to_json(response)
 
 # METHOD TO REFRESH QUESTIONS ANSWERED AND FOLLOWERS FOR EVERY ACCOUNT (WITHOUT LOGIN)
 def refresh_accounts_data():

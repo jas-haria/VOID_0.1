@@ -4,7 +4,7 @@
     </a>
     <hr class="my-3">
     <li class="navbar-nav">
-        <a class="nav-link" style="cursor: pointer;" (click)="expandedQuora=!expandedQuora">
+        <a class="nav-link" style="cursor: pointer;" (click)="expandedQuora = !expandedQuora">
             Quora &nbsp;
             <i class="ni ni-bold-right" *ngIf="!expandedQuora"></i>
             <i class="ni ni-bold-down" *ngIf="expandedQuora"></i>
@@ -17,7 +17,7 @@
                 &nbsp; Summary
             </a>
         </li>
-        <li class="nav-link" style="cursor: pointer;" (click)="expandedQuoraQuestions=!expandedQuoraQuestions">
+        <li class="nav-link" style="cursor: pointer;" (click)="expandedQuoraQuestions = !expandedQuoraQuestions">
             <a class="nav-link-inner--text">
                 <i class="fas fa-question-circle nav-link-icon"></i>
                 &nbsp; Questions &nbsp;
@@ -26,12 +26,12 @@
             </a>
         </li>
         <div *ngIf="expandedQuoraQuestions">
-            <li class="nav-link">
-                <a class="nav-link-inner--text" (click)="navigate('/quora/questions-list/new')">
-                     &nbsp; New Questions
+            <li class="nav-link" *ngFor="let tab of expandedQuoraQuestionsTab">
+                <a class="nav-link-inner--text" (click)="navigate('/quora/questions-list/' + tab.toLowerCase())">
+                     &nbsp; {{ tab.substring(0,1).toUpperCase() + tab.substring(1,tab.length).toLowerCase() + " Questions"  }}
                 </a>
             </li>
-            <li class="nav-link">
+            <!-- <li class="nav-link">
                 <a class="nav-link-inner--text" (click)="navigate('/quora/questions-list/requested')">
                      &nbsp; Requested Questions
                 </a>
@@ -40,12 +40,27 @@
                 <a class="nav-link-inner--text" (click)="navigate('/quora/questions-list/asked')">
                      &nbsp; Asked Questions
                 </a>
-            </li>
+            </li> -->
             <!-- <li class="nav-link" *ngFor="let account of quoraAccounts">
                 <a class="nav-link-inner--text">
                      &nbsp; {{ account.first_name + " " + account.last_name }}
                 </a>
             </li> -->
+        </div>
+        <li class="nav-link" style="cursor: pointer;" (click)="expandedQuoraAccounts = !expandedQuoraAccounts">
+            <a class="nav-link-inner--text">
+                <i class="ni ni-circle-08 nav-link-icon"></i>
+                &nbsp; Accounts &nbsp;
+                <i class="ni ni-bold-right" *ngIf="!expandedQuoraAccounts"></i>
+                <i class="ni ni-bold-down" *ngIf="expandedQuoraAccounts"></i>
+            </a>
+        </li>
+        <div *ngIf="expandedQuoraAccounts">
+            <li class="nav-link" *ngFor="let account of quoraAccounts">
+                <a class="nav-link-inner--text" (click)="navigate('/quora/account/' + account.id)">
+                     &nbsp; {{ account.first_name + " " + account.last_name }}
+                </a>
+            </li>
         </div>
     </div>
 </nav>
