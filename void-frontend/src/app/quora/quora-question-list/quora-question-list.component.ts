@@ -12,6 +12,7 @@ import { PageEvent } from '@angular/material/paginator';
 import * as saveAS from 'file-saver';
 import { QuoraQuestionAccountAction } from 'src/app/shared/models/enums/quora-question-account-action.enum';
 import { QuoraAskedQuestionStats } from 'src/app/shared/models/quora-asked-question-stats.model';
+import { HeaderService } from 'src/app/shared/services/header.service';
 
 @Component({
   selector: 'app-quora-question-list',
@@ -47,7 +48,8 @@ export class QuoraQuestionListComponent implements OnInit, OnDestroy {
   constructor(private _route: ActivatedRoute,
     private _router: Router,
     private _quoraService: QuoraService,
-    private _divisionService: DivisionService) { }
+    private _divisionService: DivisionService,
+    private _headerService: HeaderService) { }
 
   ngOnInit(): void {
     this.subscription.add(
@@ -63,6 +65,7 @@ export class QuoraQuestionListComponent implements OnInit, OnDestroy {
       this._route.paramMap.subscribe(params => {
         this.selectedType = this.getTypeFromParam(params.get('type'));
         this.setDisplayedColumnsInfo();
+        this._headerService.updateHeader(this.selectedType + " Questions");
         this._route.queryParams.subscribe(params => {
           if (null == params['page'] || null == params['size'] || null == params['divisions']
             || null == params['timePeriod']) {
@@ -130,6 +133,7 @@ export class QuoraQuestionListComponent implements OnInit, OnDestroy {
 
   ngOnDestroy(): void {
     this.subscription.unsubscribe();
+    this._headerService.releaseHeader();
   }
 
   initialiseDivisions(divisions: Division[]): void {

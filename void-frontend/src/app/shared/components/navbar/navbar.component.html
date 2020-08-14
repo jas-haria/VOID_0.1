@@ -2,8 +2,11 @@
   <div class="container-fluid">
     <!-- Brand -->
     <!-- <a class="h4 mb-0 text-white text-uppercase d-none d-lg-inline-block" routerLinkActive="active" [routerLink]="['/dashboard']">{{getTitle()}}</a> -->
-    
-    <a class="heading-title" (click)="goBack()"><i class="ni ni-bold-left"></i></a>
+    <span class="heading-title">
+      <a (click)="goBack()" style="cursor: pointer;"><i class="ni ni-bold-left" style="vertical-align:middle;"></i></a>
+      &nbsp;
+      <span style="vertical-align:middle;">{{ title }}</span>
+    </span>
     <!-- Form -->
     <form class="navbar-search navbar-search-dark form-inline mr-3 d-none d-md-flex ml-lg-auto">
       <div class="form-group mb-0" [ngClass]="{ 'focused': focus === true }">

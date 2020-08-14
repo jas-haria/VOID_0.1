@@ -1,7 +1,7 @@
-import { Component, OnInit, ElementRef } from '@angular/core';
+import { Component, OnInit } from '@angular/core';
 // import { ROUTES } from '../sidebar/sidebar.component';
-import { Location, LocationStrategy, PathLocationStrategy } from '@angular/common';
-import { Router } from '@angular/router';
+import { Location } from '@angular/common';
+import { HeaderService } from '../../services/header.service';
 
 @Component({
   selector: 'app-navbar',
@@ -9,32 +9,22 @@ import { Router } from '@angular/router';
   styleUrls: ['./navbar.component.scss']
 })
 export class NavbarComponent implements OnInit {
-  public focus;
-  public listTitles: any[];
-  public location: Location;
-  constructor(location: Location,  private element: ElementRef, private router: Router) {
-    this.location = location;
+  
+  title: string = this._headerService.getHeaderValue();
+
+  constructor(private _location: Location,
+    private _headerService: HeaderService) {
   }
 
   ngOnInit() {
-    //this.listTitles = ROUTES.filter(listTitle => listTitle);
+    this._headerService.getHeaderObservable().subscribe((header: string) => {
+      this.title = header;
+    });
   }
-  getTitle(){
-    var titlee = this.location.prepareExternalUrl(this.location.path());
-    if(titlee.charAt(0) === '#'){
-        titlee = titlee.slice( 1 );
-    }
-
-    for(var item = 0; item < this.listTitles.length; item++){
-        if(this.listTitles[item].path === titlee){
-            return this.listTitles[item].title;
-        }
-    }
-    return 'Dashboard';
-  }
+  
 
   goBack(): void {
-    this.location.back();
+    this._location.back();
   }
 
 }
