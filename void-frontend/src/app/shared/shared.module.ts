@@ -5,11 +5,17 @@ import { MatSortModule } from "@angular/material/sort";
 import { MatTableModule } from "@angular/material/table";
 import { TableComponent } from './components/table/table.component';
 import { NgbModule } from '@ng-bootstrap/ng-bootstrap';
+import { FooterComponent } from './components/footer/footer.component';
+import { NavbarComponent } from './components/navbar/navbar.component';
+import { Sidebar2Component } from './components/sidebar2/sidebar2.component';
 
 
 @NgModule({
   declarations: [
-    TableComponent
+    TableComponent,
+    FooterComponent,
+    NavbarComponent,
+    Sidebar2Component
   ],
   imports: [
     CommonModule,
@@ -20,7 +26,10 @@ import { NgbModule } from '@ng-bootstrap/ng-bootstrap';
   ],
   exports: [
     TableComponent,
-    NgbModule
+    NgbModule,
+    FooterComponent,
+    NavbarComponent,
+    Sidebar2Component
   ]
 })
 export class SharedModule { }

@@ -14,6 +14,7 @@ import { AppRoutingModule } from './app-routing.module';
 import { ComponentsModule } from './components/components.module';
 
 import { BrowserModule } from '@angular/platform-browser';
+import { SharedModule } from './shared/shared.module';
 
 
 @NgModule({
@@ -21,7 +22,7 @@ import { BrowserModule } from '@angular/platform-browser';
     BrowserAnimationsModule,
     FormsModule,
     HttpClientModule,
-    ComponentsModule,
+    SharedModule,
     NgbModule,
     RouterModule,
     AppRoutingModule,
