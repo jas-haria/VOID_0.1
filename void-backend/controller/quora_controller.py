@@ -63,4 +63,4 @@ def generate_questions_excel():
 
 @app.route(base_url+'/accounts', methods=['GET'])
 def get_accounts():
-    return Response(json.dumps(quora_service.get_all_accounts()), status=200, mimetype='application/json')
+    return Response(json.dumps(quora_service.get_accounts(request.args.get('id'))), status=200, mimetype='application/json')

@@ -7,8 +7,7 @@ import time
 import pandas
 
 from model.quora_model import Division, QuoraKeyword, QuoraQuestion, Script, QuoraAccount, ExecutionLog, \
-    QuoraQuestionAccountDetails, QuoraQuestionAccountActions, QuoraAccountStats, QuoraAskedQuestionStats, \
-    QuestionDetails
+    QuoraQuestionAccountDetails, QuoraQuestionAccountActions, QuoraAccountStats, QuoraAskedQuestionStats
 from model.enum import TimePeriod, QuoraQuestionAccountAction
 from service.util_service import get_new_session, scroll_to_bottom, get_driver, paginate, replace_all, convert_list_to_json
 
@@ -438,7 +437,12 @@ def generate_questions_df_for_excel(question_ids_list, current_page, division_id
         data.append({'id': question.id, 'question': question.question_text, 'url': question.question_url, 'division': question.division.division, 'approx date asked': question.asked_on})
     return pandas.DataFrame(data)
 
-def get_all_accounts():
+def get_accounts(id):
     session = get_new_session()
-    accounts = session.query(QuoraAccount).order_by(asc(QuoraAccount.id)).all()
-    return convert_list_to_json(accounts)
+    if id is None:
+        accounts = session.query(QuoraAccount).order_by(asc(QuoraAccount.id)).all()
+        response = convert_list_to_json(accounts)
+    else:
+        account = session.query(QuoraAccount).filter(QuoraAccount.id == id).first()
+        response = account._asdict()
+    return response

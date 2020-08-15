@@ -56,6 +56,13 @@ export class QuoraService {
     return this._http.get<QuoraAccount[]>(this._apiService.getBackendUrl() + '/quora/accounts');
   }
 
+  getAccount(id: number): Observable<QuoraAccount> {
+    let parameters = {};
+    parameters['id'] = id;
+    return this._http.get<QuoraAccount>(this._apiService.getBackendUrl() + '/quora/accounts',
+    { params: this._apiService.getParameters(parameters) });
+  }
+
   getAskedQuestionsStats(questionIds: number[]): Observable<QuoraAskedQuestionStats[]> {
     let parameters = {};
     parameters['questionIds'] = questionIds;
