@@ -46,13 +46,10 @@ export class QuoraService {
     { params: this._apiService.getParameters(parameters) });
   }
 
-  downloadExcel(currentPage: boolean, questionIds: number[], divisions: number[], timePeriod: TimePeriod): Observable<any> {
+  downloadExcel(accountId: number): Observable<any> {
     let parameters = {};
-    parameters['currentPage'] = currentPage;
-    parameters['questionIds'] = questionIds;
-    parameters['divisions'] = divisions;
-    parameters['timePeriod'] = timePeriod;
-    return this._http.get(this._apiService.getBackendUrl() + '/quora/excel',
+    parameters['accountId'] = accountId;
+    return this._http.get(this._apiService.getBackendUrl() + '/quora/pending-questions-excel',
     { params: this._apiService.getParameters(parameters), responseType: "arraybuffer" });
   }
 

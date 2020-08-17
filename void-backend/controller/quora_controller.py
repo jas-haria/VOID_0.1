@@ -55,10 +55,9 @@ def refresh_asked_questions_stats():
 def refresh_accounts_stats():
     return Response(json.dumps(quora_service.refresh_accounts_stats('week')), status=200, mimetype='application/json')
 
-@app.route(base_url+'/excel', methods=['GET'])
-def generate_questions_excel():
-    return send_file(util_service.generate_excel(quora_service.generate_questions_df_for_excel(
-        ast.literal_eval(request.args.get('questionIds')), bool(strtobool(request.args.get('currentPage'))), ast.literal_eval(request.args.get('divisions')), request.args.get('timePeriod') )),
+@app.route(base_url+'/pending-questions-excel', methods=['GET'])
+def generate_pending_questions_excel():
+    return send_file(util_service.generate_excel(quora_service.generate_pending_questions_df_for_excel(request.args.get('accountId'))),
                      as_attachment=True, attachment_filename='excel.xlsx')
 
 @app.route(base_url+'/accounts', methods=['GET'])

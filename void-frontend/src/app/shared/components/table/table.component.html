@@ -17,7 +17,7 @@
       <ng-container [matColumnDef]="column" *ngFor="let column of getDisplayedColumns(false); let i=index">
         <th mat-header-cell *matHeaderCellDef class="align-middle thead-light px-1" [style.width.%]="getColumnWidth(column)"><p class="mb-0">{{ displayedColumnsHeaders[i] }}</p></th>
         <td mat-cell *matCellDef="let element" class="align-middle px-1" [style.width.%]="getColumnWidth(column)">
-          <p *ngIf="specialColumns.indexOf(column) == -1" class="mb-0">{{ element[column] }}</p>
+          <p *ngIf="specialColumns.indexOf(column) == -1" class="mb-0">{{ element[column]? element[column] : 'N/A' }}</p>
           <a *ngIf="column == 'question_text'" href="{{element['question_url']}}" target="_blank">
               <p class="mb-0">{{ element[column] }}</p>
           </a>

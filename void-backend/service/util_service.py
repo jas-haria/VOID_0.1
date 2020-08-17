@@ -42,8 +42,8 @@ def scroll_to_bottom(driver, SCROLL_PAUSE_TIME):
 def convert_list_to_json(list):
     json_list = []
     for item in list:
-        json_list.append(item._asdict())
-
+        if item is not None:
+            json_list.append(item._asdict())
     return json_list
 
 def paginate(query, page_number, page_limit):

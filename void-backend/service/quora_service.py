@@ -165,9 +165,9 @@ def get_questions(division_ids, time, page_number, page_size, action, account_id
         .filter(QuoraQuestion.asked_on > get_time_interval(time)).filter((QuoraQuestion.disregard).is_(False)).filter(
         QuoraQuestionAccountActions.action == action)
     if actions_to_ignore is not None:
-        actions_to_ignore_objects = session.query(QuoraQuestionAccountDetails.question_id).join(QuoraQuestionAccountActions).filter(
+        questions_to_ignore = session.query(QuoraQuestionAccountDetails.question_id).join(QuoraQuestionAccountActions).filter(
             QuoraQuestionAccountActions.action.in_(actions_to_ignore)).all()
-        query = query.filter(QuoraQuestion.id.notin_(actions_to_ignore_objects))
+        query = query.filter(QuoraQuestion.id.notin_(questions_to_ignore))
     if account_id is not None:
         query = query.filter(QuoraQuestionAccountDetails.account_id == account_id)
     length, paginated_query = paginate(query=query.order_by(desc(QuoraQuestion.id)), page_number=int(page_number), page_limit=int(page_size))
@@ -457,14 +457,14 @@ def get_qas_graph_data(soup):
         break
     return values
 
-def generate_questions_df_for_excel(question_ids_list, current_page, division_ids_list, time_period):
+def generate_pending_questions_df_for_excel(account_id):
     session = get_new_session()
     data = []
-    questions = []
-    if current_page is True:
-        questions = session.query(QuoraQuestion).filter(QuoraQuestion.id.in_(question_ids_list)).all()
-    else:
-        questions = session.query(QuoraQuestion).filter(QuoraQuestion.asked_on > get_time_interval(time_period)).filter(QuoraQuestion.division_id.in_(division_ids_list))
+    questions_to_ignore = session.query(QuoraQuestionAccountDetails.question_id).join(QuoraQuestionAccountActions).filter(
+        QuoraQuestionAccountActions.action.in_([QuoraQuestionAccountAction.ANSWERED, QuoraQuestionAccountAction.EVALUATED])).all()
+    question_ids = session.query(QuoraQuestionAccountDetails.question_id).join(QuoraQuestion).join(QuoraQuestionAccountActions).filter((QuoraQuestion.disregard).is_(False))\
+        .filter(QuoraQuestionAccountActions.action == QuoraQuestionAccountAction.ASSIGNED).filter(QuoraQuestionAccountDetails.question_id.notin_(questions_to_ignore)).filter(QuoraQuestionAccountDetails.account_id == account_id).all()
+    questions = session.query(QuoraQuestion).filter(QuoraQuestion.id.in_(question_ids)).order_by(desc(QuoraQuestion.id))
     for question in questions:
         data.append({'id': question.id, 'question': question.question_text, 'url': question.question_url, 'division': question.division.division, 'approx date asked': question.asked_on})
     return pandas.DataFrame(data)

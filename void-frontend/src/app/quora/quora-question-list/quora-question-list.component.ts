@@ -38,6 +38,9 @@ export class QuoraQuestionListComponent implements OnInit, OnDestroy {
   divisionArray: Division[] = [];
   accountArray: QuoraAccount[] = [];
   timePeriodEnumArray: TimePeriod[] = Object.values(TimePeriod);
+  typeDisplayArray: QuoraQuestionAccountAction[] = [QuoraQuestionAccountAction.ASKED, QuoraQuestionAccountAction.REQUESTED, QuoraQuestionAccountAction.ASSIGNED,
+  QuoraQuestionAccountAction.ANSWERED, QuoraQuestionAccountAction.EVALUATED];
+  accountId: number = null;
 
   selectedType: QuoraQuestionAccountAction = QuoraQuestionAccountAction.NEW;
   selectedDivisions: number[] = [];
@@ -60,6 +63,7 @@ export class QuoraQuestionListComponent implements OnInit, OnDestroy {
         this.routeListner();
         this._quoraService.getAccounts().subscribe((response: QuoraAccount[]) => {
           this.accountArray = response;
+          this.setHeaderValue();
         })
       })
     )
@@ -70,7 +74,8 @@ export class QuoraQuestionListComponent implements OnInit, OnDestroy {
       this._route.paramMap.subscribe(params => {
         this.selectedType = this.getTypeFromParam(params.get('type'));
         this.setDisplayedColumnsInfo();
-        this._headerService.updateHeader(this.selectedType + " Questions");
+        this.accountId = params.get('accountId') ? parseInt(params.get('accountId')) : null;
+        this.setHeaderValue();
         this._route.queryParams.subscribe(params => {
           if (null == params['page'] || null == params['size'] || null == params['divisions']
             || null == params['timePeriod']) {
@@ -90,8 +95,9 @@ export class QuoraQuestionListComponent implements OnInit, OnDestroy {
 
   refreshDataSource(): void {
     this.clearSelect.next();
+    this.selectedQuestions = [];
     this.subscription.add(
-      this._quoraService.getQuestions(this.selectedPage, this.selectedSize, this.selectedDivisions, this.selectedTimePeriod, this.selectedType, null).subscribe((response: Page<QuoraQuestion>) => {
+      this._quoraService.getQuestions(this.selectedPage, this.selectedSize, this.selectedDivisions, this.selectedTimePeriod, this.selectedType, this.accountId).subscribe((response: Page<QuoraQuestion>) => {
         if (this.selectedType == QuoraQuestionAccountAction.ASKED) {
           this._quoraService.getAskedQuestionsStats(this.getIdsFromArray(response.content)).subscribe((stats: QuoraAskedQuestionStats[]) => {
             this.dataSource = response.content.map(question => this.mapQuestionForTable(question,
@@ -109,7 +115,14 @@ export class QuoraQuestionListComponent implements OnInit, OnDestroy {
 
   refreshPage(pageNumber?: number): void {
     let parameters = this.setUrlParameters(pageNumber ? pageNumber : 1, this.selectedSize, this.selectedDivisions, this.selectedTimePeriod);
-    this._router.navigate([this._router.url.substr(0, this._router.url.lastIndexOf('/')) + "/" + this.selectedType.toLowerCase()], { queryParams: parameters });
+    let url = this._router.url.substr(0, this._router.url.lastIndexOf('/'))
+    if (this.accountId) {
+      url = url.substr(0, url.lastIndexOf('/')) + '/' + this.selectedType.toLowerCase() + '/' + this.accountId;
+    }
+    else {
+      url = url + "/" + this.selectedType.toLowerCase();
+    }
+    this._router.navigate([url], { queryParams: parameters });
   }
 
   setUrlParameters(page: number, size: number, divisionIds: number[], timePeriod: TimePeriod): any {
@@ -118,6 +131,19 @@ export class QuoraQuestionListComponent implements OnInit, OnDestroy {
       'size': size,
       'divisions': JSON.stringify(divisionIds),
       'timePeriod': timePeriod
+    }
+  }
+
+  setHeaderValue(): void {
+    if (this.accountId) {
+      this.accountArray.forEach(account => {
+        if (account.id == this.accountId) {
+          this._headerService.updateHeader(account.first_name + " " + account.last_name);
+        }
+      });
+    }
+    else {
+      this._headerService.updateHeader(this.selectedType + " Questions");
     }
   }
 
@@ -178,9 +204,10 @@ export class QuoraQuestionListComponent implements OnInit, OnDestroy {
   getTypeFromParam(type: string): QuoraQuestionAccountAction {
     switch (type) {
       case 'asked': return QuoraQuestionAccountAction.ASKED
-      // case 'answered': return QuoraQuestionAccountAction.ANSWERED
+      case 'answered': return QuoraQuestionAccountAction.ANSWERED
       case 'requested': return QuoraQuestionAccountAction.REQUESTED
-      // case 'evaluated': return QuoraQuestionAccountAction.EVALUATED
+      case 'evaluated': return QuoraQuestionAccountAction.EVALUATED
+      case 'assigned': return QuoraQuestionAccountAction.ASSIGNED
       default: return QuoraQuestionAccountAction.NEW
     }
   }
@@ -190,21 +217,16 @@ export class QuoraQuestionListComponent implements OnInit, OnDestroy {
     this.refreshPage();
   }
 
-  // toggleEvaluation(): void {
-  //   this.selectedEvaluation = !this.selectedEvaluation;
-  //   this.refreshPage();
-  // }
-
   mapQuestionForTable(question: QuoraQuestion, askedQuestionStats: QuoraAskedQuestionStats): any {
     if (this.selectedType == QuoraQuestionAccountAction.ASKED) {
       return {
         'id': question.id,
         'question_text': question.question_text,
         'question_url': question.question_url,
-        'views': askedQuestionStats.view_count,
-        'followers': askedQuestionStats.follower_count,
-        'answers': askedQuestionStats.answer_count,
-        'recorded_on': askedQuestionStats.recorded_on
+        'views': askedQuestionStats ? askedQuestionStats.view_count : null,
+        'followers': askedQuestionStats ? askedQuestionStats.follower_count : null,
+        'answers': askedQuestionStats ? askedQuestionStats.answer_count : null,
+        'recorded_on': askedQuestionStats ? askedQuestionStats.recorded_on : null
       }
     }
     return {
@@ -225,25 +247,15 @@ export class QuoraQuestionListComponent implements OnInit, OnDestroy {
     this.selectedQuestions = selected;
   }
 
-  // downloadQuestionsExcel(currentPage: boolean): void {
-  //   let filename: string;
-  //   if (currentPage) {
-  //     filename = "quora_" + formatDate(new Date(), 'dd-MMM-hh-mm-a', 'en-US');
-  //   }
-  //   else {
-  //     filename = "quora_past_" + this.selectedTimePeriod.toString() + "_all";
-  //     this.divisionArray.forEach((division: Division) => {
-  //       if (this.selectedDivisions.includes(division.id)) {
-  //         filename = filename + "_" + division.division.toLowerCase();
-  //       }
-  //     });
-  //   }
-  //   this.subscription.add(
-  //     this._quoraService.downloadExcel(currentPage, this.getIdsFromArray(this.dataSource), this.selectedDivisions, this.selectedTimePeriod).subscribe(data => {
-  //       saveAS(new Blob([data], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' }), filename);
-  //     })
-  //   );
-  // }
+  downloadAssignedQuestions(accountId: number): void {
+    let account = this.accountArray.find(account => accountId==account.id);
+    let filename = "quora_" + account.first_name + "_" + account.last_name + "_" + formatDate(new Date(), 'dd-MMM-hh-mm-a', 'en-US');
+    this.subscription.add(
+      this._quoraService.downloadExcel(accountId).subscribe(data => {
+        saveAS(new Blob([data], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' }), filename);
+      })
+    );
+  }
 
   disregardSelectedQuestions(): void {
     this._quoraService.disregardQuestion(this.getIdsFromArray(this.selectedQuestions)).subscribe(response => {
@@ -251,10 +263,15 @@ export class QuoraQuestionListComponent implements OnInit, OnDestroy {
     });
   }
 
-  assignQuestions(accountId: number): void {
-    this._quoraService.updateQuestionAndAccountAction(this.getIdsFromArray(this.selectedQuestions), QuoraQuestionAccountAction.ASSIGNED, accountId).subscribe(response => {
+  updateQuestions(accountId: number, action: QuoraQuestionAccountAction): void {
+    this._quoraService.updateQuestionAndAccountAction(this.getIdsFromArray(this.selectedQuestions), action, accountId).subscribe(response => {
       this.refreshDataSource();
     });
+  }
+
+  modifySelectedType(type: QuoraQuestionAccountAction): void {
+    this.selectedType = type;
+    this.refreshPage();
   }
 
 }
