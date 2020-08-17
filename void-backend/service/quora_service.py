@@ -192,6 +192,8 @@ def refresh_accounts_data():
     answered_action = session.query(QuoraQuestionAccountActions).filter(QuoraQuestionAccountActions.action == QuoraQuestionAccountAction.ANSWERED).first()
     driver = get_driver()
     for account in accounts:
+        if account.link.like('unavailable'):
+            continue
         driver.get(account.link)
         scroll_to_bottom(driver, LOAD_TIME)
         soup = BeautifulSoup(driver.page_source, 'html.parser')
@@ -348,6 +350,8 @@ def refresh_accounts_stats(time_period):
     session = get_new_session()
     accounts = session.query(QuoraAccount).all()
     for account in accounts:
+        if account.link.like('unavailable'):
+            continue
         driver = get_driver()
         login_to_account(driver, account)
         driver.get('https://quora.com/stats')

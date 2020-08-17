@@ -100,7 +100,7 @@ export class QuoraQuestionListComponent implements OnInit, OnDestroy {
           })
         }
         else {
-          this.dataSource = response.content.map((question: QuoraQuestion) => this.mapQuestionForTable(question, null));
+          this.dataSource = response.content.map(question => this.mapQuestionForTable(question, null));
         }
         this.totalLength = response.totalLength;
       })

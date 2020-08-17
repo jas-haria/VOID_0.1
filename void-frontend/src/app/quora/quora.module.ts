@@ -9,6 +9,7 @@ import { QuoraAccountComponent } from './quora-account/quora-account.component';
 
 export const QuoraRoutes: Routes = [
   { path: 'quora', children: [
+      { path: 'questions-list/:type/:accountId', component: QuoraQuestionListComponent, pathMatch: 'full' },
       { path: 'questions-list/:type', component: QuoraQuestionListComponent, pathMatch: 'full' },
       { path: 'account/:id', component: QuoraAccountComponent, pathMatch: 'full' }
     ]
