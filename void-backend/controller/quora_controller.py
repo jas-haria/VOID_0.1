@@ -19,8 +19,8 @@ def fill_all_missing_dates():
     return Response(json.dumps(quora_service.fill_missing_dates()), status=200, mimetype='application/json')
 
 @app.route(base_url+'/disregard', methods=['PUT'])
-def delete_questions():
-    return Response(json.dumps(quora_service.delete_questions(ast.literal_eval(request.args.get('questionIds')))), status=200, mimetype='application/json')
+def disregard_questions():
+    return Response(json.dumps(quora_service.disregard_questions(ast.literal_eval(request.args.get('questionIds')))), status=200, mimetype='application/json')
 
 #to be changed
 @app.route(base_url+'/update', methods=['PUT'])
@@ -29,7 +29,7 @@ def update_qqad():
 
 @app.route(base_url, methods=['GET'])
 def get_questions():
-    return Response(json.dumps(quora_service.get_questions(ast.literal_eval(request.args.get('divisions')), request.args.get('timePeriod'), request.args.get('pageNumber'), request.args.get('pageSize'), request.args.get('action'))), status=200, mimetype='application/json')
+    return Response(json.dumps(quora_service.get_questions(ast.literal_eval(request.args.get('divisions')), request.args.get('timePeriod'), request.args.get('pageNumber'), request.args.get('pageSize'), request.args.get('action'), request.args.get('accountId'))), status=200, mimetype='application/json')
 
 @app.route(base_url+'/askedQuestionsStats', methods=['GET'])
 def get_asked_questions_stats():

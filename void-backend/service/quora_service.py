@@ -118,7 +118,7 @@ def fill_dates(question_list, put_todays_date, session):
         driver.quit()
     return question_list
 
-def delete_questions(question_ids_list):
+def disregard_questions(question_ids_list):
     session = get_new_session()
     #session.query(QuoraQuestion).filter(QuoraQuestion.id.in_(question_ids_list)).delete(synchronize_session=False)
     #session.query(QuoraQuestion).filter(QuoraQuestion.id.in_(question_ids_list)).update({QuoraQuestion.disregard: True}, synchronize_session=False)
@@ -145,22 +145,31 @@ def update_qqad(question_ids_list, action, account_id):
     session.commit()
     return {}
 
-def get_questions(division_ids, time, page_number, page_size, action):
+def get_questions(division_ids, time, page_number, page_size, action, account_id):
     session = get_new_session()
     if action == QuoraQuestionAccountAction.NEW.__str__():
         query = session.query(QuoraQuestion).filter(QuoraQuestion.division_id.in_(division_ids)).filter(QuoraQuestion.asked_on > get_time_interval(time))\
             .filter((QuoraQuestion.disregard).is_(False)).filter(~QuoraQuestion.accounts.any()).order_by(desc(QuoraQuestion.id))
         length, paginated_query = paginate(query=query, page_number=int(page_number), page_limit=int(page_size))
         return {'totalLength': length, 'content': convert_list_to_json(paginated_query.all())}
-    elif action == QuoraQuestionAccountAction.ASKED.__str__():
-        query = session.query(QuoraQuestionAccountDetails.question_id).join(QuoraQuestion).join(QuoraQuestionAccountActions).filter(QuoraQuestion.division_id.in_(division_ids))\
-            .filter(QuoraQuestion.asked_on > get_time_interval(time)).filter((QuoraQuestion.disregard).is_(False)).filter(QuoraQuestionAccountActions.action == action)
     elif action == QuoraQuestionAccountAction.REQUESTED.__str__():
-        inner_query = session.query(QuoraQuestionAccountDetails.question_id).join(QuoraQuestionAccountActions).filter(QuoraQuestionAccountActions.action.in_([QuoraQuestionAccountAction.ASSIGNED, QuoraQuestionAccountAction.ANSWERED, QuoraQuestionAccountAction.EVALUATED])).all()
-        query = session.query(QuoraQuestionAccountDetails.question_id).join(QuoraQuestion).join(QuoraQuestionAccountActions).filter(QuoraQuestion.division_id.in_(division_ids))\
-            .filter(QuoraQuestion.asked_on > get_time_interval(time)).filter((QuoraQuestion.disregard).is_(False)).filter(QuoraQuestionAccountActions.action == action)\
-            .filter(QuoraQuestion.id.notin_(inner_query))
-    #if account id then filter by account id too
+        actions_to_ignore = [QuoraQuestionAccountAction.ASSIGNED, QuoraQuestionAccountAction.ANSWERED, QuoraQuestionAccountAction.EVALUATED]
+    elif action == QuoraQuestionAccountAction.ASSIGNED.__str__():
+        actions_to_ignore = [QuoraQuestionAccountAction.ANSWERED, QuoraQuestionAccountAction.EVALUATED]
+    elif action == QuoraQuestionAccountAction.ANSWERED.__str__():
+        actions_to_ignore = [QuoraQuestionAccountAction.EVALUATED]
+    else:
+        actions_to_ignore = None
+    query = session.query(QuoraQuestionAccountDetails.question_id).join(QuoraQuestion).join(
+        QuoraQuestionAccountActions).filter(QuoraQuestion.division_id.in_(division_ids)) \
+        .filter(QuoraQuestion.asked_on > get_time_interval(time)).filter((QuoraQuestion.disregard).is_(False)).filter(
+        QuoraQuestionAccountActions.action == action)
+    if actions_to_ignore is not None:
+        actions_to_ignore_objects = session.query(QuoraQuestionAccountDetails.question_id).join(QuoraQuestionAccountActions).filter(
+            QuoraQuestionAccountActions.action.in_(actions_to_ignore)).all()
+        query = query.filter(QuoraQuestion.id.notin_(actions_to_ignore_objects))
+    if account_id is not None:
+        query = query.filter(QuoraQuestionAccountDetails.account_id == account_id)
     length, paginated_query = paginate(query=query.order_by(desc(QuoraQuestion.id)), page_number=int(page_number), page_limit=int(page_size))
     question_ids = paginated_query.all()
     questions = session.query(QuoraQuestion).filter(QuoraQuestion.id.in_(question_ids)).all()

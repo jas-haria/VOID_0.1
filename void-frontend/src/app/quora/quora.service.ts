@@ -16,13 +16,16 @@ export class QuoraService {
   
   constructor(private _http: HttpClient, private _apiService: ApiService) {}
 
-  getQuestions(pageNumber: number, pageSize: number, divisions: number[], timePeriod: TimePeriod, qqaa: QuoraQuestionAccountAction): Observable<Page<QuoraQuestion>> {
+  getQuestions(pageNumber: number, pageSize: number, divisions: number[], timePeriod: TimePeriod, qqaa: QuoraQuestionAccountAction, accountId: Number): Observable<Page<QuoraQuestion>> {
     let parameters = {};
     parameters['pageNumber'] = pageNumber;
     parameters['pageSize'] = pageSize;
     parameters['divisions'] = divisions;
     parameters['timePeriod'] = timePeriod;
     parameters['action'] = qqaa
+    if (accountId) {
+      parameters['accountId'] = accountId;
+    }
     return this._http.get<Page<QuoraQuestion>>(this._apiService.getBackendUrl() + '/quora', 
     { params: this._apiService.getParameters(parameters) });
   }
