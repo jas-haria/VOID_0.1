@@ -23,9 +23,9 @@ def delete_questions():
     return Response(json.dumps(quora_service.delete_questions(ast.literal_eval(request.args.get('questionIds')))), status=200, mimetype='application/json')
 
 #to be changed
-@app.route(base_url+'/evaluate', methods=['PUT'])
-def mark_as_evaluated():
-    return Response(json.dumps(quora_service.update_evaluated(ast.literal_eval(request.args.get('questionIds')), bool(strtobool(request.args.get('evaluated'))))), status=200, mimetype='application/json')
+@app.route(base_url+'/update', methods=['PUT'])
+def update_qqad():
+    return Response(json.dumps(quora_service.update_qqad(ast.literal_eval(request.args.get('questionIds')), request.args.get('action'), request.args.get('accountId'))), status=200, mimetype='application/json')
 
 @app.route(base_url, methods=['GET'])
 def get_questions():

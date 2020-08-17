@@ -129,10 +129,19 @@ def delete_questions(question_ids_list):
     session.commit()
     return {}
 
-#to be changed
-def update_evaluated(question_ids_list, evaluated):
+def update_qqad(question_ids_list, action, account_id):
     session = get_new_session()
-    session.query(QuoraQuestion).filter(QuoraQuestion.id.in_(question_ids_list)).update({QuoraQuestion.evaluated: evaluated}, synchronize_session=False)
+    questions = session.query(QuoraQuestion).filter(QuoraQuestion.id.in_(question_ids_list)).all()
+    action_object = session.query(QuoraQuestionAccountActions).filter(QuoraQuestionAccountActions.action == action).first()
+    if action_object is not None:
+        for question in questions:
+            qqad = session.query(QuoraQuestionAccountDetails).filter(QuoraQuestionAccountDetails.question_id == question.id).filter(QuoraQuestionAccountDetails.account_id == account_id).first()
+            if qqad is None:
+                qqad = QuoraQuestionAccountDetails()
+                qqad.question_id = question.id
+                qqad.account_id = account_id
+            qqad.action = action_object
+            session.add(qqad)
     session.commit()
     return {}
 
@@ -143,13 +152,19 @@ def get_questions(division_ids, time, page_number, page_size, action):
             .filter((QuoraQuestion.disregard).is_(False)).filter(~QuoraQuestion.accounts.any()).order_by(desc(QuoraQuestion.id))
         length, paginated_query = paginate(query=query, page_number=int(page_number), page_limit=int(page_size))
         return {'totalLength': length, 'content': convert_list_to_json(paginated_query.all())}
-    else:
+    elif action == QuoraQuestionAccountAction.ASKED.__str__():
         query = session.query(QuoraQuestionAccountDetails.question_id).join(QuoraQuestion).join(QuoraQuestionAccountActions).filter(QuoraQuestion.division_id.in_(division_ids))\
-            .filter(QuoraQuestion.asked_on > get_time_interval(time)).filter((QuoraQuestion.disregard).is_(False)).filter(QuoraQuestionAccountActions.action.like(action)).order_by(desc(QuoraQuestion.id))
-        length, paginated_query = paginate(query=query, page_number=int(page_number), page_limit=int(page_size))
-        question_ids = paginated_query.all()
-        questions = session.query(QuoraQuestion).filter(QuoraQuestion.id.in_(question_ids)).all()
-        return {'totalLength': length, 'content': convert_list_to_json(questions)}
+            .filter(QuoraQuestion.asked_on > get_time_interval(time)).filter((QuoraQuestion.disregard).is_(False)).filter(QuoraQuestionAccountActions.action == action)
+    elif action == QuoraQuestionAccountAction.REQUESTED.__str__():
+        inner_query = session.query(QuoraQuestionAccountDetails.question_id).join(QuoraQuestionAccountActions).filter(QuoraQuestionAccountActions.action.in_([QuoraQuestionAccountAction.ASSIGNED, QuoraQuestionAccountAction.ANSWERED, QuoraQuestionAccountAction.EVALUATED])).all()
+        query = session.query(QuoraQuestionAccountDetails.question_id).join(QuoraQuestion).join(QuoraQuestionAccountActions).filter(QuoraQuestion.division_id.in_(division_ids))\
+            .filter(QuoraQuestion.asked_on > get_time_interval(time)).filter((QuoraQuestion.disregard).is_(False)).filter(QuoraQuestionAccountActions.action == action)\
+            .filter(QuoraQuestion.id.notin_(inner_query))
+    #if account id then filter by account id too
+    length, paginated_query = paginate(query=query.order_by(desc(QuoraQuestion.id)), page_number=int(page_number), page_limit=int(page_size))
+    question_ids = paginated_query.all()
+    questions = session.query(QuoraQuestion).filter(QuoraQuestion.id.in_(question_ids)).all()
+    return {'totalLength': length, 'content': convert_list_to_json(questions)}
 
 def get_asked_questions_stats(question_ids):
     session = get_new_session()
@@ -271,15 +286,19 @@ def refresh_requested_questions():
 def add_asked_question(question_asked, account_id):
     session = get_new_session()
     asked_action = session.query(QuoraQuestionAccountActions).filter(QuoraQuestionAccountActions.action == QuoraQuestionAccountAction.ASKED).first()
-    question = QuoraQuestion()
-    question.question_url = question_asked.get('question_url')
-    question.question_text = question_asked.get('question_text')
-    question.division_id = question_asked.get('division_id')
-    question.asked_on = question_asked.get('asked_on')
-    session.add(question)
+    persisted_question = session.query(QuoraQuestion).filter(QuoraQuestion.question_url == question_asked.get('question_url')).first()
+    if persisted_question is None:
+        question = QuoraQuestion()
+        question.question_url = question_asked.get('question_url')
+        question.question_text = question_asked.get('question_text')
+        question.division_id = question_asked.get('division_id')
+        question.asked_on = question_asked.get('asked_on')
+        session.add(question)
+    else:
+        question = persisted_question
     qqad = QuoraQuestionAccountDetails()
-    qqad.account_id = account_id
     qqad.question = question
+    qqad.account_id = account_id
     qqad.action = asked_action
     session.add(qqad)
     session.commit()

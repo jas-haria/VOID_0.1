@@ -16,12 +16,25 @@ export class QuoraAccountComponent implements OnInit, OnDestroy {
 
   account: QuoraAccount;
 
+  topCards: any[] = [
+    { title: 'Views on Answers', middleValue: 0, bottomValue: 0, bottomValueSuccess: false, bottomText: '', icon: 'fas fa-eye', iconBgColor: 'bg-danger' },
+    { title: 'Answers', middleValue: 0, bottomValue: 0, bottomValueSuccess: false, bottomText: '', icon: 'fas fa-seedling', iconBgColor: 'bg-warning' },
+    { title: 'Followers', middleValue: 0, bottomValue: 0, bottomValueSuccess: false, bottomText: '', icon: 'fas fa-users', iconBgColor: 'bg-yellow' },
+    { title: 'Upvotes', middleValue: 0, bottomValue: 0, bottomValueSuccess: false, bottomText: '', icon: 'fas fa-thumbs-up', iconBgColor: 'bg-info' }
+  ];
+
+  charts: any[] = [
+    { title: 'Views', name: 'views-chart', monthSelected: false },
+    { title: 'Followers', name: 'followers-chart', monthSelected: false },
+    { title: 'Requested Questions', name: 'requested-questions-chart', monthSelected: false }
+  ];
+
   constructor(private _route: ActivatedRoute,
     private _headerService: HeaderService,
     private _quoraService: QuoraService) { }
 
   ngOnInit(): void {
-     this.subscription.add(
+    this.subscription.add(
       this._route.paramMap.subscribe(params => {
         this._quoraService.getAccount(parseInt(params.get('id'))).subscribe((response: QuoraAccount) => {
           this.account = response;

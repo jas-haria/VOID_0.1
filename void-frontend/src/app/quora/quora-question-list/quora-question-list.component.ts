@@ -13,6 +13,7 @@ import * as saveAS from 'file-saver';
 import { QuoraQuestionAccountAction } from 'src/app/shared/models/enums/quora-question-account-action.enum';
 import { QuoraAskedQuestionStats } from 'src/app/shared/models/quora-asked-question-stats.model';
 import { HeaderService } from 'src/app/shared/services/header.service';
+import { QuoraAccount } from 'src/app/shared/models/quora-account.model';
 
 @Component({
   selector: 'app-quora-question-list',
@@ -35,6 +36,7 @@ export class QuoraQuestionListComponent implements OnInit, OnDestroy {
 
   subscription: Subscription = new Subscription();
   divisionArray: Division[] = [];
+  accountArray: QuoraAccount[] = [];
   timePeriodEnumArray: TimePeriod[] = Object.values(TimePeriod);
 
   selectedType: QuoraQuestionAccountAction = QuoraQuestionAccountAction.NEW;
@@ -56,8 +58,11 @@ export class QuoraQuestionListComponent implements OnInit, OnDestroy {
       this._divisionService.getAllDivision().subscribe((response: Division[]) => {
         this.initialiseDivisions(response);
         this.routeListner();
+        this._quoraService.getAccounts().subscribe((response: QuoraAccount[]) => {
+          this.accountArray = response;
+        })
       })
-    );
+    )
   }
 
   routeListner(): void {
@@ -173,9 +178,9 @@ export class QuoraQuestionListComponent implements OnInit, OnDestroy {
   getTypeFromParam(type: string): QuoraQuestionAccountAction {
     switch (type) {
       case 'asked': return QuoraQuestionAccountAction.ASKED
-      case 'answered': return QuoraQuestionAccountAction.ANSWERED
+      // case 'answered': return QuoraQuestionAccountAction.ANSWERED
       case 'requested': return QuoraQuestionAccountAction.REQUESTED
-      case 'evaluated': return QuoraQuestionAccountAction.EVALUATED
+      // case 'evaluated': return QuoraQuestionAccountAction.EVALUATED
       default: return QuoraQuestionAccountAction.NEW
     }
   }
@@ -195,11 +200,11 @@ export class QuoraQuestionListComponent implements OnInit, OnDestroy {
       return {
         'id': question.id,
         'question_text': question.question_text,
-        'question_url' : question.question_url,
+        'question_url': question.question_url,
         'views': askedQuestionStats.view_count,
-        'followers' : askedQuestionStats.follower_count,
-        'answers' : askedQuestionStats.answer_count,
-        'recorded_on' : askedQuestionStats.recorded_on
+        'followers': askedQuestionStats.follower_count,
+        'answers': askedQuestionStats.answer_count,
+        'recorded_on': askedQuestionStats.recorded_on
       }
     }
     return {
@@ -220,29 +225,35 @@ export class QuoraQuestionListComponent implements OnInit, OnDestroy {
     this.selectedQuestions = selected;
   }
 
-  downloadQuestionsExcel(currentPage: boolean): void {
-    let filename: string;
-    if (currentPage) {
-      filename = "quora_" + formatDate(new Date(), 'dd-MMM-hh-mm-a', 'en-US');
-    }
-    else {
-      filename = "quora_past_" + this.selectedTimePeriod.toString() + "_all";
-      this.divisionArray.forEach((division: Division) => {
-        if (this.selectedDivisions.includes(division.id)) {
-          filename = filename + "_" + division.division.toLowerCase();
-        }
-      });
-    }
-    this.subscription.add(
-      this._quoraService.downloadExcel(currentPage, this.getIdsFromArray(this.dataSource), this.selectedDivisions, this.selectedTimePeriod).subscribe(data => {
-        saveAS(new Blob([data], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' }), filename);
-      })
-    );
-  }
+  // downloadQuestionsExcel(currentPage: boolean): void {
+  //   let filename: string;
+  //   if (currentPage) {
+  //     filename = "quora_" + formatDate(new Date(), 'dd-MMM-hh-mm-a', 'en-US');
+  //   }
+  //   else {
+  //     filename = "quora_past_" + this.selectedTimePeriod.toString() + "_all";
+  //     this.divisionArray.forEach((division: Division) => {
+  //       if (this.selectedDivisions.includes(division.id)) {
+  //         filename = filename + "_" + division.division.toLowerCase();
+  //       }
+  //     });
+  //   }
+  //   this.subscription.add(
+  //     this._quoraService.downloadExcel(currentPage, this.getIdsFromArray(this.dataSource), this.selectedDivisions, this.selectedTimePeriod).subscribe(data => {
+  //       saveAS(new Blob([data], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' }), filename);
+  //     })
+  //   );
+  // }
 
   disregardSelectedQuestions(): void {
     this._quoraService.disregardQuestion(this.getIdsFromArray(this.selectedQuestions)).subscribe(response => {
       this.refreshDataSource(); //since url parameters haven't changed
+    });
+  }
+
+  assignQuestions(accountId: number): void {
+    this._quoraService.updateQuestionAndAccountAction(this.getIdsFromArray(this.selectedQuestions), QuoraQuestionAccountAction.ASSIGNED, accountId).subscribe(response => {
+      this.refreshDataSource();
     });
   }
 

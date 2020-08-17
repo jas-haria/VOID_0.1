@@ -27,11 +27,12 @@ export class QuoraService {
     { params: this._apiService.getParameters(parameters) });
   }
 
-  updateQuestionsEvaluation(questionIds: number[], evaluated: boolean): Observable<any> {
+  updateQuestionAndAccountAction(questionIds: number[], action: QuoraQuestionAccountAction, accountId: number): Observable<any> {
     let parameters = {};
     parameters['questionIds'] = questionIds;
-    parameters['evaluated'] =  evaluated;
-    return this._http.put<any>(this._apiService.getBackendUrl() + '/quora/evaluate', {}, 
+    parameters['action'] =  action;
+    parameters['accountId'] = accountId;
+    return this._http.put<any>(this._apiService.getBackendUrl() + '/quora/update', {}, 
     { params: this._apiService.getParameters(parameters) });
   }
 
