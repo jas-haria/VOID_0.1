@@ -38,9 +38,11 @@ INSERT INTO DIVISIONS (DIVISION) VALUES ('Vidyalankar'), ('Science'), ('BSCIT'),
 
 INSERT INTO QUORA_KEYWORDS (DIVISION, KEYWORD) VALUES (1, 'VIT Mumbai'), (1, 'Vidyalankar'), (1, 'vidyalankar college'), (1,'vidyalankar institute of technology'), (1,'vidyalankar classes'), (1,'Vidyalankar School of Information Technology'), (1,'Vidyalankar Diploma College'), (1,'Vidyalankar Polytechnic'),
  (2,'iit jee'), (2,'jee'),(2,'iit jee classes mumbai'), (2,'best neet classes mumbai'), (2,'best iit jee classes mumbai'), (2,'mht cet'), (2,'mh cet'), (2,'mhtcet classes mumbai'), (2,'best mht cet classes mumbai'), (2,'neet'), (2,'neet classes mumbai'), (2,'bitsat'), (2,'bitsat classes mumbai'), (2,'best bitsat classes mumbai'), (2,'bitsat preparation'),
- (3,'bscit classes in mumbai'), (3,'bscit classes mumbai'), (3,'fy bscit classes mumbai'), (3,'sy bscit classes mumbai'), (3, 'mumbai university bscit'), (3,'best bscit classes mumbai'),
+ (3,'bscit classes in mumbai'), (3,'bscit classes mumbai'), (3, 'mumbai university bscit'), (3,'best bscit classes mumbai'),
  (4,'mtech india'), (4,'gate exam'), (4,'psu gate exam'), (4,'gate classes in mumbai'), (4,'best gate classes in mumbai'), (4,'GATE'),
- (5,'engineering classes mumbai'), (5, 'fe classes mumbai'), (5,'se classes mumbai'), (5,'te classes mumbai'), (5,'mumbai university engineering'), (5,'engineering mumbai university'), (5,'best engineering classes mumbai');
+ (5,'engineering classes mumbai'), (5, 'fe classes mumbai'), (5,'se classes mumbai'), (5,'te classes mumbai'), (5,'mumbai university engineering'), (5,'engineering mumbai university'), (5,'best engineering classes mumbai'),
+ (6,'online gate classes'), (6,'best online gate classes'), (6,'best app for gate'), (6,'gate android app'),
+ (7, 'gre classes in mumbai'), (7, 'gre classes mumbai'), (7, 'study abroad counselling in mumbai'), (7, 'study abroad counselling mumbai'), (7, 'abroad education counsellors mumbai');
 
 INSERT INTO CENTER_LOCATIONS (LOCATION_ID, CENTER_NAME) VALUES ( '7760562933001019237 ',  'Vidyalankar Classes -Andheri '), ( '13110987815294434884 ',  'Vidyalankar Classes - Borivali(Bhandarkar Bhavan) '), ( '17493438805552723046 ',  'Vidyalankar Classes - Borivali(Landmark Building) '), ( '2134343411140012763 ',  'Bhavani Shankar Road Junior College of Science '),
 ( '2043349377754078974 ',  'Vidyalankar Classes - Chembur '), ( '8575312462449434948 ',  'Vidyalankar Classes - Dombivli '), ( '4463720830483140607 ',  'Vidyalankar Classes - Ghatkopar '), ( '12014058896703999514 ',  'Vidyalankar Classes - Kalyan '), ( '2564776461742891564 ',  'Vidyalankar Classes - Kandivali '), ( '14119405071233287029 ',  'Vidyalankar Classes - Nerul '),

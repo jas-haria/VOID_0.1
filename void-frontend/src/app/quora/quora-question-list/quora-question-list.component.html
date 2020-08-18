@@ -20,7 +20,7 @@
 
 <div class="row mt-2">
     <div class="col-6">
-        <div class="btn-group float-left">
+        <div class="btn-group float-left" *ngIf="accountId">
             <button *ngFor="let type of typeDisplayArray" class="btn"
                 (click)="modifySelectedType(type)"
                 [ngClass]="type==selectedType? 'btn-danger': 'btn-outline-danger'">
