@@ -57,9 +57,22 @@ def refresh_accounts_stats():
 
 @app.route(base_url+'/pending-questions-excel', methods=['GET'])
 def generate_pending_questions_excel():
-    return send_file(util_service.generate_excel(quora_service.generate_pending_questions_df_for_excel(request.args.get('accountId'))),
+    return send_file(quora_service.generate_pending_questions_df_for_excel(request.args.get('accountId')),
                      as_attachment=True, attachment_filename='excel.xlsx')
 
 @app.route(base_url+'/accounts', methods=['GET'])
 def get_accounts():
     return Response(json.dumps(quora_service.get_accounts(request.args.get('id'))), status=200, mimetype='application/json')
+
+@app.route(base_url+'/accounts/stats', methods=['GET'])
+def get_quora_accounts_stats():
+    return Response(json.dumps(quora_service.get_quora_accounts_stats(request.args.get('accountId'))), status=200, mimetype='application/json')
+
+@app.route(base_url+'/accounts/questions-count', methods=['GET'])
+def get_quora_questions_count():
+    return Response(json.dumps(quora_service.get_quora_questions_count(request.args.get('action'), request.args.get('accountId'))), status=200, mimetype='application/json')
+
+@app.route(base_url+'/asked-questions-sample-excel', methods=['GET'])
+def get_asked_questions_sample_excel():
+    return send_file(quora_service.get_asked_questions_sample_excel(),
+                     as_attachment=True, attachment_filename='excel.xlsx')

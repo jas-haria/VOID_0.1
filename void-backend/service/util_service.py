@@ -4,8 +4,7 @@ import time
 from selenium import webdriver
 from selenium.webdriver.chrome.options import Options
 from webdriver_manager.chrome import ChromeDriverManager
-import io
-import pandas
+
 
 
 def get_new_session():
@@ -57,11 +56,3 @@ def replace_all(text, dict):
     for i, j in dict.items():
         text = text.replace(i, j)
     return text
-
-def generate_excel(dataframe):
-    strIO = io.BytesIO()
-    excel_writer = pandas.ExcelWriter(strIO, engine="xlsxwriter")
-    dataframe.to_excel(excel_writer, sheet_name="sheet 1")
-    excel_writer.save()
-    strIO.seek(0)
-    return strIO

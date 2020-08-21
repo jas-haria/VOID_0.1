@@ -4,6 +4,7 @@ from datetime import datetime
 from dateutil.relativedelta import relativedelta
 from selenium.webdriver.common.keys import Keys
 import time
+import io
 import pandas
 
 from model.quora_model import Division, QuoraKeyword, QuoraQuestion, Script, QuoraAccount, ExecutionLog, \
@@ -280,8 +281,8 @@ def refresh_requested_questions():
                 question.question_url = question_url
                 question.question_text = i.get_text().encode(encoding)
                 question.division = default_division
-                question.asked_on = datetime.now().date() #DATE DOES NOT MATTER FOR THIS QUESTION
-                session.add(question)
+            question.asked_on = datetime.now().date()  # WE DONT HAVE DATE OF WHEN REQUEST WAS MADE, SO STORING LATEST DATE
+            session.add(question)
             qqad = session.query(QuoraQuestionAccountDetails).filter(QuoraQuestionAccountDetails.account == account).filter(QuoraQuestionAccountDetails.question == question)\
                 .filter(QuoraQuestionAccountDetails.action == requested_action).first()
             if qqad is None:
@@ -467,7 +468,13 @@ def generate_pending_questions_df_for_excel(account_id):
     questions = session.query(QuoraQuestion).filter(QuoraQuestion.id.in_(question_ids)).order_by(desc(QuoraQuestion.id))
     for question in questions:
         data.append({'id': question.id, 'question': question.question_text, 'url': question.question_url, 'division': question.division.division, 'approx date asked': question.asked_on})
-    return pandas.DataFrame(data)
+    dataframe = pandas.DataFrame(data)
+    strIO = io.BytesIO()
+    excel_writer = pandas.ExcelWriter(strIO, engine="xlsxwriter")
+    dataframe.to_excel(excel_writer, sheet_name="sheet 1")
+    excel_writer.save()
+    strIO.seek(0)
+    return strIO
 
 def get_accounts(id):
     session = get_new_session()
@@ -478,3 +485,41 @@ def get_accounts(id):
         account = session.query(QuoraAccount).filter(QuoraAccount.id == id).first()
         response = account._asdict()
     return response
+
+def get_quora_accounts_stats(account_id):
+    session = get_new_session()
+    query = session.query(QuoraAccountStats)
+    if account_id is not None:
+        query = query.filter(QuoraAccountStats.account_id == account_id)
+    stats = query.filter(QuoraAccountStats.recorded_on > get_time_interval(TimePeriod.MONTH.value)).order_by(desc(QuoraAccountStats.recorded_on)).all()
+    return convert_list_to_json(stats)
+
+def get_quora_questions_count(action, account_id):
+    session = get_new_session()
+    query = session.query(QuoraQuestionAccountActions)
+    #how are answers tracked
+    return {}
+
+def get_asked_questions_sample_excel():
+    session = get_new_session()
+    accounts = session.query(QuoraAccount).order_by(desc(QuoraAccount.id)).all()
+    account_name_list = []
+    division_name_list = []
+    for account in accounts:
+        account_name_list.append(account.first_name + " " + account.last_name)
+    divisions = session.query(Division).order_by(asc(Division.id)).all()
+    for division in divisions:
+        division_name_list.append(division.division)
+    dataframe = pandas.DataFrame(columns=['Question Url', 'Division', 'Account', 'Asked On'])
+    strIO = io.BytesIO()
+    excel_writer = pandas.ExcelWriter(strIO, engine="xlsxwriter")
+    dataframe.to_excel(excel_writer, sheet_name="sheet 1", index=False)
+    worksheet = excel_writer.sheets["sheet 1"]
+    worksheet.data_validation(1, 0, 1001, 0, {'validate': 'length', 'criteria': '>', 'minimum': '5', 'input_message': 'Fill up to 1000 Rows only'})
+    worksheet.data_validation(1, 1, 1001, 1, {'validate': 'list', 'source': division_name_list})
+    worksheet.data_validation(1, 2, 1001, 2, {'validate': 'list', 'source': account_name_list})
+    worksheet.data_validation(1, 3, 1001, 3, {'validate': 'date', 'criteria': '>', 'minimum': get_time_interval(TimePeriod.MONTH.value), 'input_title': 'Enter a date greater than',
+                                              'input_message': get_time_interval(TimePeriod.MONTH.value).date().__str__() + ' (YYYY-MM-DD)'})
+    excel_writer.save()
+    strIO.seek(0)
+    return strIO

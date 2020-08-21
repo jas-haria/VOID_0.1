@@ -10,4 +10,4 @@ from controller import quora_controller, division_controller
 
 
 if __name__ == '__main__':
-    app.run()
+    app.run(threaded=True)
