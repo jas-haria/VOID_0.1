@@ -4,6 +4,9 @@ import { ActivatedRoute } from '@angular/router';
 import { Subscription } from 'rxjs';
 import { QuoraService } from '../quora.service';
 import { QuoraAccount } from 'src/app/shared/models/quora-account.model';
+import { QuoraAccountsStats } from 'src/app/shared/models/quora-accounts-stats.model';
+import { QuoraQuestionAccountAction } from 'src/app/shared/models/enums/quora-question-account-action.enum';
+import { QuoraQuestionCount } from 'src/app/shared/models/quora-question-count.model';
 
 @Component({
   selector: 'app-quora-account',
@@ -39,6 +42,8 @@ export class QuoraAccountComponent implements OnInit, OnDestroy {
         this._quoraService.getAccount(parseInt(params.get('id'))).subscribe((response: QuoraAccount) => {
           this.account = response;
           this._headerService.updateHeader(this.account.first_name + " " + this.account.last_name);
+          this.createChartLabels();
+          this.loadData();
         })
       })
     );
@@ -47,6 +52,24 @@ export class QuoraAccountComponent implements OnInit, OnDestroy {
   ngOnDestroy(): void {
     this.subscription.unsubscribe();
     this._headerService.releaseHeader();
+  }
+
+  createChartLabels(): void {
+
+  }
+
+  loadData(): void {
+    this.subscription.add(
+      this._quoraService.getAccountStats(this.account.id).subscribe((response: QuoraAccountsStats[]) => {
+        console.log(response)
+        this._quoraService.getQuestionsCount(QuoraQuestionAccountAction.ASKED, this.account.id).subscribe((response: QuoraQuestionCount[]) => {
+          console.log(response)
+          this._quoraService.getQuestionsCount(QuoraQuestionAccountAction.REQUESTED, this.account.id).subscribe((response: QuoraQuestionCount[]) => {
+            console.log(response)
+          })
+        })
+      })
+    )
   }
 
 }

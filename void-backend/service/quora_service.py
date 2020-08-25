@@ -1,4 +1,4 @@
-from sqlalchemy import asc, desc
+from sqlalchemy import asc, desc, func
 from bs4 import BeautifulSoup
 from datetime import datetime
 from dateutil.relativedelta import relativedelta
@@ -496,9 +496,19 @@ def get_quora_accounts_stats(account_id):
 
 def get_quora_questions_count(action, account_id):
     session = get_new_session()
-    query = session.query(QuoraQuestionAccountActions)
-    #how are answers tracked
-    return {}
+    action_object = session.query(QuoraQuestionAccountActions).filter(QuoraQuestionAccountActions.action.like(action)).first()
+    query = session.query(func.count(QuoraQuestionAccountDetails.account_id), QuoraQuestion.asked_on).join(QuoraQuestion)
+    if account_id is not None:
+        query = query.filter(QuoraQuestionAccountDetails.account_id == account_id)
+    details = query.filter(QuoraQuestionAccountDetails.action == action_object).filter(QuoraQuestion.asked_on > get_time_interval(TimePeriod.MONTH.value))\
+        .group_by(QuoraQuestion.asked_on).all()
+    return convert_question_count_array_to_json(details)
+
+def convert_question_count_array_to_json(array):
+    json = []
+    for item in array:
+        json.append({'date': str(item[1]), 'count': item[0]})
+    return json
 
 def get_asked_questions_sample_excel():
     session = get_new_session()
