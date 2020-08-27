@@ -66,20 +66,18 @@
                 </div>
                 <div class="col">
                     <ul class="nav nav-pills justify-content-end">
-                        <li class="nav-item mr-2 mr-md-0" data-toggle="chart" data-target="#{{chart.name}}"
-                            (click)="data=datasets[0];updateOptions()">
+                        <li class="nav-item mr-2 mr-md-0">
                             <a href="javascript:void(0)" class="nav-link py-2 px-3"
-                                [ngClass]="{'active':chart.monthSelected}" data-toggle="tab{{chart.name}}"
-                                (click)="chart.monthSelected=true">
+                                [ngClass]="{'active':chart.monthSelected}"
+                                (click)="chart.monthSelected=true;updateCharts();">
                                 <span class="d-none d-md-block">Month</span>
                                 <span class="d-md-none">M</span>
                             </a>
                         </li>
-                        <li class="nav-item" data-toggle="chart" data-target="#{{chart.name}}"
-                            (click)="data=datasets[1];updateOptions();">
+                        <li class="nav-item">
                             <a href="javascript:void(0)" class="nav-link py-2 px-3"
-                                [ngClass]="{'active':!chart.monthSelected}" data-toggle="tab{{chart-name}}"
-                                (click)="chart.monthSelected=false">
+                                [ngClass]="{'active':!chart.monthSelected}"
+                                (click)="chart.monthSelected=false;updateCharts();">
                                 <span class="d-none d-md-block">Week</span>
                                 <span class="d-md-none">W</span>
                             </a>
