@@ -178,11 +178,13 @@ def get_questions(division_ids, time, page_number, page_size, action, account_id
 
 def get_asked_questions_stats(question_ids):
     session = get_new_session()
-    response = []
+    stats = []
+    if question_ids is None:
+        question_ids = session.query(QuoraQuestion.id).filter(QuoraQuestion.asked_on > get_time_interval(TimePeriod.MONTH.value)).all()
     for id in question_ids:
         question_stat = session.query(QuoraAskedQuestionStats).filter(QuoraAskedQuestionStats.question_id == id).order_by(desc(QuoraAskedQuestionStats.recorded_on)).first()
-        response.append(question_stat)
-    return convert_list_to_json(response)
+        stats.append(question_stat)
+    return convert_list_to_json(stats)
 
 # METHOD TO REFRESH QUESTIONS ANSWERED AND FOLLOWERS FOR EVERY ACCOUNT (WITHOUT LOGIN)
 def refresh_accounts_data():

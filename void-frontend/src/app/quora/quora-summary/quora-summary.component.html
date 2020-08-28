@@ -1,0 +1,14 @@
+<div class="progress-wrapper" *ngFor="let progressBar of progressBars">
+    <div class="progress-info">
+        <div class="progress-label">
+            <span>{{ progressBar.title }}</span>
+        </div>
+        <div class="progress-percentage">
+            <span>60%</span>
+        </div>
+    </div>
+    <div class="progress">
+        <div class="progress-bar bg-default" role="progressbar" aria-valuenow="{{progressBar.value}}" aria-valuemin="0"
+            aria-valuemax="100" [style.width.%]="progressBar.value"></div>
+    </div>
+</div>

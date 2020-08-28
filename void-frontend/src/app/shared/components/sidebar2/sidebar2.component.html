@@ -12,7 +12,7 @@
     </li>
     <div *ngIf="expandedQuora">
         <li class="nav-link" style="cursor: pointer;">
-            <a class="nav-link-inner--text">
+            <a class="nav-link-inner--text" (click)="navigate('quora/summary')">
                 <i class="fas fa-chart-pie nav-link-icon"></i>
                 &nbsp; Summary
             </a>

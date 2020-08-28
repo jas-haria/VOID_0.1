@@ -33,7 +33,10 @@ def get_questions():
 
 @app.route(base_url+'/askedQuestionsStats', methods=['GET'])
 def get_asked_questions_stats():
-    return Response(json.dumps(quora_service.get_asked_questions_stats(ast.literal_eval(request.args.get('questionIds')))), status=200, mimetype='application/json')
+    questionIds = None
+    if request.args.get('questionIds') is not None:
+        questionIds = ast.literal_eval(request.args.get('questionIds'))
+    return Response(json.dumps(quora_service.get_asked_questions_stats(questionIds)), status=200, mimetype='application/json')
 
 @app.route(base_url+'/refreshAccountsData', methods=['GET'])
 def refresh_accounts_data():

@@ -5,10 +5,12 @@ import { Routes, RouterModule } from '@angular/router';
 import { QuoraService } from './quora.service';
 import { SharedModule } from '../shared/shared.module';
 import { QuoraAccountComponent } from './quora-account/quora-account.component';
+import { QuoraSummaryComponent } from './quora-summary/quora-summary.component';
 
 
 export const QuoraRoutes: Routes = [
   { path: 'quora', children: [
+      { path: 'summary', component: QuoraSummaryComponent, pathMatch: 'full' },
       { path: 'questions-list/:type/:accountId', component: QuoraQuestionListComponent, pathMatch: 'full' },
       { path: 'questions-list/:type', component: QuoraQuestionListComponent, pathMatch: 'full' },
       { path: 'account/:id', component: QuoraAccountComponent, pathMatch: 'full' }
@@ -19,7 +21,8 @@ export const QuoraRoutes: Routes = [
 @NgModule({
   declarations: [
     QuoraQuestionListComponent,
-    QuoraAccountComponent
+    QuoraAccountComponent,
+    QuoraSummaryComponent
   ],
   imports: [
     CommonModule,
