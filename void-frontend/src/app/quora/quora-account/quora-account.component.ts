@@ -19,22 +19,20 @@ import Chart from 'chart.js';
 export class QuoraAccountComponent implements OnInit, OnDestroy, AfterViewInit {
 
   subscription: Subscription = new Subscription();
-  dateLabelArray: number[] = [];
+  monthLongValueArray: number[] = [];
   weekLabels: string[] = [];
   monthLabels: string[] = [];
   account: QuoraAccount;
 
+  charts: any[] = [
+    { title: 'Views', name: 'views-chart', monthSelected: false, barSelected: false, chart: null, data: [] },
+    { title: 'Requested Questions', name: 'requested-questions-chart', monthSelected: false, barSelected: false, chart: null, data: [] }
+  ];
   topCards: any[] = [
     { title: 'Views', middleValue: '', bottomValue: '', bottomValueSuccess: false, icon: 'fas fa-eye', iconBgColor: 'bg-danger' },
     { title: 'Answers/Assign', middleValue: '', bottomValue: '', bottomValueSuccess: false, icon: 'fas fa-seedling', iconBgColor: 'bg-warning' },
     { title: 'Followers', middleValue: '', bottomValue: '', bottomValueSuccess: false, icon: 'fas fa-users', iconBgColor: 'bg-yellow' },
     { title: 'Upvotes', middleValue: '', bottomValue: '', bottomValueSuccess: false, icon: 'fas fa-thumbs-up', iconBgColor: 'bg-info' }
-  ];
-
-  charts: any[] = [
-    { title: 'Views', name: 'views-chart', monthSelected: false },
-    { title: 'Followers', name: 'followers-chart', monthSelected: false },
-    { title: 'Requested Questions', name: 'requested-questions-chart', monthSelected: false }
   ];
 
   constructor(private _route: ActivatedRoute,
@@ -46,6 +44,7 @@ export class QuoraAccountComponent implements OnInit, OnDestroy, AfterViewInit {
     parseOptions(Chart, chartOptions());
     this.subscription.add(
       this._route.paramMap.subscribe(params => {
+        this.refreshAllDisplayData();
         this._quoraService.getAccount(parseInt(params.get('id'))).subscribe((response: QuoraAccount) => {
           this.account = response;
           this._headerService.updateHeader(this.account.first_name + " " + this.account.last_name);
@@ -56,18 +55,15 @@ export class QuoraAccountComponent implements OnInit, OnDestroy, AfterViewInit {
   }
 
   ngAfterViewInit(): void {
+    this.refreshAllDisplayData();
+  }
+
+  refreshAllDisplayData(): void {
     this.charts.forEach(chart => {
-      let chartInView = document.getElementById(chart.name);
-      chart.chart = new Chart(chartInView, {
-        type: 'line',
-        data: {
-          labels: this.weekLabels,
-          datasets: [{
-            labels: chart.title,
-            data: []
-          }]
-        }
-      });
+      chart.monthSelected = false;
+      chart.barSelected = false;
+      chart.data = [];
+      this.createOrRecreateChart(chart);
     });
   }
 
@@ -76,40 +72,40 @@ export class QuoraAccountComponent implements OnInit, OnDestroy, AfterViewInit {
     this._headerService.releaseHeader();
   }
 
-  updateCharts(): void {
-    this.charts.forEach(chart => {
-      chart.chart.data.labels = chart.monthSelected ? this.monthLabels : this.weekLabels;
-      if (chart.data) {
+  createOrRecreateChart(chart: any): void {
+    if (chart.chart) chart.chart.destroy();
+    let chartInView = document.getElementById(chart.name);
+    if (chartInView) {
+      chart.chart = new Chart(chartInView, {
+        type: chart.barSelected ? 'bar' : 'line',
+        data: {
+          labels: this.weekLabels,
+          datasets: [{
+            labels: chart.title,
+            data: (chart.data && chart.data.length > 0) ? (chart.monthSelected ? chart.data : chart.data.slice(23, 30)) : []
+          }]
+        }
+      });
+    }
+  }
+
+  updateChart(chart: any): void {
+    chart.chart.data.labels = chart.monthSelected ? this.monthLabels : this.weekLabels;
+    if (chart.data) {
       chart.chart.data.datasets[0].data = chart.monthSelected ? chart.data : chart.data.slice(23, 30)
-      }
-      chart.chart.update();
-      // if (chart.data) {
-      //   let chartInView = document.getElementById(chart.name);
-      //   chart.chart.destroy();
-      //   chart.chart = new Chart(chartInView, {
-      //     type: 'line',
-      //     data: {
-      //       labels: chart.monthSelected ? this.monthLabels : this.weekLabels,
-      //       datasets: [{
-      //         labels: chart.title,
-      //         data: chart.monthSelected ? chart.data : chart.data.slice(23, 30)
-      //       }]
-      //     }
-      //   });
-      //   chart.chart.update();
-      // }
-    });
+    }
+    chart.chart.update();
   }
 
   createChartLabels(): void {
-    this.dateLabelArray = [];
+    this.monthLongValueArray = [];
     this.weekLabels = [];
     this.monthLabels = [];
     for (let i = 1; i < 31; i++) {
       let dateVar = new Date();
       dateVar.setDate(dateVar.getDate() - i);
       dateVar.setHours(0, 0, 0, 0);
-      this.dateLabelArray = [dateVar.getTime(), ...this.dateLabelArray];
+      this.monthLongValueArray = [dateVar.getTime(), ...this.monthLongValueArray];
       this.monthLabels = [dateVar.getDate().toString(), ...this.monthLabels];
       if (i < 8) {
         this.weekLabels = [dateVar.toLocaleDateString('en-IN', { weekday: 'long' }), ...this.weekLabels];
@@ -120,15 +116,12 @@ export class QuoraAccountComponent implements OnInit, OnDestroy, AfterViewInit {
   loadData(): void {
     this.subscription.add(
       this._quoraService.getAccountStats(this.account.id).subscribe((rawQuoraAccountStats: QuoraAccountsStats[]) => {
-        this._quoraService.getQuestionsCount(QuoraQuestionAccountAction.ASKED, this.account.id).subscribe((rawAskedQuestionsCount: QuoraQuestionCount[]) => {
-          this._quoraService.getQuestionsCount(QuoraQuestionAccountAction.REQUESTED, this.account.id).subscribe((rawRequestedQuestionsCount: QuoraQuestionCount[]) => {
-            this._quoraService.getQuestionsCount(QuoraQuestionAccountAction.ANSWERED, this.account.id).subscribe((rawAnsweredQuestionsCount: QuoraQuestionCount[]) => {
-              this._quoraService.getQuestionsCount(QuoraQuestionAccountAction.ASSIGNED, this.account.id).subscribe((rawAssignedQuestionsCount: QuoraQuestionCount[]) => {
-                this.setQuoraAccountStatsDetails(rawQuoraAccountStats);
-                let answersThisWeek = this.getTotalCount(rawAnsweredQuestionsCount, 24, 30);
-                this.topCards[1].middleValue = answersThisWeek + '/' + this.getTotalCount(rawAssignedQuestionsCount, this.dateLabelArray[24], this.dateLabelArray[30]);
-                this.setBottomValues(answersThisWeek, this.getTotalCount(rawAnsweredQuestionsCount, 17, 23), this.topCards[1]);
-              })
+        this._quoraService.getQuestionsCount(QuoraQuestionAccountAction.REQUESTED, this.account.id).subscribe((rawRequestedQuestionsCount: QuoraQuestionCount[]) => {
+          this._quoraService.getQuestionsCount(QuoraQuestionAccountAction.ANSWERED, this.account.id).subscribe((rawAnsweredQuestionsCount: QuoraQuestionCount[]) => {
+            this._quoraService.getQuestionsCount(QuoraQuestionAccountAction.ASSIGNED, this.account.id).subscribe((rawAssignedQuestionsCount: QuoraQuestionCount[]) => {
+              this.setQuoraAccountStatsDetails(rawQuoraAccountStats);
+              this.setRequestedChart(rawRequestedQuestionsCount);
+              this.setAnswersTopCard(rawAnsweredQuestionsCount, rawAssignedQuestionsCount);
             })
           })
         })
@@ -142,7 +135,7 @@ export class QuoraAccountComponent implements OnInit, OnDestroy, AfterViewInit {
       for (let i = 0; i < questionCount.length; i++) {
         let questionCountDate = new Date(questionCount[i].date);
         questionCountDate.setHours(0, 0, 0, 0);
-        let position = this.dateLabelArray.indexOf(questionCountDate.getTime());
+        let position = this.monthLongValueArray.indexOf(questionCountDate.getTime());
         if (position >= from && position <= to) {
           total = total + questionCount[i].count;
         }
@@ -163,7 +156,7 @@ export class QuoraAccountComponent implements OnInit, OnDestroy, AfterViewInit {
       let statDate = new Date(accountStats[i].recorded_on);
       statDate.setHours(0, 0, 0, 0);
       let statDateTime = statDate.getTime();
-      let position = this.dateLabelArray.indexOf(statDateTime);
+      let position = this.monthLongValueArray.indexOf(statDateTime);
       viewsChart[position] = viewsChart[position] + accountStats[i].view_count;
       if (position >= 24 && position <= 30) {
         viewsThisWeek = viewsThisWeek + accountStats[i].view_count;
@@ -180,7 +173,7 @@ export class QuoraAccountComponent implements OnInit, OnDestroy, AfterViewInit {
       }
       if (i == accountStats.length - 1) {
         this.charts[0].data = viewsChart;
-        this.updateCharts();
+        this.updateChart(this.charts[0]);
         this.topCards[0].middleValue = viewsThisWeek;
         this.setBottomValues(viewsThisWeek, viewsLastWeek, this.topCards[0]);
         this.topCards[2].middleValue = totalFollowsThisWeek - totalFollowsLastWeek;
@@ -189,6 +182,26 @@ export class QuoraAccountComponent implements OnInit, OnDestroy, AfterViewInit {
         this.setBottomValues(upvotesThisWeek, upvotesLastWeek, this.topCards[3]);
       }
     }
+  }
+
+  setRequestedChart(rawRequestedQuestionsCount: QuoraQuestionCount[]): void {
+    let requestsChart = this.getArrayOfZeros(30);
+    for (let i = 0; i < rawRequestedQuestionsCount.length; i++) {
+      let questionCountDate = new Date(rawRequestedQuestionsCount[i].date);
+      questionCountDate.setHours(0, 0, 0, 0);
+      let position = this.monthLongValueArray.indexOf(questionCountDate.getTime());
+      requestsChart[position] = requestsChart[position] + rawRequestedQuestionsCount[i].count;
+      if (i == (rawRequestedQuestionsCount.length - 1)) {
+        this.charts[1].data = requestsChart;
+        this.updateChart(this.charts[1]);
+      }
+    }
+  }
+
+  setAnswersTopCard(rawAnsweredQuestionsCount: QuoraQuestionCount[], rawAssignedQuestionsCount: QuoraQuestionCount[]): void {
+    let answersThisWeek = this.getTotalCount(rawAnsweredQuestionsCount, 24, 30);
+    this.topCards[1].middleValue = answersThisWeek + '/' + this.getTotalCount(rawAssignedQuestionsCount, 24, 30);
+    this.setBottomValues(answersThisWeek, this.getTotalCount(rawAnsweredQuestionsCount, 17, 23), this.topCards[1]);
   }
 
   setBottomValues(thisWeek: number, lastWeek: number, topCard: any): void {
