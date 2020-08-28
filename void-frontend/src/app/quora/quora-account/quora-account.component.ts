@@ -1,14 +1,13 @@
 import { Component, OnInit, OnDestroy, AfterContentChecked, AfterViewInit } from '@angular/core';
 import { HeaderService } from 'src/app/shared/services/header.service';
 import { ActivatedRoute } from '@angular/router';
-import { Subscription } from 'rxjs';
+import { Subscription, Subject } from 'rxjs';
 import { QuoraService } from '../quora.service';
 import { QuoraAccount } from 'src/app/shared/models/quora-account.model';
 import { QuoraAccountsStats } from 'src/app/shared/models/quora-accounts-stats.model';
 import { QuoraQuestionAccountAction } from 'src/app/shared/models/enums/quora-question-account-action.enum';
 import { QuoraQuestionCount } from 'src/app/shared/models/quora-question-count.model';
-import { chartOptions, parseOptions } from "../../variables/charts";
-import Chart from 'chart.js';
+import { ChartDetails } from 'src/app/shared/models/chart-details.model';
 
 
 @Component({
@@ -24,10 +23,11 @@ export class QuoraAccountComponent implements OnInit, OnDestroy, AfterViewInit {
   monthLabels: string[] = [];
   account: QuoraAccount;
 
-  charts: any[] = [
-    { title: 'Views', name: 'views-chart', monthSelected: false, barSelected: false, chart: null, data: [] },
-    { title: 'Requested Questions', name: 'requested-questions-chart', monthSelected: false, barSelected: false, chart: null, data: [] }
-  ];
+  createOrRecreateChart: Subject<string> = new Subject<string>();
+  updateChart: Subject<string> = new Subject<string>();
+
+  charts: ChartDetails[] = [new ChartDetails('Views', 'views-chart'), new ChartDetails('Requested Questions', 'requested-questions-chart')];
+
   topCards: any[] = [
     { title: 'Views', middleValue: '', bottomValue: '', bottomValueSuccess: false, icon: 'fas fa-eye', iconBgColor: 'bg-danger' },
     { title: 'Answers/Assign', middleValue: '', bottomValue: '', bottomValueSuccess: false, icon: 'fas fa-seedling', iconBgColor: 'bg-warning' },
@@ -41,7 +41,6 @@ export class QuoraAccountComponent implements OnInit, OnDestroy, AfterViewInit {
 
   ngOnInit(): void {
     this.createChartLabels();
-    parseOptions(Chart, chartOptions());
     this.subscription.add(
       this._route.paramMap.subscribe(params => {
         this.refreshAllDisplayData();
@@ -63,38 +62,13 @@ export class QuoraAccountComponent implements OnInit, OnDestroy, AfterViewInit {
       chart.monthSelected = false;
       chart.barSelected = false;
       chart.data = [];
-      this.createOrRecreateChart(chart);
+      this.createOrRecreateChart.next(chart.name);
     });
   }
 
   ngOnDestroy(): void {
     this.subscription.unsubscribe();
     this._headerService.releaseHeader();
-  }
-
-  createOrRecreateChart(chart: any): void {
-    if (chart.chart) chart.chart.destroy();
-    let chartInView = document.getElementById(chart.name);
-    if (chartInView) {
-      chart.chart = new Chart(chartInView, {
-        type: chart.barSelected ? 'bar' : 'line',
-        data: {
-          labels: this.weekLabels,
-          datasets: [{
-            labels: chart.title,
-            data: (chart.data && chart.data.length > 0) ? (chart.monthSelected ? chart.data : chart.data.slice(23, 30)) : []
-          }]
-        }
-      });
-    }
-  }
-
-  updateChart(chart: any): void {
-    chart.chart.data.labels = chart.monthSelected ? this.monthLabels : this.weekLabels;
-    if (chart.data) {
-      chart.chart.data.datasets[0].data = chart.monthSelected ? chart.data : chart.data.slice(23, 30)
-    }
-    chart.chart.update();
   }
 
   createChartLabels(): void {
@@ -173,7 +147,7 @@ export class QuoraAccountComponent implements OnInit, OnDestroy, AfterViewInit {
       }
       if (i == accountStats.length - 1) {
         this.charts[0].data = viewsChart;
-        this.updateChart(this.charts[0]);
+        this.updateChart.next(this.charts[0].name);
         this.topCards[0].middleValue = viewsThisWeek;
         this.setBottomValues(viewsThisWeek, viewsLastWeek, this.topCards[0]);
         this.topCards[2].middleValue = totalFollowsThisWeek - totalFollowsLastWeek;
@@ -193,7 +167,7 @@ export class QuoraAccountComponent implements OnInit, OnDestroy, AfterViewInit {
       requestsChart[position] = requestsChart[position] + rawRequestedQuestionsCount[i].count;
       if (i == (rawRequestedQuestionsCount.length - 1)) {
         this.charts[1].data = requestsChart;
-        this.updateChart(this.charts[1]);
+        this.updateChart.next(this.charts[1].name);
       }
     }
   }

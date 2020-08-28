@@ -8,6 +8,7 @@ import { NgbModule } from '@ng-bootstrap/ng-bootstrap';
 import { FooterComponent } from './components/footer/footer.component';
 import { NavbarComponent } from './components/navbar/navbar.component';
 import { Sidebar2Component } from './components/sidebar2/sidebar2.component';
+import { ChartComponent } from './components/chart/chart.component';
 
 
 @NgModule({
@@ -15,7 +16,8 @@ import { Sidebar2Component } from './components/sidebar2/sidebar2.component';
     TableComponent,
     FooterComponent,
     NavbarComponent,
-    Sidebar2Component
+    Sidebar2Component,
+    ChartComponent
   ],
   imports: [
     CommonModule,
@@ -29,7 +31,8 @@ import { Sidebar2Component } from './components/sidebar2/sidebar2.component';
     NgbModule,
     FooterComponent,
     NavbarComponent,
-    Sidebar2Component
+    Sidebar2Component,
+    ChartComponent
   ]
 })
 export class SharedModule { }

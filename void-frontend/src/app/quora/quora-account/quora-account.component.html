@@ -36,10 +36,11 @@
 <div class="container-fluid mt--7">
     <div class="row">
         <div class="mb-5 col-xl-8">
-            <ng-container [ngTemplateOutlet]="chartTemplate" [ngTemplateOutletContext]="{chart:charts[0]}">
-            </ng-container>
+            <app-chart [chart]="charts[0]" [weekLabels]="weekLabels" [monthLabels]="monthLabels"
+                [createOrRecreate]="createOrRecreateChart.asObservable()" [update]="updateChart.asObservable()">
+            </app-chart>
         </div>
-        <div class="mb-5 col col-xl-3">
+        <div class=" mb-5 col col-xl-3">
             <div class="align-items-start">
                 1
             </div>
@@ -79,57 +80,12 @@
 
         </div>
         <div class="mb-5 col-xl-8">
-            <ng-container [ngTemplateOutlet]="chartTemplate" [ngTemplateOutletContext]="{chart:charts[1]}">
-            </ng-container>
+            <app-chart [chart]="charts[1]" [weekLabels]="weekLabels" [monthLabels]="monthLabels"
+                [createOrRecreate]="createOrRecreateChart.asObservable()" [update]="updateChart.asObservable()">
+            </app-chart>
         </div>
         <div class="mb-5 col-xl-3">
             Container
         </div>
     </div>
 </div>
-
-<ng-template #chartTemplate let-chart='chart'>
-    <div class="card bg-gradient-default shadow">
-        <div class="card-header bg-transparent">
-            <div class="row align-items-center">
-                <div class="col">
-                    <!-- <h6 class="text-uppercase text-light ls-1 mb-1">Overview</h6> -->
-                    <h2 class="text-white mb-0">{{chart.title}}</h2>
-                </div>
-                <div class="col">
-                    <div class="btn-group mx-2">
-                        <button class="btn" [ngClass]="{'btn-primary':chart.barSelected}"
-                            (click)="chart.barSelected=true;createOrRecreateChart(chart);">
-                            <span class="d-none d-md-block">Bar</span>
-                            <span class="d-md-none">B</span>
-                        </button>
-                        <button class="btn" [ngClass]="{'btn-primary':!chart.barSelected}"
-                            (click)="chart.barSelected=false;createOrRecreateChart(chart);">
-                            <span class="d-none d-md-block">Line</span>
-                            <span class="d-md-none">L</span>
-                        </button>
-                    </div>
-                    <div class="btn-group float-right">
-                        <button class="btn" [ngClass]="{'btn-primary':chart.monthSelected}"
-                            (click)="chart.monthSelected=true;updateChart(chart);">
-                            <span class="d-none d-md-block">Month</span>
-                            <span class="d-md-none">M</span>
-                        </button>
-                        <button class="btn" [ngClass]="{'btn-primary':!chart.monthSelected}"
-                            (click)="chart.monthSelected=false;updateChart(chart);">
-                            <span class="d-none d-md-block">Week</span>
-                            <span class="d-md-none">W</span>
-                        </button>
-                    </div>
-                </div>
-            </div>
-        </div>
-        <div class="card-body">
-            <!-- Chart -->
-            <div class="chart">
-                <!-- Chart wrapper -->
-                <canvas id="{{chart.name}}" class="chart-canvas"></canvas>
-            </div>
-        </div>
-    </div>
-</ng-template>
