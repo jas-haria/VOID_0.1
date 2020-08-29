@@ -176,13 +176,16 @@ def get_questions(division_ids, time, page_number, page_size, action, account_id
     questions = session.query(QuoraQuestion).filter(QuoraQuestion.id.in_(question_ids)).all()
     return {'totalLength': length, 'content': convert_list_to_json(questions)}
 
-def get_asked_questions_stats(question_ids):
+def get_asked_questions_stats(question_ids, last_week):
     session = get_new_session()
     stats = []
     if question_ids is None:
         question_ids = session.query(QuoraQuestion.id).filter(QuoraQuestion.asked_on > get_time_interval(TimePeriod.MONTH.value)).all()
+    query = session.query(QuoraAskedQuestionStats)
+    if last_week is True:
+        query = query.filter(QuoraAskedQuestionStats.recorded_on < get_time_interval(TimePeriod.WEEK.value))
     for id in question_ids:
-        question_stat = session.query(QuoraAskedQuestionStats).filter(QuoraAskedQuestionStats.question_id == id).order_by(desc(QuoraAskedQuestionStats.recorded_on)).first()
+        question_stat = query.filter(QuoraAskedQuestionStats.question_id == id).order_by(desc(QuoraAskedQuestionStats.recorded_on)).first()
         stats.append(question_stat)
     return convert_list_to_json(stats)
 
@@ -493,7 +496,7 @@ def get_quora_accounts_stats(account_id):
     query = session.query(QuoraAccountStats)
     if account_id is not None:
         query = query.filter(QuoraAccountStats.account_id == account_id)
-    stats = query.filter(QuoraAccountStats.recorded_on > get_time_interval(TimePeriod.MONTH.value)).order_by(desc(QuoraAccountStats.recorded_on)).all()
+    stats = query.filter(QuoraQuestion.asked_on > get_time_interval(TimePeriod.MONTH.value)).all()
     return convert_list_to_json(stats)
 
 def get_quora_questions_count(action, account_id):

@@ -99,7 +99,7 @@ export class QuoraQuestionListComponent implements OnInit, OnDestroy {
     this.subscription.add(
       this._quoraService.getQuestions(this.selectedPage, this.selectedSize, this.selectedDivisions, this.selectedTimePeriod, this.selectedType, this.accountId).subscribe((response: Page<QuoraQuestion>) => {
         if (this.selectedType == QuoraQuestionAccountAction.ASKED) {
-          this._quoraService.getAskedQuestionsStats(this.getIdsFromArray(response.content)).subscribe((stats: QuoraAskedQuestionStats[]) => {
+          this._quoraService.getAskedQuestionsStats(false, this.getIdsFromArray(response.content)).subscribe((stats: QuoraAskedQuestionStats[]) => {
             this.dataSource = response.content.map(question => this.mapQuestionForTable(question,
               stats.find((stat: QuoraAskedQuestionStats) => stat.question_id == question.id)
             ));

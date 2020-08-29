@@ -17,6 +17,8 @@ export class ChartComponent implements OnInit, OnDestroy {
   @Input('createOrRecreate') createOrRecreate: Observable<string>;
   @Input('update') update: Observable<string>;
 
+  fillColor: string[] = ['white', 'red', 'green', 'yellow'];
+
   subscription: Subscription = new Subscription();
 
   constructor() { }
@@ -52,22 +54,50 @@ export class ChartComponent implements OnInit, OnDestroy {
       this.chart.chart = new Chart(chartInView, {
         type: this.chart.barSelected ? 'bar' : 'line',
         data: {
-          labels: this.chart.monthSelected? this.monthLabels: this.weekLabels,
-          datasets: [{
-            labels: this.chart.title,
-            data: (this.chart.data && this.chart.data.length > 0) ? (this.chart.monthSelected ? this.chart.data : this.chart.data.slice(23, 30)) : []
-          }]
+          labels: this.chart.monthSelected ? this.monthLabels : this.weekLabels,
+          datasets: this.getDatasets()
         }
       });
     }
   }
 
-  updateChart(): void {
-      this.chart.chart.data.labels = this.chart.monthSelected ? this.monthLabels : this.weekLabels;
-      if (this.chart.data) {
-        this.chart.chart.data.datasets[0].data = this.chart.monthSelected ? this.chart.data : this.chart.data.slice(23, 30)
+  getDatasets(): any[] {
+    if (this.chart.multipleDatasets) {
+      let datasets = [];
+      for (let i = 0; i < this.chart.multipleTitles.length; i++) {
+        datasets = [...datasets, {
+          label: this.chart.multipleTitles[i],
+          data: (this.chart.data[i] && this.chart.data[i].length > 0) ? (this.chart.monthSelected ? this.chart.data[i] : this.chart.data[i].slice(23, 30)) : [],
+          backgroundColor: this.fillColor[i],
+          borderColor: this.fillColor[i],
+          fill: false
+        }];
+        if (i == (this.chart.multipleTitles.length - 1)) {
+          return datasets
+        }
       }
-      this.chart.chart.update();
     }
+    else {
+      return [{
+        label: this.chart.title,
+        data: (this.chart.data && this.chart.data.length > 0) ? (this.chart.monthSelected ? this.chart.data : this.chart.data.slice(23, 30)) : []
+      }];
+    }
+  }
+
+  updateChart(): void {
+    this.chart.chart.data.labels = this.chart.monthSelected ? this.monthLabels : this.weekLabels;
+    if (this.chart.data) {
+      if (this.chart.multipleDatasets) {
+        this.chart.data.forEach((dataArray, index, array) => {
+          this.chart.chart.data.datasets[index].data = this.chart.monthSelected ? dataArray : dataArray.slice(23, 30);
+        });
+      }
+      else {
+        this.chart.chart.data.datasets[0].data = this.chart.monthSelected ? this.chart.data : this.chart.data.slice(23, 30);
+      }
+    }
+    this.chart.chart.update();
+  }
 
 }

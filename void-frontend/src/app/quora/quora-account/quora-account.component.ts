@@ -166,7 +166,9 @@ export class QuoraAccountComponent implements OnInit, OnDestroy, AfterViewInit {
       let questionCountDate = new Date(rawRequestedQuestionsCount[i].date);
       questionCountDate.setHours(0, 0, 0, 0);
       let position = this.monthLongValueArray.indexOf(questionCountDate.getTime());
-      requestsChart[position] = requestsChart[position] + rawRequestedQuestionsCount[i].count;
+      if (position != -1) {
+        requestsChart[position] = requestsChart[position] + rawRequestedQuestionsCount[i].count;
+      }
       if (i == (rawRequestedQuestionsCount.length - 1)) {
         this.charts[1].data = requestsChart;
         this.updateChart.next(this.charts[1].name);
@@ -189,6 +191,7 @@ export class QuoraAccountComponent implements OnInit, OnDestroy, AfterViewInit {
       topCard.bottomValue = (thisWeek > 0) ? "All new" : "No growth";
       topCard.bottomValueSuccess = (thisWeek > 0) ? true : false;
     }
+    topCard.bottomMessage = "since last week";
   }
 
   getArrayOfZeros(length: number): number[] {

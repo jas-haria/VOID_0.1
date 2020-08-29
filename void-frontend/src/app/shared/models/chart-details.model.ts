@@ -4,14 +4,18 @@ export class ChartDetails {
     monthSelected: boolean;
     barSelected: boolean;
     chart: any;
-    data: number[];
+    data: any[];
+    multipleDatasets: boolean;
+    multipleTitles: string[]
 
-    constructor(title: string, name: string) {
+    constructor(title: string, name: string, multipleDatasets: boolean) {
         this.title = title;
         this.name = name;
         this.monthSelected = false;
         this.barSelected = false;
         this.chart = null;
         this.data = [];
+        this.multipleDatasets = multipleDatasets;
+        this.multipleTitles = [];
     }
 }

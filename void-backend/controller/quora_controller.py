@@ -36,7 +36,7 @@ def get_asked_questions_stats():
     questionIds = None
     if request.args.get('questionIds') is not None:
         questionIds = ast.literal_eval(request.args.get('questionIds'))
-    return Response(json.dumps(quora_service.get_asked_questions_stats(questionIds)), status=200, mimetype='application/json')
+    return Response(json.dumps(quora_service.get_asked_questions_stats(questionIds, bool(strtobool(request.args.get('lastWeek'))))), status=200, mimetype='application/json')
 
 @app.route(base_url+'/refreshAccountsData', methods=['GET'])
 def refresh_accounts_data():

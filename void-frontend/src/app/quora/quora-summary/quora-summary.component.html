@@ -12,3 +12,25 @@
             aria-valuemax="100" [style.width.%]="progressBar.value"></div>
     </div>
 </div>
+
+<div class="row mt-5">
+    <div class="row w-100 mb-5">
+        <div class="col-xl-8 col-lg-12">
+            <app-chart [chart]="charts[0]" [weekLabels]="weekLabels" [monthLabels]="monthLabels"
+                [createOrRecreate]="createOrRecreateChart.asObservable()" [update]="updateChart.asObservable()">
+            </app-chart>
+        </div>
+        <div class="col-xl-4 col-lg-12">
+            <div *ngFor="let topCard of topCards">
+                <app-top-card [topCard]="topCard"></app-top-card>
+            </div>
+        </div>
+    </div>
+    <div class="row w-100 mb-5">
+        <div class=" col-xl-8 col-lg-12">
+            <app-chart [chart]="charts[1]" [weekLabels]="weekLabels" [monthLabels]="monthLabels"
+                [createOrRecreate]="createOrRecreateChart.asObservable()" [update]="updateChart.asObservable()">
+            </app-chart>
+        </div>
+    </div>
+</div>

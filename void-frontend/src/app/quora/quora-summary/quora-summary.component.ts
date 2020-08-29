@@ -1,23 +1,39 @@
-import { Component, OnInit, OnDestroy } from '@angular/core';
+import { Component, OnInit, OnDestroy, AfterViewInit } from '@angular/core';
 import { QuoraService } from '../quora.service';
 import { HeaderService } from 'src/app/shared/services/header.service';
 import { QuoraAccountsStats } from 'src/app/shared/models/quora-accounts-stats.model';
-import { Subscription } from 'rxjs';
+import { Subscription, Subject } from 'rxjs';
 import { QuoraQuestionAccountAction } from 'src/app/shared/models/enums/quora-question-account-action.enum';
 import { QuoraQuestionCount } from 'src/app/shared/models/quora-question-count.model';
 import { QuoraAskedQuestionStats } from 'src/app/shared/models/quora-asked-question-stats.model';
+import { ChartDetails } from 'src/app/shared/models/chart-details.model';
+import { TopCardDetails } from 'src/app/shared/models/topcard-details.model';
 
 @Component({
   selector: 'app-quora-summary',
   templateUrl: './quora-summary.component.html',
   styleUrls: ['./quora-summary.component.css']
 })
-export class QuoraSummaryComponent implements OnInit, OnDestroy {
+export class QuoraSummaryComponent implements OnInit, OnDestroy, AfterViewInit {
 
   subscription: Subscription = new Subscription();
   monthLongValueArray: number[] = [];
   weekLabels: string[] = [];
   monthLabels: string[] = [];
+
+  createOrRecreateChart: Subject<string> = new Subject<string>();
+  updateChart: Subject<string> = new Subject<string>();
+
+  charts: ChartDetails[] = [new ChartDetails('Views', 'views-chart', false),
+  new ChartDetails('Requested vs Answered Qs', 'requested-answered-chart', true)
+  ];
+
+  topCards: any[] = [
+    new TopCardDetails('Views', 'fas fa-eye', 'bg-danger'),
+    new TopCardDetails('Asked Questions Views', 'fas fa-chalkboard-teacher', 'bg-warning'),
+    new TopCardDetails('Asked Questions Followers', 'fas fa-share-alt', 'bg-yellow'),
+    new TopCardDetails('Asked Questions Answers', 'fas fa-thumbs-up', 'bg-info')
+  ];
 
   progressBars: any[] = [
     { title: 'Questions Answered', message: '', value: 0 },
@@ -28,6 +44,7 @@ export class QuoraSummaryComponent implements OnInit, OnDestroy {
     private _headerService: HeaderService) { }
 
   ngOnInit(): void {
+    this.charts[1].multipleTitles = ['Answered', 'Requested'];
     this._headerService.updateHeader("Quora Summary");
     this.createChartLabels();
     this.loadData();
@@ -36,6 +53,24 @@ export class QuoraSummaryComponent implements OnInit, OnDestroy {
   ngOnDestroy(): void {
     this._headerService.releaseHeader();
     this.subscription.unsubscribe();
+  }
+
+  ngAfterViewInit(): void {
+    this.refreshAllDisplayData();
+  }
+
+  refreshAllDisplayData(): void {
+    this.charts.forEach(chart => {
+      chart.monthSelected = false;
+      chart.barSelected = false;
+      chart.data = [];
+      if (chart.multipleDatasets) {
+        chart.multipleTitles.forEach(title => {
+          chart.data = [...chart.data, []];
+        })
+      }
+      this.createOrRecreateChart.next(chart.name);
+    });
   }
 
   createChartLabels(): void {
@@ -61,8 +96,13 @@ export class QuoraSummaryComponent implements OnInit, OnDestroy {
           this._quoraService.getQuestionsCount(QuoraQuestionAccountAction.ASKED).subscribe((rawAskedQuestionsCount: QuoraQuestionCount[]) => {
             this._quoraService.getQuestionsCount(QuoraQuestionAccountAction.REQUESTED).subscribe((rawRequestedQuestionsCount: QuoraQuestionCount[]) => {
               this._quoraService.getQuestionsCount(QuoraQuestionAccountAction.ASSIGNED).subscribe((rawAssignedQuestionsCount: QuoraQuestionCount[]) => {
-                this._quoraService.getAskedQuestionsStats().subscribe((rawAskedQuestionsStats: QuoraAskedQuestionStats[]) => {
-                  this.setProgressBarValues(rawAnsweredQuestionsCount, rawAssignedQuestionsCount, rawAskedQuestionsCount);
+                this._quoraService.getAskedQuestionsStats(true).subscribe((rawLastWeekAskedQuestionsStats: QuoraAskedQuestionStats[]) => {
+                  this._quoraService.getAskedQuestionsStats(false).subscribe((rawThisWeekAskedQuestionsStats: QuoraAskedQuestionStats[]) => {
+                    this.setAskedProgressBarValue(rawAskedQuestionsCount);
+                    this.setFromAnsweredAssignedRequestedCount(rawAnsweredQuestionsCount, rawAssignedQuestionsCount, rawRequestedQuestionsCount);
+                    this.setFromQuoraAccountStatsDetails(rawAccountStats);
+                    this.setFromQuoraAskedQuestionStats(rawLastWeekAskedQuestionsStats, rawThisWeekAskedQuestionsStats);
+                  })
                 })
               })
             })
@@ -92,13 +132,124 @@ export class QuoraSummaryComponent implements OnInit, OnDestroy {
     }
   }
 
-  setProgressBarValues(answered: QuoraQuestionCount[], assigned: QuoraQuestionCount[], asked: QuoraQuestionCount[]): void {
-    let answeredWeeklyCount = this.getTotalCount(answered, 23, 29),
-      assignedWeeklyCount = this.getTotalCount(assigned, 23, 29),
-      askedWeeklyCount = this.getTotalCount(asked, 23, 29);
-    this.progressBars[0].value = (answeredWeeklyCount / assignedWeeklyCount) * 100;
-    this.progressBars[0].message = answeredWeeklyCount + '/' + assignedWeeklyCount;
-    this.progressBars[1].value = (askedWeeklyCount / 10) * 100;
+  setAskedProgressBarValue(asked: QuoraQuestionCount[]): void {
+    let askedWeeklyCount = this.getTotalCount(asked, 23, 29);
+    this.progressBars[1].value = (askedWeeklyCount > 10) ? 100 : (askedWeeklyCount / 10) * 100;
     this.progressBars[1].message = askedWeeklyCount + '/10';
+  }
+
+  setFromAnsweredAssignedRequestedCount(answered: QuoraQuestionCount[], assigned: QuoraQuestionCount[], requestedCount: QuoraQuestionCount[]): void {
+    let answeredWeeklyCount = 0, assignedWeeklyCount = this.getTotalCount(assigned, 23, 29);
+    let answeredCountChart = this.getArrayOfZeros(30);
+    for (let i = 0; i < answered.length; i++) {
+      let countDate = new Date(answered[i].date);
+      countDate.setHours(0, 0, 0, 0);
+      let position = this.monthLongValueArray.indexOf(countDate.getTime());
+      if (position >= 23 && position <= 29) {
+        answeredWeeklyCount = answeredWeeklyCount + answered[i].count;
+      }
+      answeredCountChart[position] = answeredCountChart[position] + answered[i].count;
+      if (i == answered.length - 1) {
+        this.progressBars[0].value = (answeredWeeklyCount > assignedWeeklyCount) ? 100 : (answeredWeeklyCount / assignedWeeklyCount) * 100;
+        this.progressBars[0].message = answeredWeeklyCount + '/' + assignedWeeklyCount;
+        this.charts[1].data[0] = answeredCountChart;
+        this.setRequestedGraphValues(requestedCount);
+      }
+    }
+  }
+
+  setRequestedGraphValues(requestedCount: QuoraQuestionCount[]): void {
+    let requestedCountChart = this.getArrayOfZeros(30);
+    for (let i = 0; i < requestedCount.length; i++) {
+      let countDate = new Date(requestedCount[i].date);
+      countDate.setHours(0, 0, 0, 0);
+      let position = this.monthLongValueArray.indexOf(countDate.getTime());
+      if (position != -1) {
+        requestedCountChart[position] = requestedCountChart[position] + requestedCount[i].count;
+      }
+      if(i == (requestedCount.length - 1)) {
+        this.charts[1].data[1] = requestedCountChart;
+        this.updateChart.next(this.charts[1].name);
+      }
+    }
+  }
+
+  setFromQuoraAccountStatsDetails(accountStats: QuoraAccountsStats[]): void {
+    let viewsThisWeek = 0, viewsLastWeek = 0;
+    let viewsChart = this.getArrayOfZeros(30);
+    for (let i = 0; i < accountStats.length; i++) {
+      let statDate = new Date(accountStats[i].recorded_on);
+      statDate.setHours(0, 0, 0, 0);
+      let statDateTime = statDate.getTime();
+      let position = this.monthLongValueArray.indexOf(statDateTime);
+      viewsChart[position] = viewsChart[position] + accountStats[i].view_count;
+      if (position >= 23 && position <= 29) {
+        viewsThisWeek = viewsThisWeek + accountStats[i].view_count;
+      }
+      else if (position >= 16 && position <= 22) {
+        viewsLastWeek = viewsLastWeek + accountStats[i].view_count;
+      }
+      if (i == accountStats.length - 1) {
+        this.charts[0].data = viewsChart;
+        this.updateChart.next(this.charts[0].name);
+        this.topCards[0].middleValue = viewsThisWeek;
+        this.setBottomValues(viewsThisWeek, viewsLastWeek, this.topCards[0]);
+      }
+    }
+  }
+
+  setFromQuoraAskedQuestionStats(lastWeekAskedStats: QuoraAskedQuestionStats[], thisWeekAskedStats: QuoraAskedQuestionStats[]): void {
+    let viewsThisWeek = 0, followersThisWeek = 0, answersThisWeek = 0, viewsLastWeek = 0, followersLastWeek = 0, answersLastWeek = 0;
+    let combinedMaxLength = lastWeekAskedStats.length > thisWeekAskedStats.length ? lastWeekAskedStats.length : thisWeekAskedStats.length;
+    for (let i = 0; i < combinedMaxLength; i++) {
+      if (i < lastWeekAskedStats.length) {
+        let statDate = new Date(lastWeekAskedStats[i].recorded_on);
+        statDate.setHours(0, 0, 0, 0);
+        let position = this.monthLongValueArray.indexOf(statDate.getTime());
+        if (position >= 16 && position <= 22) {
+          viewsLastWeek = viewsLastWeek + lastWeekAskedStats[position].view_count;
+          followersLastWeek = followersLastWeek + lastWeekAskedStats[position].follower_count;
+          answersLastWeek = answersLastWeek + lastWeekAskedStats[position].answer_count;
+        }
+      }
+      if (i < thisWeekAskedStats.length) {
+        let statDate = new Date(thisWeekAskedStats[i].recorded_on);
+        statDate.setHours(0, 0, 0, 0);
+        let position = this.monthLongValueArray.indexOf(statDate.getTime());
+        if (position >= 23 && position <= 29) {
+          viewsThisWeek = viewsThisWeek + thisWeekAskedStats[position].view_count;
+          followersThisWeek = followersThisWeek + thisWeekAskedStats[position].follower_count;
+          answersThisWeek = answersThisWeek + thisWeekAskedStats[position].answer_count;
+        }
+      }
+      if (i == (combinedMaxLength - 1)) {
+        this.topCards[1].middleValue = viewsThisWeek;
+        this.setBottomValues(viewsThisWeek, viewsLastWeek, this.topCards[1]);
+        this.topCards[2].middleValue = followersThisWeek;
+        this.setBottomValues(followersThisWeek, followersLastWeek, this.topCards[2]);
+        this.topCards[3].middleValue = answersThisWeek;
+        this.setBottomValues(answersThisWeek, answersLastWeek, this.topCards[3]);
+      }
+    }
+  }
+
+  setBottomValues(thisWeek: number, lastWeek: number, topCard: TopCardDetails): void {
+    if (lastWeek) {
+      topCard.bottomValue = Math.round((Math.abs(thisWeek - lastWeek) * 100) / lastWeek).toString() + '%';
+      topCard.bottomValueSuccess = (thisWeek > lastWeek) ? true : false;
+    }
+    else {
+      topCard.bottomValue = (thisWeek > 0) ? "All new" : "No growth";
+      topCard.bottomValueSuccess = (thisWeek > 0) ? true : false;
+    }
+    topCard.bottomMessage = "since last week";
+  }
+
+  getArrayOfZeros(length: number): number[] {
+    let array = new Array();
+    for (let i = 0; i < length; i++) {
+      array.push(0);
+    }
+    return array;
   }
 }
