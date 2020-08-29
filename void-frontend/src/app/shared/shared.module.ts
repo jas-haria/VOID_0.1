@@ -9,6 +9,7 @@ import { FooterComponent } from './components/footer/footer.component';
 import { NavbarComponent } from './components/navbar/navbar.component';
 import { Sidebar2Component } from './components/sidebar2/sidebar2.component';
 import { ChartComponent } from './components/chart/chart.component';
+import { TopCardComponent } from './components/top-card/top-card.component';
 
 
 @NgModule({
@@ -17,7 +18,8 @@ import { ChartComponent } from './components/chart/chart.component';
     FooterComponent,
     NavbarComponent,
     Sidebar2Component,
-    ChartComponent
+    ChartComponent,
+    TopCardComponent
   ],
   imports: [
     CommonModule,
@@ -32,7 +34,8 @@ import { ChartComponent } from './components/chart/chart.component';
     FooterComponent,
     NavbarComponent,
     Sidebar2Component,
-    ChartComponent
+    ChartComponent,
+    TopCardComponent
   ]
 })
 export class SharedModule { }

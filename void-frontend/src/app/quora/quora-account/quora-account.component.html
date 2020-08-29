@@ -4,29 +4,7 @@
             <!-- Card stats -->
             <div class="row">
                 <div class="col-xl-3 col-lg-6" *ngFor="let topCard of topCards">
-                    <div class="card card-stats mb-4 mb-xl-0">
-                        <div class="card-body">
-                            <div class="row">
-                                <div class="col">
-                                    <h5 class="card-title text-uppercase text-muted mb-0">{{ topCard.title }}</h5>
-                                    <span class="h2 font-weight-bold mb-0">{{ topCard.middleValue }}</span>
-                                </div>
-                                <div class="col-auto">
-                                    <div
-                                        class="icon icon-shape text-white rounded-circle shadow {{topCard.iconBgColor}}">
-                                        <i class="{{topCard.icon}}"></i>
-                                    </div>
-                                </div>
-                            </div>
-                            <p class="mt-3 mb-0 text-muted text-sm">
-                                <span class="mr-2 {{topCard.bottomValueSuccess?'text-success':'text-danger'}}">
-                                    <i class="fa {{topCard.bottomValueSuccess?'fa-arrow-up':'fa-arrow-down'}}"></i>
-                                    {{ topCard.bottomValue }}
-                                </span>
-                                <span class="text-nowrap">since last week</span>
-                            </p>
-                        </div>
-                    </div>
+                    <app-top-card [topCard]="topCard"></app-top-card>
                 </div>
             </div>
         </div>

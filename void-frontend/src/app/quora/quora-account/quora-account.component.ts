@@ -8,6 +8,7 @@ import { QuoraAccountsStats } from 'src/app/shared/models/quora-accounts-stats.m
 import { QuoraQuestionAccountAction } from 'src/app/shared/models/enums/quora-question-account-action.enum';
 import { QuoraQuestionCount } from 'src/app/shared/models/quora-question-count.model';
 import { ChartDetails } from 'src/app/shared/models/chart-details.model';
+import { TopCardDetails } from 'src/app/shared/models/topcard-details.model';
 
 
 @Component({
@@ -26,13 +27,14 @@ export class QuoraAccountComponent implements OnInit, OnDestroy, AfterViewInit {
   createOrRecreateChart: Subject<string> = new Subject<string>();
   updateChart: Subject<string> = new Subject<string>();
 
-  charts: ChartDetails[] = [new ChartDetails('Views', 'views-chart'), new ChartDetails('Requested Questions', 'requested-questions-chart')];
+  charts: ChartDetails[] = [new ChartDetails('Views', 'views-chart', false),
+  new ChartDetails('Requested Questions', 'requested-questions-chart', false)];
 
   topCards: any[] = [
-    { title: 'Views', middleValue: '', bottomValue: '', bottomValueSuccess: false, icon: 'fas fa-eye', iconBgColor: 'bg-danger' },
-    { title: 'Answers/Assign', middleValue: '', bottomValue: '', bottomValueSuccess: false, icon: 'fas fa-seedling', iconBgColor: 'bg-warning' },
-    { title: 'Followers', middleValue: '', bottomValue: '', bottomValueSuccess: false, icon: 'fas fa-users', iconBgColor: 'bg-yellow' },
-    { title: 'Upvotes', middleValue: '', bottomValue: '', bottomValueSuccess: false, icon: 'fas fa-thumbs-up', iconBgColor: 'bg-info' }
+    new TopCardDetails('Views', 'fas fa-eye', 'bg-danger'),
+    new TopCardDetails('Answers/Assign', 'fas fa-seedling', 'bg-warning'),
+    new TopCardDetails('Followers', 'fas fa-users', 'bg-yellow'),
+    new TopCardDetails('Upvotes', 'fas fa-thumbs-up', 'bg-info')
   ];
 
   constructor(private _route: ActivatedRoute,
@@ -132,17 +134,17 @@ export class QuoraAccountComponent implements OnInit, OnDestroy, AfterViewInit {
       let statDateTime = statDate.getTime();
       let position = this.monthLongValueArray.indexOf(statDateTime);
       viewsChart[position] = viewsChart[position] + accountStats[i].view_count;
-      if (position >= 24 && position <= 30) {
+      if (position >= 23 && position <= 29) {
         viewsThisWeek = viewsThisWeek + accountStats[i].view_count;
         upvotesThisWeek = upvotesThisWeek + accountStats[i].view_count;
         totalFollowsThisWeek = accountStats[i].total_followers > totalFollowsThisWeek ? accountStats[i].total_followers : totalFollowsThisWeek;
       }
-      else if (position >= 17 && position <= 23) {
+      else if (position >= 16 && position <= 22) {
         viewsLastWeek = viewsLastWeek + accountStats[i].view_count;
         upvotesLastWeek = upvotesLastWeek + accountStats[i].view_count;
         totalFollowsLastWeek = accountStats[i].total_followers > totalFollowsLastWeek ? accountStats[i].total_followers : totalFollowsLastWeek;
       }
-      else if (position >= 10 && position <= 16) {
+      else if (position >= 9 && position <= 15) {
         totalFollowsWeekBeforeLast = accountStats[i].total_followers > totalFollowsWeekBeforeLast ? accountStats[i].total_followers : totalFollowsWeekBeforeLast;
       }
       if (i == accountStats.length - 1) {
@@ -173,9 +175,9 @@ export class QuoraAccountComponent implements OnInit, OnDestroy, AfterViewInit {
   }
 
   setAnswersTopCard(rawAnsweredQuestionsCount: QuoraQuestionCount[], rawAssignedQuestionsCount: QuoraQuestionCount[]): void {
-    let answersThisWeek = this.getTotalCount(rawAnsweredQuestionsCount, 24, 30);
-    this.topCards[1].middleValue = answersThisWeek + '/' + this.getTotalCount(rawAssignedQuestionsCount, 24, 30);
-    this.setBottomValues(answersThisWeek, this.getTotalCount(rawAnsweredQuestionsCount, 17, 23), this.topCards[1]);
+    let answersThisWeek = this.getTotalCount(rawAnsweredQuestionsCount, 23, 29);
+    this.topCards[1].middleValue = answersThisWeek + '/' + this.getTotalCount(rawAssignedQuestionsCount, 23, 29);
+    this.setBottomValues(answersThisWeek, this.getTotalCount(rawAnsweredQuestionsCount, 16, 22), this.topCards[1]);
   }
 
   setBottomValues(thisWeek: number, lastWeek: number, topCard: any): void {
