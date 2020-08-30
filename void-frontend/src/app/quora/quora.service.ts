@@ -48,12 +48,17 @@ export class QuoraService {
       { params: this._apiService.getParameters(parameters) });
   }
 
-  downloadExcel(accountId: number): Observable<any> {
+  downloadPendingQuestionsExcel(accountId: number): Observable<any> {
     let parameters = {};
     parameters['accountId'] = accountId;
     return this._http.get(this._apiService.getBackendUrl() + '/quora/pending-questions-excel',
-      { params: this._apiService.getParameters(parameters), responseType: "arraybuffer" });
+      { params: this._apiService.getParameters(parameters), headers: this._apiService.getHeadersToAvoidCache(), responseType: "arraybuffer" });
   }
+
+  downloadTemplateExcel(): Observable<any> {
+    return this._http.get(this._apiService.getBackendUrl() + '/quora/asked-questions-sample-excel',
+      { headers: this._apiService.getHeadersToAvoidCache(), responseType: "arraybuffer" });
+   }
 
   getAccounts(): Observable<QuoraAccount[]> {
     return this._http.get<QuoraAccount[]>(this._apiService.getBackendUrl() + '/quora/accounts');
@@ -93,5 +98,10 @@ export class QuoraService {
     }
     return this._http.get<QuoraQuestionCount[]>(this._apiService.getBackendUrl() + '/quora/accounts/questions-count',
       { params: this._apiService.getParameters(parameters) });
+  }
+
+  uploadQuoraAskedQuestionsFile(formData: FormData): Observable<boolean> {
+    return this._http.post<boolean>(this._apiService.getBackendUrl() + '/quora/upload-quora-asked-questions',
+    formData);
   }
 }

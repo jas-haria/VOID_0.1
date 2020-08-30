@@ -1,15 +1,21 @@
-<div class="progress-wrapper" *ngFor="let progressBar of progressBars">
-    <div class="progress-info">
-        <div class="progress-label">
-            <span>{{ progressBar.title }}</span>
+<div class="row">
+    <div class="card w-100">
+        <div class="card-body">
+            <h2>This Week</h2>
+            <div class="progress-wrapper" *ngFor="let progressBar of progressBars">
+                <div class="progress-info">
+                    <div class="progress-label">
+                        <span>{{ progressBar.title }}</span>
+                    </div>
+                    <div class="progress-percentage">
+                        <span>{{ progressBar.message }}</span>
+                    </div>
+                </div>
+                <div class="progress">
+                    <div class="progress-bar bg-default" role="progressbar" [style.width.%]="progressBar.value"></div>
+                </div>
+            </div>
         </div>
-        <div class="progress-percentage">
-            <span>{{ progressBar.message }}</span>
-        </div>
-    </div>
-    <div class="progress">
-        <div class="progress-bar bg-default" role="progressbar" aria-valuenow="{{progressBar.value}}" aria-valuemin="0"
-            aria-valuemax="100" [style.width.%]="progressBar.value"></div>
     </div>
 </div>
 
@@ -27,10 +33,62 @@
         </div>
     </div>
     <div class="row w-100 mb-5">
-        <div class=" col-xl-8 col-lg-12">
+        <div class="col-xl-8 col-lg-12">
             <app-chart [chart]="charts[1]" [weekLabels]="weekLabels" [monthLabels]="monthLabels"
                 [createOrRecreate]="createOrRecreateChart.asObservable()" [update]="updateChart.asObservable()">
             </app-chart>
         </div>
+        <div class="col-xl-4 col-lg-12">
+            <div class="card">
+                <div class="card-body">
+                    <span>Template xlsx file for uploading Quora Asked Questions</span>
+                    <button class="btn btn-outline-danger w-100 mt-2" (click)="downloadSampleForUpload()">
+                        Download &nbsp;<i class="fas fa-file-download"></i>
+                    </button>
+                </div>
+            </div>
+            <div class="card mt-2">
+                <div class="card-body">
+                    <span>Upload Quora Asked Questions</span>
+                    <div class="custom-file mt-2">
+                        <input type="file" class="custom-file-input" #fileUpload lang="en"
+                            (change)="handleFileInput($event.target.files)" (click)="fileUpload.value=null"
+                            accept=".xlsx">
+                        <label class="custom-file-label text-truncate"
+                            for="customFileLang">{{ fileToUpload? fileToUpload.name: 'Select file (.xlsx only)' }}</label>
+                    </div>
+                    <button class="btn w-100 mt-2" [disabled]="!fileToUpload" (click)="uploadQuoraAskedQuestionsFile()"
+                        [ngClass]="fileToUpload?'btn-outline-danger':'disabled'">
+                        Upload &nbsp;<i class="fas fa-file-upload"></i>
+                    </button>
+                </div>
+            </div>
+        </div>
     </div>
 </div>
+
+
+<ng-template #invalidFile let-c="close" let-d="dismiss">
+    <div class="modal-content">
+        <div class="modal-header alert-danger">
+            <p class="modal-title" id="modal-title-default">Invalid File</p>
+            <button type="button" class="close" (click)="c(false)">
+                <span>×</span>
+            </button>
+        </div>
+        <div class="modal-body">
+            <p>Please recheck the file contents!</p>
+            <ul>
+                <li>Headers need to be exactly like in the sample file</li>
+                <li>No row can be partially filled</li>
+                <li>Cannot upload more than a 1000 questions at once</li>
+                <li>The file extension must be .xlsx</li>
+            </ul>
+            <p>Tip: Download the sample file again</p>
+        </div>
+        <div class="modal-footer">
+            <button type="button" class="btn btn-outline-default  ml-auto"
+                (click)="c(false)">Close</button>
+        </div>
+    </div>
+</ng-template>

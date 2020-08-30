@@ -1,0 +1,21 @@
+<div>
+    <div class="modal-content">
+        <div class="modal-header alert-{{ headerClass }}">
+            <p class="modal-title" id="modal-title-default">{{ title }}</p>
+            <button type="button" class="close" (click)="close(false)">
+                <span>×</span>
+            </button>
+        </div>
+        <div class="modal-body">
+            <p>{{ bodyContentBeforeList }}</p>
+            <ul>
+                <li *ngFor="let listItem of bodyContentList">{{ listItem }}</li>
+            </ul>
+            <p>{{ bodyContentAfterList }}</p>
+        </div>
+        <div class="modal-footer">
+            <button type="button" class="btn btn-outline-default  ml-auto"
+                (click)="close(false)">Close</button>
+        </div>
+    </div>
+</div>

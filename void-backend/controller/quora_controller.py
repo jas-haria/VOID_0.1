@@ -46,10 +46,6 @@ def refresh_accounts_data():
 def refresh_requested_questions():
     return Response(json.dumps(quora_service.refresh_requested_questions()), status=200, mimetype='application/json')
 
-@app.route(base_url, methods=['POST'])
-def add_asked_question():
-    return Response(json.dumps(quora_service.add_asked_question(request.json, request.args.get('account_id'))), status=200, mimetype='application/json')
-
 @app.route(base_url+'/refreshAskedQuestionsStats', methods=['GET'])
 def refresh_asked_questions_stats():
     return Response(json.dumps(quora_service.refresh_asked_questions_stats()), status=200, mimetype='application/json')
@@ -79,3 +75,7 @@ def get_quora_questions_count():
 def get_asked_questions_sample_excel():
     return send_file(quora_service.get_asked_questions_sample_excel(),
                      as_attachment=True, attachment_filename='excel.xlsx')
+
+@app.route(base_url+'/upload-quora-asked-questions', methods=['POST'])
+def upload_asked_questions():
+    return Response(json.dumps(quora_service.upload_asked_questions(request.files['file'])), status=200, mimetype='application/json')

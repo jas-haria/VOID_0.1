@@ -11,7 +11,6 @@ import { AuthLayoutComponent } from './layouts/auth-layout/auth-layout.component
 import { NgbModule } from '@ng-bootstrap/ng-bootstrap';
 
 import { AppRoutingModule } from './app-routing.module';
-import { ComponentsModule } from './components/components.module';
 
 import { BrowserModule } from '@angular/platform-browser';
 import { SharedModule } from './shared/shared.module';
@@ -34,7 +33,7 @@ import { SharedModule } from './shared/shared.module';
     AuthLayoutComponent,
   ],
   providers: [],
-  bootstrap: [AppComponent]
+  bootstrap: [AppComponent],
 })
 export class AppModule { }
 

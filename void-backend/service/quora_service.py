@@ -14,6 +14,7 @@ from service.util_service import get_new_session, scroll_to_bottom, get_driver, 
 
 LOAD_TIME = 3
 encoding = 'utf-8'
+quora_asked_question_excel_headers = ['Question Url', 'Division', 'Account', 'Asked On'];
 
 
 def refresh_data(time, put_todays_date):
@@ -300,27 +301,6 @@ def refresh_requested_questions():
     session.commit()
     return {}
 
-def add_asked_question(question_asked, account_id):
-    session = get_new_session()
-    asked_action = session.query(QuoraQuestionAccountActions).filter(QuoraQuestionAccountActions.action == QuoraQuestionAccountAction.ASKED).first()
-    persisted_question = session.query(QuoraQuestion).filter(QuoraQuestion.question_url == question_asked.get('question_url')).first()
-    if persisted_question is None:
-        question = QuoraQuestion()
-        question.question_url = question_asked.get('question_url')
-        question.question_text = question_asked.get('question_text')
-        question.division_id = question_asked.get('division_id')
-        question.asked_on = question_asked.get('asked_on')
-        session.add(question)
-    else:
-        question = persisted_question
-    qqad = QuoraQuestionAccountDetails()
-    qqad.question = question
-    qqad.account_id = account_id
-    qqad.action = asked_action
-    session.add(qqad)
-    session.commit()
-    return {}
-
 def refresh_asked_questions_stats():
     session = get_new_session()
     driver = get_driver()
@@ -502,7 +482,7 @@ def get_quora_accounts_stats(account_id):
 def get_quora_questions_count(action, account_id):
     session = get_new_session()
     action_object = session.query(QuoraQuestionAccountActions).filter(QuoraQuestionAccountActions.action.like(action)).first()
-    query = session.query(func.count(QuoraQuestionAccountDetails.account_id), QuoraQuestion.asked_on).join(QuoraQuestion)
+    query = session.query(func.count(QuoraQuestionAccountDetails.account_id), QuoraQuestion.asked_on).join(QuoraQuestion).filter(QuoraQuestion.disregard is False)
     if account_id is not None:
         query = query.filter(QuoraQuestionAccountDetails.account_id == account_id)
     details = query.filter(QuoraQuestionAccountDetails.action == action_object).filter(QuoraQuestion.asked_on > get_time_interval(TimePeriod.MONTH.value))\
@@ -521,11 +501,11 @@ def get_asked_questions_sample_excel():
     account_name_list = []
     division_name_list = []
     for account in accounts:
-        account_name_list.append(account.first_name + " " + account.last_name)
+        account_name_list.append(account.first_name + " " + account.last_name + " (" + str(account.id) + ")")
     divisions = session.query(Division).order_by(asc(Division.id)).all()
     for division in divisions:
-        division_name_list.append(division.division)
-    dataframe = pandas.DataFrame(columns=['Question Url', 'Division', 'Account', 'Asked On'])
+        division_name_list.append(division.division + ' (' + str(division.id) + ')')
+    dataframe = pandas.DataFrame(columns=quora_asked_question_excel_headers)
     strIO = io.BytesIO()
     excel_writer = pandas.ExcelWriter(strIO, engine="xlsxwriter")
     dataframe.to_excel(excel_writer, sheet_name="sheet 1", index=False)
@@ -538,3 +518,26 @@ def get_asked_questions_sample_excel():
     excel_writer.save()
     strIO.seek(0)
     return strIO
+
+def upload_asked_questions(file):
+    df = pandas.read_excel(file)
+    if set(df.columns.values.tolist()) != set(quora_asked_question_excel_headers) or df[quora_asked_question_excel_headers].isnull().values.any() or len(df.index) == 0 or len(df.index) > 1000:
+        return False
+    session = get_new_session()
+    asked_action_object = session.query(QuoraQuestionAccountActions).filter(QuoraQuestionAccountActions.action == QuoraQuestionAccountAction.ASKED).first()
+    for index, row in df.iterrows():
+        persisted_question = session.query(QuoraQuestion).filter(QuoraQuestion.question_url.like(row['Question Url'])).first()
+        if persisted_question is None:
+            persisted_question = QuoraQuestion()
+            persisted_question.question_url = row['Question Url']
+            persisted_question.question_text = replace_all(row['Question Url'], {'https:': '', 'www.': '', 'quora.com': '', 'unanswered/': '', '/': '', '-': ' '})
+            persisted_question.asked_on = row['Asked On']
+            persisted_question.division_id = row['Division'][row['Division'].index('(')+1: row['Division'].index(')')]
+            session.add(persisted_question)
+        qqad = QuoraQuestionAccountDetails()
+        qqad.question = persisted_question
+        qqad.action = asked_action_object
+        qqad.account_id = row['Account'][row['Account'].index('(')+1: row['Account'].index(')')]
+        session.add(qqad)
+    session.commit()
+    return True

@@ -251,7 +251,7 @@ export class QuoraQuestionListComponent implements OnInit, OnDestroy {
     let account = this.accountArray.find(account => accountId==account.id);
     let filename = "quora_" + account.first_name + "_" + account.last_name + "_" + formatDate(new Date(), 'dd-MMM-hh-mm-a', 'en-US');
     this.subscription.add(
-      this._quoraService.downloadExcel(accountId).subscribe(data => {
+      this._quoraService.downloadPendingQuestionsExcel(accountId).subscribe(data => {
         saveAS(new Blob([data], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' }), filename);
       })
     );

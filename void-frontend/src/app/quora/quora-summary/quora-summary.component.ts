@@ -1,13 +1,16 @@
-import { Component, OnInit, OnDestroy, AfterViewInit } from '@angular/core';
+import { Component, OnInit, OnDestroy, AfterViewInit, ViewChild, TemplateRef, NgModuleRef } from '@angular/core';
 import { QuoraService } from '../quora.service';
 import { HeaderService } from 'src/app/shared/services/header.service';
 import { QuoraAccountsStats } from 'src/app/shared/models/quora-accounts-stats.model';
 import { Subscription, Subject } from 'rxjs';
+import * as saveAS from 'file-saver';
 import { QuoraQuestionAccountAction } from 'src/app/shared/models/enums/quora-question-account-action.enum';
 import { QuoraQuestionCount } from 'src/app/shared/models/quora-question-count.model';
 import { QuoraAskedQuestionStats } from 'src/app/shared/models/quora-asked-question-stats.model';
 import { ChartDetails } from 'src/app/shared/models/chart-details.model';
 import { TopCardDetails } from 'src/app/shared/models/topcard-details.model';
+import { NgbModal, NgbModalOptions } from '@ng-bootstrap/ng-bootstrap';
+import { ModalComponent } from 'src/app/shared/components/modal/modal.component';
 
 @Component({
   selector: 'app-quora-summary',
@@ -24,8 +27,11 @@ export class QuoraSummaryComponent implements OnInit, OnDestroy, AfterViewInit {
   createOrRecreateChart: Subject<string> = new Subject<string>();
   updateChart: Subject<string> = new Subject<string>();
 
+  fileToUpload: File = null;
+  @ViewChild('invalidFile') invalidFile: TemplateRef<any>;
+
   charts: ChartDetails[] = [new ChartDetails('Views', 'views-chart', false),
-  new ChartDetails('Requested vs Answered Qs', 'requested-answered-chart', true)
+  new ChartDetails('Requested vs Answered Questions', 'requested-answered-chart', true)
   ];
 
   topCards: any[] = [
@@ -36,12 +42,13 @@ export class QuoraSummaryComponent implements OnInit, OnDestroy, AfterViewInit {
   ];
 
   progressBars: any[] = [
-    { title: 'Questions Answered', message: '', value: 0 },
+    { title: 'Questions Answered / Assigned', message: '', value: 0 },
     { title: 'Questions Asked', message: '', value: 0 }
   ];
 
   constructor(private _quoraService: QuoraService,
-    private _headerService: HeaderService) { }
+    private _headerService: HeaderService,
+    private _modalService: NgbModal) { }
 
   ngOnInit(): void {
     this.charts[1].multipleTitles = ['Answered', 'Requested'];
@@ -53,6 +60,7 @@ export class QuoraSummaryComponent implements OnInit, OnDestroy, AfterViewInit {
   ngOnDestroy(): void {
     this._headerService.releaseHeader();
     this.subscription.unsubscribe();
+    this._modalService.dismissAll();
   }
 
   ngAfterViewInit(): void {
@@ -167,7 +175,7 @@ export class QuoraSummaryComponent implements OnInit, OnDestroy, AfterViewInit {
       if (position != -1) {
         requestedCountChart[position] = requestedCountChart[position] + requestedCount[i].count;
       }
-      if(i == (requestedCount.length - 1)) {
+      if (i == (requestedCount.length - 1)) {
         this.charts[1].data[1] = requestedCountChart;
         this.updateChart.next(this.charts[1].name);
       }
@@ -252,4 +260,50 @@ export class QuoraSummaryComponent implements OnInit, OnDestroy, AfterViewInit {
     }
     return array;
   }
+
+  downloadSampleForUpload(): void {
+    this.subscription.add(
+      this._quoraService.downloadTemplateExcel().subscribe(data => {
+        saveAS(new Blob([data], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' }), "quora_asked_questions_upload_template");
+      })
+    );
+  }
+
+  handleFileInput(files: FileList): void {
+    this.fileToUpload = files.item(0);
+    if (this.fileToUpload.name.substring(this.fileToUpload.name.lastIndexOf('.'), this.fileToUpload.name.length) != '.xlsx') {
+      this.fileToUpload = null;
+      this.showInvalidFilePopup('Invalid File Type', ['Only .xlsx extension allowed']);
+    }
+  }
+
+  uploadQuoraAskedQuestionsFile(): void {
+    let formData = new FormData();
+    formData.append('file', this.fileToUpload);
+    this.subscription.add(
+      this._quoraService.uploadQuoraAskedQuestionsFile(formData).subscribe((response: boolean) => {
+        if (response) {
+          this.fileToUpload = null;
+        }
+        else {
+          this.showInvalidFilePopup('Invalid File Contents', ['Headers need to be exactly like in the sample file',
+            'No row can be partially filled', 'Cannot fill more than a 1000 rows at once', 'At least one row should be filled']);
+        }
+      })
+    );
+  }
+
+  showInvalidFilePopup(title: string, bodyContentList: string[]): void {
+    let ngbModalOptions: NgbModalOptions = {
+      backdrop: 'static',
+      keyboard: false
+    };
+    let modalRef = this._modalService.open(ModalComponent, ngbModalOptions);
+    modalRef.componentInstance.headerClass = 'danger';
+    modalRef.componentInstance.title = title;
+    modalRef.componentInstance.bodyContentBeforeList = 'Please recheck the file you have uploaded!'
+    modalRef.componentInstance.bodyContentList = bodyContentList;
+    modalRef.componentInstance.bodyContentAfterList = 'Tip: Download the sample file again and fill it.'
+  }
+
 }

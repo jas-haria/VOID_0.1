@@ -10,6 +10,7 @@ import { NavbarComponent } from './components/navbar/navbar.component';
 import { Sidebar2Component } from './components/sidebar2/sidebar2.component';
 import { ChartComponent } from './components/chart/chart.component';
 import { TopCardComponent } from './components/top-card/top-card.component';
+import { ModalComponent } from './components/modal/modal.component';
 
 
 @NgModule({
@@ -19,7 +20,8 @@ import { TopCardComponent } from './components/top-card/top-card.component';
     NavbarComponent,
     Sidebar2Component,
     ChartComponent,
-    TopCardComponent
+    TopCardComponent,
+    ModalComponent,
   ],
   imports: [
     CommonModule,
@@ -35,7 +37,9 @@ import { TopCardComponent } from './components/top-card/top-card.component';
     NavbarComponent,
     Sidebar2Component,
     ChartComponent,
-    TopCardComponent
-  ]
+    TopCardComponent,
+    ModalComponent
+  ],
+  providers: []
 })
 export class SharedModule { }
