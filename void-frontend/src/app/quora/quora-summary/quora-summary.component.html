@@ -63,32 +63,14 @@
                     </button>
                 </div>
             </div>
+            <div class="card mt-2">
+                <div class="card-body">
+                    <span>{{ 'Refreshed at ' + lastRefreshed?.execution_time }} </span>
+                    <button class="btn w-100 mt-2 btn-outline-danger" (click)="refreshAllStats()">
+                        Refresh All Stats &nbsp;<i class="fas fa-sync"></i>
+                    </button>
+                </div>
+            </div>
         </div>
     </div>
 </div>
-
-
-<ng-template #invalidFile let-c="close" let-d="dismiss">
-    <div class="modal-content">
-        <div class="modal-header alert-danger">
-            <p class="modal-title" id="modal-title-default">Invalid File</p>
-            <button type="button" class="close" (click)="c(false)">
-                <span>×</span>
-            </button>
-        </div>
-        <div class="modal-body">
-            <p>Please recheck the file contents!</p>
-            <ul>
-                <li>Headers need to be exactly like in the sample file</li>
-                <li>No row can be partially filled</li>
-                <li>Cannot upload more than a 1000 questions at once</li>
-                <li>The file extension must be .xlsx</li>
-            </ul>
-            <p>Tip: Download the sample file again</p>
-        </div>
-        <div class="modal-footer">
-            <button type="button" class="btn btn-outline-default  ml-auto"
-                (click)="c(false)">Close</button>
-        </div>
-    </div>
-</ng-template>

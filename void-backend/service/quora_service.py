@@ -10,7 +10,7 @@ import pandas
 from model.quora_model import Division, QuoraKeyword, QuoraQuestion, Script, QuoraAccount, ExecutionLog, \
     QuoraQuestionAccountDetails, QuoraQuestionAccountActions, QuoraAccountStats, QuoraAskedQuestionStats
 from model.enum import TimePeriod, QuoraQuestionAccountAction
-from service.util_service import get_new_session, scroll_to_bottom, get_driver, paginate, replace_all, convert_list_to_json
+from service.util_service import get_new_session, scroll_to_bottom, get_driver, paginate, replace_all, convert_list_to_json, get_number_from_string
 
 LOAD_TIME = 3
 encoding = 'utf-8'
@@ -191,15 +191,14 @@ def get_asked_questions_stats(question_ids, last_week):
     return convert_list_to_json(stats)
 
 # METHOD TO REFRESH QUESTIONS ANSWERED AND FOLLOWERS FOR EVERY ACCOUNT (WITHOUT LOGIN)
+#can be deleted, missing dates should be replaced by current date
 def refresh_accounts_data():
     session = get_new_session()
-    script = session.query(Script).filter(Script.name == 'Refresh_Quora_Accounts_Data').first()
-    execution_log = session.query(ExecutionLog).filter(ExecutionLog.script_id == script.id).first()
     accounts = session.query(QuoraAccount).all()
     answered_action = session.query(QuoraQuestionAccountActions).filter(QuoraQuestionAccountActions.action == QuoraQuestionAccountAction.ANSWERED).first()
     driver = get_driver()
     for account in accounts:
-        if account.link.like('unavailable'):
+        if account.link == 'unavailable':
             continue
         driver.get(account.link)
         scroll_to_bottom(driver, LOAD_TIME)
@@ -214,9 +213,9 @@ def refresh_accounts_data():
                 date_string = replace_all(j.getText(), {"Answered": "", "Updated": ""})
                 date_of_answer = datetime.strptime(date_string.strip(), '%B %d, %Y')
                 #TAKING ONE EXTRA DAY BECAUSE QUESTIONS CAN BE ASKED ON DIFFERENT TIMES ON THE SAME DAY
-                if date_of_answer < execution_log.execution_time - relativedelta(days=1):
-                    breakLoop = True
-                    break
+                # if date_of_answer < execution_log.execution_time - relativedelta(days=1):
+                #     breakLoop = True
+                #     break
 
                 # GET ALL QUESTIONS NEWLY ANSWERED
                 for k in i.findAll('a', attrs={'class': 'q-box qu-cursor--pointer qu-hover--textDecoration--underline'}):
@@ -249,8 +248,6 @@ def refresh_accounts_data():
 
     driver.quit()
     #REFRESH LAST EXECUTED DATE
-    execution_log.execution_time = datetime.now()
-    session.add(execution_log)
     session.commit()
     return {}
 
@@ -323,20 +320,20 @@ def refresh_asked_questions_stats():
         # IDENTIFIES STATS PER QUESTION
         for j in soup.findAll('div', attrs={'class': 'q-flex qu-py--tiny qu-px--medium qu-alignItems--center'}):
             if "Public Follower" in j.get_text():
-                qaqs.follower_count = int(replace_all(j.get_text(), {'Public Follower': '', 's': '', ',': ''}).strip())
+                qaqs.follower_count = get_number_from_string(replace_all(j.get_text(), {'Public Follower': '', 's': ''}).strip())
             if "View" in j.get_text():
-                qaqs.view_count = int(replace_all(j.get_text(), {'View': '', 's': '', ',': ''}).strip())
+                qaqs.view_count = get_number_from_string(replace_all(j.get_text(), {'View': '', 's': ''}).strip())
         session.add(qaqs)
 
     driver.quit()
     session.commit()
     return {}
 
-def refresh_accounts_stats(time_period):
+def refresh_accounts_stats():
     session = get_new_session()
     accounts = session.query(QuoraAccount).all()
     for account in accounts:
-        if account.link.like('unavailable'):
+        if account.link == 'unavailable':
             continue
         driver = get_driver()
         login_to_account(driver, account)
@@ -429,7 +426,7 @@ def get_qas_graph_data(soup):
     for i in soup.findAll('g', attrs={'style': 'opacity: 1;'}):
         yaxis_value = {}
         yaxis_value['pixel'] = float(replace_all(i['transform'], {'translate(0,': '', ')': ''}))
-        yaxis_value['number'] = int(i.get_text())
+        yaxis_value['number'] = float(i.get_text())
         if yaxis_values.__len__() == 2:
             break
         yaxis_values.append(yaxis_value)
@@ -541,3 +538,28 @@ def upload_asked_questions(file):
         session.add(qqad)
     session.commit()
     return True
+
+def refresh_all_stats():
+    session = get_new_session()
+    script = session.query(Script).filter(Script.name == 'Refresh_Quora_Stats').first()
+    execution_log = session.query(ExecutionLog).filter(ExecutionLog.script_id == script.id).first()
+    if execution_log is None:
+        execution_log = ExecutionLog()
+        execution_log.script_id = script.id
+    execution_log.execution_time = datetime.now()
+
+    refresh_data(TimePeriod.WEEK.value, True)
+    refresh_accounts_data()
+    refresh_requested_questions()
+    refresh_asked_questions_stats()
+    refresh_accounts_stats()
+
+    session.add(execution_log)
+    session.commit()
+    return execution_log._asdict()
+
+def get_last_refreshed():
+    session = get_new_session()
+    script = session.query(Script).filter(Script.name == 'Refresh_Quora_Stats').first()
+    execution_log = session.query(ExecutionLog).filter(ExecutionLog.script_id == script.id).first()
+    return execution_log._asdict()

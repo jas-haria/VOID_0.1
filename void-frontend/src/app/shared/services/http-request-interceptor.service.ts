@@ -11,7 +11,6 @@ export class HttpRequestInterceptorService {
   private showSpinner = new Subject<boolean>();
 
   public addErrors(errors: any): void {
-    console.log("error")
     this.errors.next(errors);
   }
 

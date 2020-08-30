@@ -10,6 +10,7 @@ import { QuoraQuestionAccountAction } from '../shared/models/enums/quora-questio
 import { QuoraAskedQuestionStats } from '../shared/models/quora-asked-question-stats.model';
 import { QuoraAccountsStats } from '../shared/models/quora-accounts-stats.model';
 import { QuoraQuestionCount } from '../shared/models/quora-question-count.model';
+import { ExecutionLog } from '../shared/models/execution-log.model';
 
 @Injectable({
   providedIn: 'root'
@@ -103,5 +104,13 @@ export class QuoraService {
   uploadQuoraAskedQuestionsFile(formData: FormData): Observable<boolean> {
     return this._http.post<boolean>(this._apiService.getBackendUrl() + '/quora/upload-quora-asked-questions',
     formData);
+  }
+
+  refreshAllStats(): Observable<ExecutionLog> {
+    return this._http.get<ExecutionLog>(this._apiService.getBackendUrl() + '/quora/refresh-all');
+  }
+
+  getLastRefreshed(): Observable<ExecutionLog> {
+    return this._http.get<ExecutionLog>(this._apiService.getBackendUrl() + '/quora/last-refreshed');
   }
 }

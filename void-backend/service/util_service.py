@@ -56,3 +56,11 @@ def replace_all(text, dict):
     for i, j in dict.items():
         text = text.replace(i, j)
     return text
+
+def get_number_from_string(num):
+    num = replace_all(num, {',': ''})
+    if ('K' in num):
+        num = num[0: num.index('K')]
+        num = float(num)*1000
+
+    return num

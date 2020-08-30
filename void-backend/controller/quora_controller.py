@@ -79,3 +79,11 @@ def get_asked_questions_sample_excel():
 @app.route(base_url+'/upload-quora-asked-questions', methods=['POST'])
 def upload_asked_questions():
     return Response(json.dumps(quora_service.upload_asked_questions(request.files['file'])), status=200, mimetype='application/json')
+
+@app.route(base_url+'/last-refreshed', methods=['GET'])
+def get_last_refreshed():
+    return Response(json.dumps(quora_service.get_last_refreshed()), status=200, mimetype='application/json')
+
+@app.route(base_url+'/refresh-all', methods=['GET'])
+def refresh_all():
+    return Response(json.dumps(quora_service.refresh_all_stats()), status=200, mimetype='application/json')

@@ -1,4 +1,4 @@
-import { Component, OnInit, OnDestroy } from '@angular/core';
+import { Component, OnInit, OnDestroy, NgModuleRef } from '@angular/core';
 import { NgbModal, NgbModalOptions } from '@ng-bootstrap/ng-bootstrap';
 import { ModalComponent } from './shared/components/modal/modal.component';
 import { HttpRequestInterceptorService } from './shared/services/http-request-interceptor.service';
@@ -30,7 +30,6 @@ export class AppComponent implements OnInit, OnDestroy {
     ).add(
       this._httpRequestInterceptorService.getErrors().subscribe(error => {
         this._modalService.dismissAll();
-        console.log("error")
         this.showErrorPopup();
       })
     );
@@ -50,7 +49,13 @@ export class AppComponent implements OnInit, OnDestroy {
     let modalRef = this._modalService.open(ModalComponent, ngbModalOptions);
     modalRef.componentInstance.headerClass = 'default';
     modalRef.componentInstance.title = 'Loading...';
-    modalRef.componentInstance.bodyContentBeforeList = 'Give me a moment. Or two.';
+    modalRef.componentInstance.bodyContentBeforeList = 'This may take a while. Please ensure:';
+    modalRef.componentInstance.bodyContentList = [
+      'Your machine is connected to the internet at all times',
+      'Your machine does not sleep due to inactivity',
+      'You do not close this window'
+    ];
+    modalRef.componentInstance.bodyContentAfterList = 'It will be worth the wait, really.'
     modalRef.componentInstance.isLoading = true;
   }
 

@@ -12,6 +12,7 @@ import { TopCardDetails } from 'src/app/shared/models/topcard-details.model';
 import { NgbModal, NgbModalOptions } from '@ng-bootstrap/ng-bootstrap';
 import { ModalComponent } from 'src/app/shared/components/modal/modal.component';
 import { HttpRequestInterceptorService } from 'src/app/shared/services/http-request-interceptor.service';
+import { ExecutionLog } from 'src/app/shared/models/execution-log.model';
 
 @Component({
   selector: 'app-quora-summary',
@@ -21,6 +22,7 @@ import { HttpRequestInterceptorService } from 'src/app/shared/services/http-requ
 export class QuoraSummaryComponent implements OnInit, OnDestroy, AfterViewInit {
 
   subscription: Subscription = new Subscription();
+  lastRefreshed: ExecutionLog = null;
   monthLongValueArray: number[] = [];
   weekLabels: string[] = [];
   monthLabels: string[] = [];
@@ -101,18 +103,21 @@ export class QuoraSummaryComponent implements OnInit, OnDestroy, AfterViewInit {
   loadData(): void {
     this._httpRequestInterceptorService.displaySpinner(true);
     this.subscription.add(
-      this._quoraService.getAccountStats().subscribe((rawAccountStats: QuoraAccountsStats[]) => {
-        this._quoraService.getQuestionsCount(QuoraQuestionAccountAction.ANSWERED).subscribe((rawAnsweredQuestionsCount: QuoraQuestionCount[]) => {
-          this._quoraService.getQuestionsCount(QuoraQuestionAccountAction.ASKED).subscribe((rawAskedQuestionsCount: QuoraQuestionCount[]) => {
-            this._quoraService.getQuestionsCount(QuoraQuestionAccountAction.REQUESTED).subscribe((rawRequestedQuestionsCount: QuoraQuestionCount[]) => {
-              this._quoraService.getQuestionsCount(QuoraQuestionAccountAction.ASSIGNED).subscribe((rawAssignedQuestionsCount: QuoraQuestionCount[]) => {
-                this._quoraService.getAskedQuestionsStats(true).subscribe((rawLastWeekAskedQuestionsStats: QuoraAskedQuestionStats[]) => {
-                  this._quoraService.getAskedQuestionsStats(false).subscribe((rawThisWeekAskedQuestionsStats: QuoraAskedQuestionStats[]) => {
-                    this.setAskedProgressBarValue(rawAskedQuestionsCount);
-                    this.setFromAnsweredAssignedRequestedCount(rawAnsweredQuestionsCount, rawAssignedQuestionsCount, rawRequestedQuestionsCount);
-                    this.setFromQuoraAccountStatsDetails(rawAccountStats);
-                    this.setFromQuoraAskedQuestionStats(rawLastWeekAskedQuestionsStats, rawThisWeekAskedQuestionsStats);
-                    this._httpRequestInterceptorService.displaySpinner(false);
+      this._quoraService.getLastRefreshed().subscribe((response: ExecutionLog) => {
+        this._quoraService.getAccountStats().subscribe((rawAccountStats: QuoraAccountsStats[]) => {
+          this._quoraService.getQuestionsCount(QuoraQuestionAccountAction.ANSWERED).subscribe((rawAnsweredQuestionsCount: QuoraQuestionCount[]) => {
+            this._quoraService.getQuestionsCount(QuoraQuestionAccountAction.ASKED).subscribe((rawAskedQuestionsCount: QuoraQuestionCount[]) => {
+              this._quoraService.getQuestionsCount(QuoraQuestionAccountAction.REQUESTED).subscribe((rawRequestedQuestionsCount: QuoraQuestionCount[]) => {
+                this._quoraService.getQuestionsCount(QuoraQuestionAccountAction.ASSIGNED).subscribe((rawAssignedQuestionsCount: QuoraQuestionCount[]) => {
+                  this._quoraService.getAskedQuestionsStats(true).subscribe((rawLastWeekAskedQuestionsStats: QuoraAskedQuestionStats[]) => {
+                    this._quoraService.getAskedQuestionsStats(false).subscribe((rawThisWeekAskedQuestionsStats: QuoraAskedQuestionStats[]) => {
+                      this.setAskedProgressBarValue(rawAskedQuestionsCount);
+                      this.setFromAnsweredAssignedRequestedCount(rawAnsweredQuestionsCount, rawAssignedQuestionsCount, rawRequestedQuestionsCount);
+                      this.setFromQuoraAccountStatsDetails(rawAccountStats);
+                      this.setFromQuoraAskedQuestionStats(rawLastWeekAskedQuestionsStats, rawThisWeekAskedQuestionsStats);
+                      this._httpRequestInterceptorService.displaySpinner(false);
+                      this.lastRefreshed = response;
+                    })
                   })
                 })
               })
@@ -309,6 +314,16 @@ export class QuoraSummaryComponent implements OnInit, OnDestroy, AfterViewInit {
     modalRef.componentInstance.bodyContentBeforeList = 'Please recheck the file you have uploaded!'
     modalRef.componentInstance.bodyContentList = bodyContentList;
     modalRef.componentInstance.bodyContentAfterList = 'Tip: Download the sample file again and fill it.'
+  }
+
+  refreshAllStats(): void {
+    this._httpRequestInterceptorService.displaySpinner(true);
+    this.subscription.add(
+      this._quoraService.refreshAllStats().subscribe((response: ExecutionLog) => {
+        this.lastRefreshed = response;
+        this._httpRequestInterceptorService.displaySpinner(false);
+      })
+    );
   }
 
 }
