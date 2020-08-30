@@ -11,6 +11,7 @@ import { ChartDetails } from 'src/app/shared/models/chart-details.model';
 import { TopCardDetails } from 'src/app/shared/models/topcard-details.model';
 import { NgbModal, NgbModalOptions } from '@ng-bootstrap/ng-bootstrap';
 import { ModalComponent } from 'src/app/shared/components/modal/modal.component';
+import { HttpRequestInterceptorService } from 'src/app/shared/services/http-request-interceptor.service';
 
 @Component({
   selector: 'app-quora-summary',
@@ -28,7 +29,6 @@ export class QuoraSummaryComponent implements OnInit, OnDestroy, AfterViewInit {
   updateChart: Subject<string> = new Subject<string>();
 
   fileToUpload: File = null;
-  @ViewChild('invalidFile') invalidFile: TemplateRef<any>;
 
   charts: ChartDetails[] = [new ChartDetails('Views', 'views-chart', false),
   new ChartDetails('Requested vs Answered Questions', 'requested-answered-chart', true)
@@ -48,7 +48,8 @@ export class QuoraSummaryComponent implements OnInit, OnDestroy, AfterViewInit {
 
   constructor(private _quoraService: QuoraService,
     private _headerService: HeaderService,
-    private _modalService: NgbModal) { }
+    private _modalService: NgbModal,
+    private _httpRequestInterceptorService: HttpRequestInterceptorService) { }
 
   ngOnInit(): void {
     this.charts[1].multipleTitles = ['Answered', 'Requested'];
@@ -98,6 +99,7 @@ export class QuoraSummaryComponent implements OnInit, OnDestroy, AfterViewInit {
   }
 
   loadData(): void {
+    this._httpRequestInterceptorService.displaySpinner(true);
     this.subscription.add(
       this._quoraService.getAccountStats().subscribe((rawAccountStats: QuoraAccountsStats[]) => {
         this._quoraService.getQuestionsCount(QuoraQuestionAccountAction.ANSWERED).subscribe((rawAnsweredQuestionsCount: QuoraQuestionCount[]) => {
@@ -110,6 +112,7 @@ export class QuoraSummaryComponent implements OnInit, OnDestroy, AfterViewInit {
                     this.setFromAnsweredAssignedRequestedCount(rawAnsweredQuestionsCount, rawAssignedQuestionsCount, rawRequestedQuestionsCount);
                     this.setFromQuoraAccountStatsDetails(rawAccountStats);
                     this.setFromQuoraAskedQuestionStats(rawLastWeekAskedQuestionsStats, rawThisWeekAskedQuestionsStats);
+                    this._httpRequestInterceptorService.displaySpinner(false);
                   })
                 })
               })

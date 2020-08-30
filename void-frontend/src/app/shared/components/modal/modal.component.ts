@@ -1,4 +1,5 @@
 import { Component, OnInit, Input } from '@angular/core';
+import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
 
 @Component({
   selector: 'app-modal',
@@ -7,15 +8,20 @@ import { Component, OnInit, Input } from '@angular/core';
 })
 export class ModalComponent implements OnInit {
 
+  @Input('isSpinner') isLoading: boolean = false;
   @Input('headerClass') headerClass: string = 'default';
   @Input('title') title: string = '';
   @Input('bodyContentBeforeList') bodyContentBeforeList: string = '';
   @Input('bodyContentList') bodyContentList: string[] = [];
-  @Input('bodyContentAfterList') bodyContentAfterList: string[] = [];
+  @Input('bodyContentAfterList') bodyContentAfterList: string = '';
 
-  constructor() { }
+  constructor(private _ngbActiveModal: NgbActiveModal) { }
 
   ngOnInit(): void {
+  }
+
+  close(result: any): void {
+    this._ngbActiveModal.close(result);
   }
 
 }

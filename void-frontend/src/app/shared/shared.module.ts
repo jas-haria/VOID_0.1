@@ -3,6 +3,7 @@ import { CommonModule } from '@angular/common';
 import { MatPaginatorModule } from "@angular/material/paginator";
 import { MatSortModule } from "@angular/material/sort";
 import { MatTableModule } from "@angular/material/table";
+import { MatProgressSpinnerModule } from '@angular/material/progress-spinner'
 import { TableComponent } from './components/table/table.component';
 import { NgbModule } from '@ng-bootstrap/ng-bootstrap';
 import { FooterComponent } from './components/footer/footer.component';
@@ -29,6 +30,7 @@ import { ModalComponent } from './components/modal/modal.component';
     MatPaginatorModule,
     MatSortModule,
     NgbModule,
+    MatProgressSpinnerModule
   ],
   exports: [
     TableComponent,

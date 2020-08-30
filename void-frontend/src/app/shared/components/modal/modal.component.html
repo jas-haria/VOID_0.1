@@ -2,20 +2,24 @@
     <div class="modal-content">
         <div class="modal-header alert-{{ headerClass }}">
             <p class="modal-title" id="modal-title-default">{{ title }}</p>
-            <button type="button" class="close" (click)="close(false)">
+            <button type="button" class="close" (click)="close('false')" *ngIf="!isLoading">
                 <span>×</span>
             </button>
         </div>
         <div class="modal-body">
-            <p>{{ bodyContentBeforeList }}</p>
-            <ul>
+            <p *ngIf="bodyContentBeforeList && bodyContentBeforeList.length>0">
+                {{ bodyContentBeforeList }}
+            </p>
+            <ul *ngIf="bodyContentList && bodyContentList.length>0">
                 <li *ngFor="let listItem of bodyContentList">{{ listItem }}</li>
             </ul>
-            <p>{{ bodyContentAfterList }}</p>
+            <p *ngIf="bodyContentAfterList && bodyContentAfterList.length>0">
+                {{ bodyContentAfterList }}
+            </p>
         </div>
-        <div class="modal-footer">
-            <button type="button" class="btn btn-outline-default  ml-auto"
-                (click)="close(false)">Close</button>
+        <div class="modal-footer" *ngIf="!isLoading">
+            <button type="button" class="btn btn-outline-default  ml-auto" 
+                (click)="close('false')">Close</button>
         </div>
     </div>
 </div>

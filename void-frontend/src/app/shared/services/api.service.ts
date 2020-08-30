@@ -1,5 +1,5 @@
 import { Injectable } from '@angular/core';
-import { HttpClient, HttpParams, HttpHeaders } from '@angular/common/http';
+import { HttpParams, HttpHeaders } from '@angular/common/http';
 
 @Injectable({
   providedIn: 'root'
@@ -29,9 +29,9 @@ export class ApiService {
 
   getHeadersToAvoidCache(): HttpHeaders {
     return new HttpHeaders({
-      'Cache-Control':  'no-cache, no-store, must-revalidate, post- check=0, pre-check=0',
+      'Cache-Control': 'no-cache, no-store, must-revalidate, post- check=0, pre-check=0',
       'Pragma': 'no-cache',
       'Expires': '0'
-  });
+    });
   }
 }
