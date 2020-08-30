@@ -9,6 +9,7 @@ import { QuoraQuestionAccountAction } from 'src/app/shared/models/enums/quora-qu
 import { QuoraQuestionCount } from 'src/app/shared/models/quora-question-count.model';
 import { ChartDetails } from 'src/app/shared/models/chart-details.model';
 import { TopCardDetails } from 'src/app/shared/models/topcard-details.model';
+import { HttpRequestInterceptorService } from 'src/app/shared/services/http-request-interceptor.service';
 
 
 @Component({
@@ -39,12 +40,14 @@ export class QuoraAccountComponent implements OnInit, OnDestroy, AfterViewInit {
 
   constructor(private _route: ActivatedRoute,
     private _headerService: HeaderService,
-    private _quoraService: QuoraService) { }
+    private _quoraService: QuoraService,
+    private _httpRequestInterceptorService: HttpRequestInterceptorService) { }
 
   ngOnInit(): void {
     this.createChartLabels();
     this.subscription.add(
       this._route.paramMap.subscribe(params => {
+        this._httpRequestInterceptorService.displaySpinner(true);
         this.refreshAllDisplayData();
         this._quoraService.getAccount(parseInt(params.get('id'))).subscribe((response: QuoraAccount) => {
           this.account = response;
@@ -98,6 +101,7 @@ export class QuoraAccountComponent implements OnInit, OnDestroy, AfterViewInit {
               this.setQuoraAccountStatsDetails(rawQuoraAccountStats);
               this.setRequestedChart(rawRequestedQuestionsCount);
               this.setAnswersTopCard(rawAnsweredQuestionsCount, rawAssignedQuestionsCount);
+              this._httpRequestInterceptorService.displaySpinner(false);
             })
           })
         })

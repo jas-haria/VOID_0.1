@@ -283,10 +283,12 @@ export class QuoraSummaryComponent implements OnInit, OnDestroy, AfterViewInit {
   uploadQuoraAskedQuestionsFile(): void {
     let formData = new FormData();
     formData.append('file', this.fileToUpload);
+    this._httpRequestInterceptorService.displaySpinner(true);
     this.subscription.add(
       this._quoraService.uploadQuoraAskedQuestionsFile(formData).subscribe((response: boolean) => {
         if (response) {
           this.fileToUpload = null;
+          this._httpRequestInterceptorService.displaySpinner(false);
         }
         else {
           this.showInvalidFilePopup('Invalid File Contents', ['Headers need to be exactly like in the sample file',

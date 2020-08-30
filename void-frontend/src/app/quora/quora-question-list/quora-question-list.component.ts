@@ -14,6 +14,7 @@ import { QuoraQuestionAccountAction } from 'src/app/shared/models/enums/quora-qu
 import { QuoraAskedQuestionStats } from 'src/app/shared/models/quora-asked-question-stats.model';
 import { HeaderService } from 'src/app/shared/services/header.service';
 import { QuoraAccount } from 'src/app/shared/models/quora-account.model';
+import { HttpRequestInterceptorService } from 'src/app/shared/services/http-request-interceptor.service';
 
 @Component({
   selector: 'app-quora-question-list',
@@ -54,9 +55,11 @@ export class QuoraQuestionListComponent implements OnInit, OnDestroy {
     private _router: Router,
     private _quoraService: QuoraService,
     private _divisionService: DivisionService,
-    private _headerService: HeaderService) { }
+    private _headerService: HeaderService,
+    private _httpRequestInterceptorService: HttpRequestInterceptorService) { }
 
   ngOnInit(): void {
+    this._httpRequestInterceptorService.displaySpinner(true);
     this.subscription.add(
       this._divisionService.getAllDivision().subscribe((response: Division[]) => {
         this.initialiseDivisions(response);
@@ -64,6 +67,7 @@ export class QuoraQuestionListComponent implements OnInit, OnDestroy {
         this._quoraService.getAccounts().subscribe((response: QuoraAccount[]) => {
           this.accountArray = response;
           this.setHeaderValue();
+          this._httpRequestInterceptorService.displaySpinner(false);
         })
       })
     )
@@ -94,6 +98,7 @@ export class QuoraQuestionListComponent implements OnInit, OnDestroy {
   }
 
   refreshDataSource(): void {
+    this._httpRequestInterceptorService.displaySpinner(true);
     this.clearSelect.next();
     this.selectedQuestions = [];
     this.subscription.add(
@@ -103,10 +108,12 @@ export class QuoraQuestionListComponent implements OnInit, OnDestroy {
             this.dataSource = response.content.map(question => this.mapQuestionForTable(question,
               stats.find((stat: QuoraAskedQuestionStats) => stat.question_id == question.id)
             ));
+            this._httpRequestInterceptorService.displaySpinner(false);
           })
         }
         else {
           this.dataSource = response.content.map(question => this.mapQuestionForTable(question, null));
+          this._httpRequestInterceptorService.displaySpinner(false);
         }
         this.totalLength = response.totalLength;
       })
