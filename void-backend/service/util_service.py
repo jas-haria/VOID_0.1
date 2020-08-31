@@ -14,10 +14,8 @@ def get_new_session():
     return Session()
 
 def get_driver():
-    print("get driver")
     options = Options()
     options.add_argument("--headless")
-    #return webdriver.Chrome(r"C:\Users\jasha\PycharmProjects\void\driver\chromedriver.exe", options=options)
     driver = webdriver.Chrome(ChromeDriverManager().install(), options=options)
     return driver
 
