@@ -1,4 +1,4 @@
-import { Component, OnInit, OnDestroy, AfterContentChecked, AfterViewInit } from '@angular/core';
+import { Component, OnInit, OnDestroy, AfterViewInit } from '@angular/core';
 import { HeaderService } from 'src/app/shared/services/header.service';
 import { ActivatedRoute } from '@angular/router';
 import { Subscription, Subject } from 'rxjs';
@@ -37,6 +37,7 @@ export class QuoraAccountComponent implements OnInit, OnDestroy, AfterViewInit {
     new TopCardDetails('Followers', 'fas fa-users', 'bg-yellow'),
     new TopCardDetails('Upvotes', 'fas fa-thumbs-up', 'bg-info')
   ];
+  followerTopCard: TopCardDetails =  new TopCardDetails('Total Followers', 'fas fa-user-secret', 'bg-dark')
 
   constructor(private _route: ActivatedRoute,
     private _headerService: HeaderService,
@@ -140,12 +141,12 @@ export class QuoraAccountComponent implements OnInit, OnDestroy, AfterViewInit {
       viewsChart[position] = viewsChart[position] + accountStats[i].view_count;
       if (position >= 23 && position <= 29) {
         viewsThisWeek = viewsThisWeek + accountStats[i].view_count;
-        upvotesThisWeek = upvotesThisWeek + accountStats[i].view_count;
+        upvotesThisWeek = upvotesThisWeek + accountStats[i].upvote_count;
         totalFollowsThisWeek = accountStats[i].total_followers > totalFollowsThisWeek ? accountStats[i].total_followers : totalFollowsThisWeek;
       }
       else if (position >= 16 && position <= 22) {
         viewsLastWeek = viewsLastWeek + accountStats[i].view_count;
-        upvotesLastWeek = upvotesLastWeek + accountStats[i].view_count;
+        upvotesLastWeek = upvotesLastWeek + accountStats[i].upvote_count;
         totalFollowsLastWeek = accountStats[i].total_followers > totalFollowsLastWeek ? accountStats[i].total_followers : totalFollowsLastWeek;
       }
       else if (position >= 9 && position <= 15) {
@@ -160,6 +161,7 @@ export class QuoraAccountComponent implements OnInit, OnDestroy, AfterViewInit {
         this.setBottomValues(totalFollowsThisWeek - totalFollowsLastWeek, totalFollowsLastWeek - totalFollowsWeekBeforeLast, this.topCards[2]);
         this.topCards[3].middleValue = upvotesThisWeek;
         this.setBottomValues(upvotesThisWeek, upvotesLastWeek, this.topCards[3]);
+        this.followerTopCard.middleValue = (totalFollowsThisWeek != 0 ? totalFollowsThisWeek: (totalFollowsLastWeek != 0 ? totalFollowsLastWeek : totalFollowsWeekBeforeLast)).toString();
       }
     }
   }

@@ -52,7 +52,7 @@ def refresh_asked_questions_stats():
 
 @app.route(base_url+'/refreshAccountStats', methods=['GET'])
 def refresh_accounts_stats():
-    return Response(json.dumps(quora_service.refresh_accounts_stats('week')), status=200, mimetype='application/json')
+    return Response(json.dumps(quora_service.refresh_accounts_stats()), status=200, mimetype='application/json')
 
 @app.route(base_url+'/pending-questions-excel', methods=['GET'])
 def generate_pending_questions_excel():

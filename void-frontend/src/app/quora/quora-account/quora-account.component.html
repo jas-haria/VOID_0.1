@@ -18,52 +18,56 @@
                 [createOrRecreate]="createOrRecreateChart.asObservable()" [update]="updateChart.asObservable()">
             </app-chart>
         </div>
-        <div class=" mb-5 col col-xl-3">
-            <div class="align-items-start">
-                1
-            </div>
-
-            <div class="align-items-center">
-                2
-            </div>
-
-            <div class="align-items-end">
-                3
-            </div>
-
-            <!-- <div class="mb-5" *ngFor="let topCard of topCards.slice(0,3)">
-                <div class="card card-stats mb-4 mb-xl-0">
-                    <div class="card-body">
-                        <div class="row">
-                            <div class="col">
-                                <h5 class="card-title text-uppercase text-muted mb-0">{{ topCard.title }}</h5>
-                                <span class="h2 font-weight-bold mb-0">{{ topCard.middleValue }}</span>
-                            </div>
-                            <div class="col-auto">
-                                <div class="icon icon-shape text-white rounded-circle shadow {{topCard.iconBgColor}}">
-                                    <i class="{{topCard.icon}}"></i>
-                                </div>
-                            </div>
-                        </div>
-                        <p class="mt-3 mb-0 text-muted text-sm">
-                            <span class="mr-2 {{topCard.bottomValueSuccess?'text-success':'text-danger'}}">
-                                <i class="fa {{topCard.bottomValueSuccess?'fa-arrow-up':'fa-arrow-down'}}"></i>
-                                {{ topCard.bottomValue }}
-                            </span>
-                            <span class="text-nowrap">since last week</span>
-                        </p>
-                    </div>
+        <div class="mb-5 col col-xl-4">
+            <app-top-card [topCard]="followerTopCard"></app-top-card>
+            <div class="card mt-4">
+                <div class="card-header">
+                    <span class="text-uppercase">External Actions</span>
                 </div>
-            </div> -->
-
+                <div class="card-body">
+                    <a class="btn w-100 mt-2" [disable]="(account?.link != 'unavailable')" target="_blank"
+                        [href]="account?.link"
+                        [ngClass]="(account?.link != 'unavailable')?'btn-outline-danger':'disable'">
+                        Visit Quora Account &nbsp;<i class="fab fa-quora"></i>
+                    </a>
+                    <div class="d-flex align-items-center justify-content-between">
+                        <button class="btn mt-2" [disable]="(account?.email != 'unavailable')"
+                            [cdkCopyToClipboard]="account?.email" placement="top" ngbTooltip="Copy to clipboard"
+                            [ngClass]="(account?.email != 'unavailable')?'btn-outline-danger':'disable'">
+                            Email &nbsp;<i class="fas fa-clipboard"></i>
+                        </button>
+                        <button class="btn mt-2" [disable]="(account?.password != 'unavailable')"
+                            [cdkCopyToClipboard]="account?.password" placement="top" ngbTooltip="Copy to clipboard"
+                            [ngClass]="(account?.password != 'unavailable')?'btn-outline-danger':'disable'">
+                            Account Password &nbsp;<i class="fas fa-clipboard"></i>
+                        </button>
+                    </div>
+                    <a class="btn w-100 mt-2" [disable]="(account?.email != 'unavailable')" target="_blank"
+                        [href]="(account?.email!='unavailable')?'mailto:'+account?.email:''"
+                        [ngClass]="(account?.email != 'unavailable')?'btn-outline-danger':'disable'">
+                        Send Mail &nbsp;<i class="fas fa-paper-plane"></i>
+                    </a>
+                </div>
+            </div>
+            <div class="card mt-2">
+                <div class="card-body">
+                    <a class="btn btn-outline-danger w-100" [routerLink]="'../../questions-list/requested/'+account?.id">
+                        Go to Questions &nbsp;<i class="fas fa-arrow-right"></i>
+                    </a>
+                </div>
+            </div>
         </div>
         <div class="mb-5 col-xl-8">
             <app-chart [chart]="charts[1]" [weekLabels]="weekLabels" [monthLabels]="monthLabels"
                 [createOrRecreate]="createOrRecreateChart.asObservable()" [update]="updateChart.asObservable()">
             </app-chart>
         </div>
-        <div class="mb-5 col-xl-3">
-            Container
+        <div class="mb-5 col-xl-4">
+            <div class="card w-100">
+                <div class="card-body">
+                    <span>Coming Soon...</span>
+                </div>
+            </div>
         </div>
     </div>
 </div>

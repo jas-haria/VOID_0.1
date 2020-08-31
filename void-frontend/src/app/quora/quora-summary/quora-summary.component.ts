@@ -115,8 +115,8 @@ export class QuoraSummaryComponent implements OnInit, OnDestroy, AfterViewInit {
                       this.setFromAnsweredAssignedRequestedCount(rawAnsweredQuestionsCount, rawAssignedQuestionsCount, rawRequestedQuestionsCount);
                       this.setFromQuoraAccountStatsDetails(rawAccountStats);
                       this.setFromQuoraAskedQuestionStats(rawLastWeekAskedQuestionsStats, rawThisWeekAskedQuestionsStats);
-                      this._httpRequestInterceptorService.displaySpinner(false);
                       this.lastRefreshed = response;
+                      this._httpRequestInterceptorService.displaySpinner(false);
                     })
                   })
                 })
@@ -223,9 +223,9 @@ export class QuoraSummaryComponent implements OnInit, OnDestroy, AfterViewInit {
         statDate.setHours(0, 0, 0, 0);
         let position = this.monthLongValueArray.indexOf(statDate.getTime());
         if (position >= 16 && position <= 22) {
-          viewsLastWeek = viewsLastWeek + lastWeekAskedStats[position].view_count;
-          followersLastWeek = followersLastWeek + lastWeekAskedStats[position].follower_count;
-          answersLastWeek = answersLastWeek + lastWeekAskedStats[position].answer_count;
+          viewsLastWeek = viewsLastWeek + lastWeekAskedStats[i].view_count;
+          followersLastWeek = followersLastWeek + lastWeekAskedStats[i].follower_count;
+          answersLastWeek = answersLastWeek + lastWeekAskedStats[i].answer_count;
         }
       }
       if (i < thisWeekAskedStats.length) {
@@ -233,9 +233,9 @@ export class QuoraSummaryComponent implements OnInit, OnDestroy, AfterViewInit {
         statDate.setHours(0, 0, 0, 0);
         let position = this.monthLongValueArray.indexOf(statDate.getTime());
         if (position >= 23 && position <= 29) {
-          viewsThisWeek = viewsThisWeek + thisWeekAskedStats[position].view_count;
-          followersThisWeek = followersThisWeek + thisWeekAskedStats[position].follower_count;
-          answersThisWeek = answersThisWeek + thisWeekAskedStats[position].answer_count;
+          viewsThisWeek = viewsThisWeek + thisWeekAskedStats[i].view_count;
+          followersThisWeek = followersThisWeek + thisWeekAskedStats[i].follower_count;
+          answersThisWeek = answersThisWeek + thisWeekAskedStats[i].answer_count;
         }
       }
       if (i == (combinedMaxLength - 1)) {

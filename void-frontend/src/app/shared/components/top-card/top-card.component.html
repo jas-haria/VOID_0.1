@@ -12,7 +12,7 @@
                 </div>
             </div>
         </div>
-        <p class="mt-3 mb-0 text-muted text-sm">
+        <p class="mt-3 mb-0 text-muted text-sm" *ngIf="topCard.bottomValue">
             <span class="mr-2 {{topCard.bottomValueSuccess?'text-success':'text-danger'}}">
                 <i class="fa {{topCard.bottomValueSuccess?'fa-arrow-up':'fa-arrow-down'}}"></i>
                 {{ topCard.bottomValue }}

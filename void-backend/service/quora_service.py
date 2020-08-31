@@ -134,7 +134,7 @@ def disregard_questions(question_ids_list):
 def update_qqad(question_ids_list, action, account_id):
     session = get_new_session()
     questions = session.query(QuoraQuestion).filter(QuoraQuestion.id.in_(question_ids_list)).all()
-    action_object = session.query(QuoraQuestionAccountActions).filter(QuoraQuestionAccountActions.action == action).first()
+    action_object = session.query(QuoraQuestionAccountActions).filter(QuoraQuestionAccountActions.action == QuoraQuestionAccountAction[action]).first()
     if action_object is not None:
         for question in questions:
             qqad = session.query(QuoraQuestionAccountDetails).filter(QuoraQuestionAccountDetails.question_id == question.id).filter(QuoraQuestionAccountDetails.account_id == account_id).first()
@@ -478,8 +478,8 @@ def get_quora_accounts_stats(account_id):
 
 def get_quora_questions_count(action, account_id):
     session = get_new_session()
-    action_object = session.query(QuoraQuestionAccountActions).filter(QuoraQuestionAccountActions.action.like(action)).first()
-    query = session.query(func.count(QuoraQuestionAccountDetails.account_id), QuoraQuestion.asked_on).join(QuoraQuestion).filter(QuoraQuestion.disregard is False)
+    action_object = session.query(QuoraQuestionAccountActions).filter(QuoraQuestionAccountActions.action == QuoraQuestionAccountAction[action]).first()
+    query = session.query(func.count(QuoraQuestionAccountDetails.question_id), QuoraQuestion.asked_on).join(QuoraQuestion).filter(QuoraQuestion.disregard.is_(False))
     if account_id is not None:
         query = query.filter(QuoraQuestionAccountDetails.account_id == account_id)
     details = query.filter(QuoraQuestionAccountDetails.action == action_object).filter(QuoraQuestion.asked_on > get_time_interval(TimePeriod.MONTH.value))\

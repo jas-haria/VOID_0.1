@@ -3,7 +3,6 @@ import { CommonModule } from '@angular/common';
 import { MatPaginatorModule } from "@angular/material/paginator";
 import { MatSortModule } from "@angular/material/sort";
 import { MatTableModule } from "@angular/material/table";
-import { MatProgressSpinnerModule } from '@angular/material/progress-spinner'
 import { TableComponent } from './components/table/table.component';
 import { NgbModule } from '@ng-bootstrap/ng-bootstrap';
 import { FooterComponent } from './components/footer/footer.component';
@@ -12,6 +11,7 @@ import { Sidebar2Component } from './components/sidebar2/sidebar2.component';
 import { ChartComponent } from './components/chart/chart.component';
 import { TopCardComponent } from './components/top-card/top-card.component';
 import { ModalComponent } from './components/modal/modal.component';
+import { ClipboardModule } from '@angular/cdk/clipboard';
 
 
 @NgModule({
@@ -30,7 +30,7 @@ import { ModalComponent } from './components/modal/modal.component';
     MatPaginatorModule,
     MatSortModule,
     NgbModule,
-    MatProgressSpinnerModule
+    ClipboardModule
   ],
   exports: [
     TableComponent,
@@ -40,7 +40,8 @@ import { ModalComponent } from './components/modal/modal.component';
     Sidebar2Component,
     ChartComponent,
     TopCardComponent,
-    ModalComponent
+    ModalComponent,
+    ClipboardModule
   ],
   providers: []
 })
