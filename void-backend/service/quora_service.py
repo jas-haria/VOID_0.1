@@ -10,7 +10,7 @@ import pandas
 from model.quora_model import Division, QuoraKeyword, QuoraQuestion, Script, QuoraAccount, ExecutionLog, \
     QuoraQuestionAccountDetails, QuoraQuestionAccountActions, QuoraAccountStats, QuoraAskedQuestionStats
 from model.enum import TimePeriod, QuoraQuestionAccountAction
-from service.util_service import get_new_session, scroll_to_bottom, get_driver, paginate, replace_all, convert_list_to_json, get_number_from_string
+from service.util_service import get_new_session, scroll_to_bottom, get_driver, paginate, replace_all, convert_list_to_json, get_number_from_string, get_time_interval
 
 LOAD_TIME = 3
 encoding = 'utf-8'
@@ -54,21 +54,6 @@ def refresh_data(time, put_todays_date):
     session.commit()
 
     return {}
-
-
-def get_time_interval(time):
-    timedelta_value = None
-    if time == TimePeriod.DAY.value:
-        timedelta_value = relativedelta(days=1)
-
-    if time == TimePeriod.WEEK.value:
-        timedelta_value = relativedelta(weeks=1)
-
-    if time == TimePeriod.MONTH.value:
-        timedelta_value = relativedelta(months=1)
-
-    # RETURNING AN EXTRA DAY IN CASE OF OVERLAPPING TIMEZONES
-    return datetime.now() - timedelta_value - relativedelta(days=1)
 
 def fill_missing_dates():
     session = get_new_session()
@@ -526,8 +511,8 @@ def upload_asked_questions(file):
         persisted_question = session.query(QuoraQuestion).filter(QuoraQuestion.question_url.like(row['Question Url'])).first()
         if persisted_question is None:
             persisted_question = QuoraQuestion()
-            persisted_question.question_url = row['Question Url']
-            persisted_question.question_text = replace_all(row['Question Url'], {'https:': '', 'www.': '', 'quora.com': '', 'unanswered/': '', '/': '', '-': ' '})
+            persisted_question.question_url = row['Question Url'].encode(encoding)
+            persisted_question.question_text = (replace_all(row['Question Url'], {'https:': '', 'www.': '', 'quora.com': '', 'unanswered/': '', '/': '', '-': ' '})).encode(encoding)
             persisted_question.asked_on = row['Asked On']
             persisted_question.division_id = row['Division'][row['Division'].index('(')+1: row['Division'].index(')')]
             session.add(persisted_question)
@@ -538,6 +523,17 @@ def upload_asked_questions(file):
         session.add(qqad)
     session.commit()
     return True
+
+def delete_old_data():
+    session = get_new_session()
+    two_month_period = datetime.now() - relativedelta(months=2)
+    question_ids = session.query(QuoraQuestion.id).filter(QuoraQuestion.asked_on < two_month_period).all()
+    session.query(QuoraAccountStats).filter(QuoraAccountStats.recorded_on < two_month_period).delete(synchronize_session=False)
+    session.query(QuoraAskedQuestionStats).filter(QuoraAskedQuestionStats.question_id.in_(question_ids)).delete(synchronize_session=False)
+    session.query(QuoraQuestionAccountDetails).filter(QuoraQuestionAccountDetails.question_id.in_(question_ids)).delete(synchronize_session=False)
+    session.query(QuoraQuestion).filter(QuoraQuestion.id.in_(question_ids)).delete(synchronize_session=False)
+    session.commit()
+    return {}
 
 def refresh_all_stats():
     session = get_new_session()
@@ -553,6 +549,7 @@ def refresh_all_stats():
     refresh_requested_questions()
     refresh_asked_questions_stats()
     refresh_accounts_stats()
+    delete_old_data()
 
     session.add(execution_log)
     session.commit()

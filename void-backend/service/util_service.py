@@ -4,11 +4,14 @@ import time
 from selenium import webdriver
 from selenium.webdriver.chrome.options import Options
 from webdriver_manager.chrome import ChromeDriverManager
+from dateutil.relativedelta import relativedelta
+from datetime import datetime
 
+from model.enum import TimePeriod
 
 
 def get_new_session():
-    engine = create_engine("mysql://root:rootroot@localhost/VOID_DEV")
+    engine = create_engine("mysql://root:rootroot@localhost/VOID_DEV?charset=utf8")
     engine.connect()
     Session = sessionmaker(bind=engine)
     return Session()
@@ -62,3 +65,17 @@ def get_number_from_string(num):
         num = float(num)*1000
 
     return num
+
+def get_time_interval(time):
+    timedelta_value = None
+    if time == TimePeriod.DAY.value:
+        timedelta_value = relativedelta(days=1)
+
+    if time == TimePeriod.WEEK.value:
+        timedelta_value = relativedelta(weeks=1)
+
+    if time == TimePeriod.MONTH.value:
+        timedelta_value = relativedelta(months=1)
+
+    # RETURNING AN EXTRA DAY IN CASE OF OVERLAPPING TIMEZONES
+    return datetime.now() - timedelta_value - relativedelta(days=1)
