@@ -66,9 +66,15 @@
             <div class="card mt-2">
                 <div class="card-body">
                     <span>{{ 'Refreshed at ' + lastRefreshed?.execution_time }} </span>
-                    <button class="btn w-100 mt-2 btn-outline-danger" (click)="refreshAllStats()">
-                        Refresh All Stats &nbsp;<i class="fas fa-sync"></i>
-                    </button>
+                    <div ngbDropdown placement="top" class="w-100">
+                        <button class="btn w-100 mt-2 btn-outline-danger" ngbDropdownToggle>
+                            Refresh All Stats &nbsp;<i class="fas fa-sync"></i>
+                        </button>
+                        <div ngbDropdownMenu class=" dropdown-menu-right dropdown-menu-arrow">
+                            <a class="dropdown-item" (click)="refreshAllStats()">This may take a (really long) while.
+                                Click here to proceed.</a>
+                        </div>
+                    </div>
                 </div>
             </div>
         </div>
