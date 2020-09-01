@@ -240,7 +240,7 @@ def refresh_accounts_data():
 # METHOD TO LOG INTO QUORA ACCOUNT
 def login_to_account(driver, account):
     driver.get("https://www.quora.com/")
-    form = driver.find_element_by_class_name('regular_login')
+    form = driver.find_element_by_class_name('inline_login_form')
     username = form.find_element_by_name('email')
     username.send_keys(account.email)
     password = form.find_element_by_name('password')
