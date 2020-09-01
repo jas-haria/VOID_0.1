@@ -11,7 +11,7 @@ from model.enum import TimePeriod
 
 
 def get_new_session():
-    engine = create_engine("mysql://root:rootroot@localhost/VOID_DEV?charset=utf8")
+    engine = create_engine("mysql://root:rootroot@localhost/VOID_DEV?charset=utf8mb4")
     engine.connect()
     Session = sessionmaker(bind=engine)
     return Session()

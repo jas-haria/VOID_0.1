@@ -542,15 +542,19 @@ def refresh_all_stats():
     if execution_log is None:
         execution_log = ExecutionLog()
         execution_log.script_id = script.id
-    execution_log.execution_time = datetime.now()
 
-    refresh_data(TimePeriod.WEEK.value, True)
+    if execution_log.execution_time is None or execution_log.execution_time < get_time_interval(TimePeriod.DAY.value):
+        refresh_data(TimePeriod.WEEK.value, True)
+    else:
+        refresh_data(TimePeriod.DAY.value, True)
+
     refresh_accounts_data()
     refresh_requested_questions()
     refresh_asked_questions_stats()
     refresh_accounts_stats()
     delete_old_data()
 
+    execution_log.execution_time = datetime.now()
     session.add(execution_log)
     session.commit()
     return execution_log._asdict()
