@@ -19,7 +19,7 @@ def get_new_session():
 def get_driver():
     options = Options()
     options.add_argument("--headless")
-    driver = webdriver.Chrome(ChromeDriverManager().install(), options=options)
+    driver = webdriver.Chrome(ChromeDriverManager().install())#, options=options)
     return driver
 
 def scroll_to_bottom(driver, SCROLL_PAUSE_TIME):
@@ -63,8 +63,11 @@ def get_number_from_string(num):
     if ('K' in num):
         num = num[0: num.index('K')]
         num = float(num)*1000
+    elif ('k' in num):
+        num = num[0: num.index('k')]
+        num = float(num)*1000
 
-    return num
+    return float(num)
 
 def get_time_interval(time):
     timedelta_value = None

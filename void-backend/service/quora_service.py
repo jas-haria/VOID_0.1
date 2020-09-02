@@ -181,6 +181,7 @@ def refresh_accounts_data():
     session = get_new_session()
     accounts = session.query(QuoraAccount).all()
     answered_action = session.query(QuoraQuestionAccountActions).filter(QuoraQuestionAccountActions.action == QuoraQuestionAccountAction.ANSWERED).first()
+    default_division = session.query(Division).filter(Division.division == 'Vidyalankar').first()
     driver = get_driver()
     for account in accounts:
         if account.link == 'unavailable':
@@ -207,15 +208,23 @@ def refresh_accounts_data():
                     question_link = ("https://www.quora.com"+k.get('href'))
                     #SAVE QUESTION AS ANSWERED IN DB (TO DO)
                     question = session.query(QuoraQuestion).filter(QuoraQuestion.question_url == question_link).first()
-                    if question is not None:
+                    if question is None:
+                        question = QuoraQuestion()
+                        question.question_url = question_link.encode(encoding)
+                        question.question_text = (replace_all(question_link,{'https:': '', 'www.': '', 'quora.com': '',  'unanswered/': '', '/': '', '-': ' '})).encode(encoding)
+                        question.asked_on = datetime.now().date()
+                        question.division = default_division
+                        session.add(question)
+                        qqad = QuoraQuestionAccountDetails()
+                    else:
                         qqad = session.query(QuoraQuestionAccountDetails).filter(QuoraQuestionAccountDetails.account == account).filter(QuoraQuestionAccountDetails.question == question)\
                             .filter(QuoraQuestionAccountDetails.action == answered_action).first()
-                        if qqad is None:
-                            qqad = QuoraQuestionAccountDetails()
-                            qqad.account = account
-                            qqad.question = question
-                            qqad.action = answered_action
-                            session.add(qqad)
+                    if qqad is None:
+                        qqad = QuoraQuestionAccountDetails()
+                        qqad.account = account
+                        qqad.question = question
+                        qqad.action = answered_action
+                        session.add(qqad)
         # GET FOLLOWERS COUNT
         count = 0
         for i in soup.findAll('div', attrs={'class': 'q-box qu-display--flex'}):
@@ -232,7 +241,6 @@ def refresh_accounts_data():
             count += 1
 
     driver.quit()
-    #REFRESH LAST EXECUTED DATE
     session.commit()
     return {}
 
@@ -341,7 +349,7 @@ def refresh_accounts_stats():
         stats_arrays_object = {}
         quora_account_stats_array = []
         for i in [[0, 'Views'], [1, 'Upvotes'], [2, 'Shares']]:
-            if int(stats_count[i[0]]) == 0:
+            if get_number_from_string(stats_count[i[0]]) == float(0):
                 continue
             if xaxis_dates.__len__() == 0:
                 xaxis_dates = get_qas_xaxis_dates(soup)
@@ -406,9 +414,14 @@ def get_qas_xaxis_dates(soup):
     return xaxis_dates
 
 def get_qas_graph_data(soup):
+    selected_graph = None
+    for i in soup.findAll('div', attrs={'class': 'stats_graph'}):
+        if 'hidden' not in i['class']:
+            selected_graph = i
+            break
     # GET YAXIS VALUES AND HEIGHT FOR 1
     yaxis_values = []
-    for i in soup.findAll('g', attrs={'style': 'opacity: 1;'}):
+    for i in selected_graph.findAll('g', attrs={'style': 'opacity: 1;'}):
         yaxis_value = {}
         yaxis_value['pixel'] = float(replace_all(i['transform'], {'translate(0,': '', ')': ''}))
         yaxis_value['number'] = float(i.get_text())
@@ -419,7 +432,7 @@ def get_qas_graph_data(soup):
                 yaxis_values[1]['number'] - yaxis_values[0]['number'])
     #GET VALUES FOR EACH DATE
     values = []
-    for i in soup.findAll('div', attrs={'class': 'rickshaw_graph'}):
+    for i in selected_graph.findAll('div', attrs={'class': 'rickshaw_graph'}):
         for j in i.findAll('rect'):
             values.append(round(float(j['height']) / height_for_one))
         break
