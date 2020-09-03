@@ -19,7 +19,7 @@ def get_new_session():
 def get_driver():
     options = Options()
     options.add_argument("--headless")
-    driver = webdriver.Chrome(ChromeDriverManager().install())#, options=options)
+    driver = webdriver.Chrome(ChromeDriverManager().install(), options=options)
     return driver
 
 def scroll_to_bottom(driver, SCROLL_PAUSE_TIME):

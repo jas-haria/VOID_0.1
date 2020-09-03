@@ -212,6 +212,8 @@ def refresh_accounts_data():
         for i in soup.findAll('div', attrs={'class': 'q-box qu-pt--medium qu-pb--medium'}):
             # GET ALL QUESTIONS NEWLY ANSWERED
             for k in i.findAll('a', attrs={'class': 'q-box qu-cursor--pointer qu-hover--textDecoration--underline'}):
+                if '/answer' in k.get('href'):
+                    continue
                 question_link = ("https://www.quora.com"+k.get('href'))
                 #SAVE QUESTION AS ANSWERED IN DB (TO DO)
                 question = session.query(QuoraQuestion).filter(QuoraQuestion.question_url == question_link).first()
