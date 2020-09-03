@@ -27,7 +27,8 @@ export class Sidebar2Component implements OnInit {
   ngOnInit(): void {
     this.subscription.add(
       this._quoraService.getAccounts().subscribe(response => {
-        this.quoraAccounts = response;
+        this.quoraAccounts = response.filter(account =>  account.email != 'unavailable');
+        this.quoraAccounts = [...this.quoraAccounts, response.find(account => account.email == 'unavailable')];
       })
     );
   }

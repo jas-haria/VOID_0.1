@@ -3,6 +3,9 @@ from bs4 import BeautifulSoup
 from datetime import datetime
 from dateutil.relativedelta import relativedelta
 from selenium.webdriver.common.keys import Keys
+from selenium.webdriver.common.by import By
+from selenium.webdriver.support.ui import WebDriverWait
+from selenium.webdriver.support import expected_conditions as EC
 import time
 import io
 import pandas
@@ -55,6 +58,7 @@ def refresh_data(time, put_todays_date):
 
     return {}
 
+#can be deleted, missing dates should be replaced by current date
 def fill_missing_dates():
     session = get_new_session()
     question_list = session.query(QuoraQuestion).filter_by(asked_on=None, disregard=False).all()
@@ -63,7 +67,6 @@ def fill_missing_dates():
     session.commit()
 
     return {}
-
 
 def fill_dates(question_list, put_todays_date, session):
     if put_todays_date:
@@ -176,7 +179,6 @@ def get_asked_questions_stats(question_ids, last_week):
     return convert_list_to_json(stats)
 
 # METHOD TO REFRESH QUESTIONS ANSWERED AND FOLLOWERS FOR EVERY ACCOUNT (WITHOUT LOGIN)
-#can be deleted, missing dates should be replaced by current date
 def refresh_accounts_data():
     session = get_new_session()
     accounts = session.query(QuoraAccount).all()
@@ -187,49 +189,54 @@ def refresh_accounts_data():
         if account.link == 'unavailable':
             continue
         driver.get(account.link)
-        scroll_to_bottom(driver, LOAD_TIME)
+        persisted_date = session.query(QuoraQuestion.asked_on).join(QuoraQuestionAccountDetails).filter(QuoraQuestionAccountDetails.account_id == account.id)\
+            .filter(QuoraQuestionAccountDetails.question_id == QuoraQuestion.id).order_by(desc(QuoraQuestion.asked_on)).first()
+
+        last_height = driver.execute_script("return document.body.scrollHeight")
+        while True:
+            driver.execute_script("window.scrollTo(0, document.body.scrollHeight);")
+            time.sleep(LOAD_TIME)
+            if persisted_date is not None:
+                dates = driver.find_elements_by_xpath("*//a[contains(@href, '/answer/" + account.link[account.link.rindex('/')+1: len(account.link)] + "')]")
+                last_date_string = replace_all(dates[-1].text, {"Answered": "", "Updated": ""})
+                last_date = datetime.strptime(last_date_string.strip(), '%B %d, %Y')
+                if last_date.date() < persisted_date[0]:
+                    break
+            new_height = driver.execute_script("return document.body.scrollHeight")
+            if new_height == last_height:
+                break
+            last_height = new_height
+
         soup = BeautifulSoup(driver.page_source, 'html.parser')
-        breakLoop = False
         # LOOP IDENTIFIES CLASS OF EVERY QUESTION
         for i in soup.findAll('div', attrs={'class': 'q-box qu-pt--medium qu-pb--medium'}):
-            if breakLoop:
-                break
-            # GET EACH QUESTION DATE
-            for j in i.findAll('div', attrs={'class': 'q-text qu-color--gray qu-fontSize--small qu-passColorToLinks qu-truncateLines--1'}):
-                date_string = replace_all(j.getText(), {"Answered": "", "Updated": ""})
-                date_of_answer = datetime.strptime(date_string.strip(), '%B %d, %Y')
-                #TAKING ONE EXTRA DAY BECAUSE QUESTIONS CAN BE ASKED ON DIFFERENT TIMES ON THE SAME DAY
-                # if date_of_answer < execution_log.execution_time - relativedelta(days=1):
-                #     breakLoop = True
-                #     break
-
-                # GET ALL QUESTIONS NEWLY ANSWERED
-                for k in i.findAll('a', attrs={'class': 'q-box qu-cursor--pointer qu-hover--textDecoration--underline'}):
-                    question_link = ("https://www.quora.com"+k.get('href'))
-                    #SAVE QUESTION AS ANSWERED IN DB (TO DO)
-                    question = session.query(QuoraQuestion).filter(QuoraQuestion.question_url == question_link).first()
-                    if question is None:
-                        question = QuoraQuestion()
-                        question.question_url = question_link.encode(encoding)
-                        question.question_text = (replace_all(question_link,{'https:': '', 'www.': '', 'quora.com': '',  'unanswered/': '', '/': '', '-': ' '})).encode(encoding)
-                        question.asked_on = datetime.now().date()
-                        question.division = default_division
-                        session.add(question)
-                        qqad = QuoraQuestionAccountDetails()
-                    else:
-                        qqad = session.query(QuoraQuestionAccountDetails).filter(QuoraQuestionAccountDetails.account == account).filter(QuoraQuestionAccountDetails.question == question)\
-                            .filter(QuoraQuestionAccountDetails.action == answered_action).first()
-                    if qqad is None:
-                        qqad = QuoraQuestionAccountDetails()
-                        qqad.account = account
-                        qqad.question = question
-                        qqad.action = answered_action
-                        session.add(qqad)
+            # GET ALL QUESTIONS NEWLY ANSWERED
+            for k in i.findAll('a', attrs={'class': 'q-box qu-cursor--pointer qu-hover--textDecoration--underline'}):
+                question_link = ("https://www.quora.com"+k.get('href'))
+                #SAVE QUESTION AS ANSWERED IN DB (TO DO)
+                question = session.query(QuoraQuestion).filter(QuoraQuestion.question_url == question_link).first()
+                if question is None:
+                    question = QuoraQuestion()
+                    question.question_url = question_link.encode(encoding)
+                    question.question_text = (replace_all(question_link,{'https:': '', 'www.': '', 'quora.com': '',  'unanswered/': '', '/': '', '-': ' '})).encode(encoding)
+                    question.asked_on = datetime.now().date()
+                    question.division = default_division
+                    session.add(question)
+                    qqad = QuoraQuestionAccountDetails()
+                else:
+                    qqad = session.query(QuoraQuestionAccountDetails).filter(QuoraQuestionAccountDetails.account == account).filter(QuoraQuestionAccountDetails.question == question)\
+                        .filter(QuoraQuestionAccountDetails.action == answered_action).first()
+                if qqad is None:
+                    qqad = QuoraQuestionAccountDetails()
+                    qqad.account = account
+                    qqad.question = question
+                    qqad.action = answered_action
+                    session.add(qqad)
         # GET FOLLOWERS COUNT
         count = 0
         for i in soup.findAll('div', attrs={'class': 'q-box qu-display--flex'}):
             if count == 4:
-                follower_count = replace_all(i.getText(), {"Follower": "", "s": ""})
+                follower_count = get_number_from_string(replace_all(i.getText(), {"Follower": "", "s": ""}))
                 follower_count_object = session.query(QuoraAccountStats).filter(QuoraAccountStats.recorded_on == datetime.now().date()).filter(QuoraAccountStats.account_id == account.id).first()
                 if follower_count_object is None:
                     follower_count_object = QuoraAccountStats()
@@ -248,10 +255,10 @@ def refresh_accounts_data():
 # METHOD TO LOG INTO QUORA ACCOUNT
 def login_to_account(driver, account):
     driver.get("https://www.quora.com/")
-    form = driver.find_element_by_class_name('inline_login_form')
-    username = form.find_element_by_name('email')
+    wait = WebDriverWait(driver, 3)
+    username = wait.until(EC.visibility_of_element_located((By.XPATH, "//input[contains(@placeholder, 'mail')]")))
     username.send_keys(account.email)
-    password = form.find_element_by_name('password')
+    password = driver.find_element_by_xpath("*//input[contains(@placeholder, 'assword')]")
     password.send_keys(account.password)
     password.send_keys(Keys.RETURN)
     time.sleep(LOAD_TIME)
@@ -424,7 +431,7 @@ def get_qas_graph_data(soup):
     for i in selected_graph.findAll('g', attrs={'style': 'opacity: 1;'}):
         yaxis_value = {}
         yaxis_value['pixel'] = float(replace_all(i['transform'], {'translate(0,': '', ')': ''}))
-        yaxis_value['number'] = float(i.get_text())
+        yaxis_value['number'] = get_number_from_string(i.get_text())
         if yaxis_values.__len__() == 2:
             break
         yaxis_values.append(yaxis_value)

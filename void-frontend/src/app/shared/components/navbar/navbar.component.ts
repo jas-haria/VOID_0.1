@@ -12,19 +12,13 @@ export class NavbarComponent implements OnInit {
   
   title: string = this._headerService.getHeaderValue();
 
-  constructor(private _location: Location,
-    private _headerService: HeaderService) {
+  constructor(private _headerService: HeaderService) {
   }
 
   ngOnInit() {
     this._headerService.getHeaderObservable().subscribe((header: string) => {
       this.title = header;
     });
-  }
-  
-
-  goBack(): void {
-    this._location.back();
   }
 
 }
