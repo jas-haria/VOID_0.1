@@ -21,8 +21,7 @@
 <div class="row mt-2">
     <div class="col-6">
         <div class="btn-group float-left" *ngIf="accountId">
-            <button *ngFor="let type of typeDisplayArray" class="btn"
-                (click)="modifySelectedType(type)"
+            <button *ngFor="let type of typeDisplayArray" class="btn" (click)="modifySelectedType(type)"
                 [ngClass]="type==selectedType? 'btn-danger': 'btn-outline-danger'">
                 {{ type.substring(0,1).toUpperCase() + type.substring(1,type.length).toLowerCase() }}
             </button>
@@ -54,11 +53,25 @@
         </div>
     </div>
     <div class="col-2">
-        <button class="btn float-right" [ngClass]="selectedQuestions?.length>0? 'btn-outline-default': 'disabled'"
-            [disabled]="selectedQuestions?.length==0" (click)="disregardSelectedQuestions()">
-            <span>{{ 'Delete '+ selectedQuestions.length + ' Question' +  (selectedQuestions.length!=1? 's': '')}}</span>&nbsp;<i
-                class="fas fa-trash-alt" style="vertical-align:middle;"></i>
-        </button>
+        <div *ngIf="['NEW','ASKED','REQUESTED','ANSWERED'].includes(selectedType)" class="float-right">
+            <button class="btn" [ngClass]="selectedQuestions?.length>0? 'btn-outline-default': 'disabled'"
+                [disabled]="selectedQuestions?.length==0" (click)="disregardSelectedQuestions()">
+                <span>{{ 'Delete '+ selectedQuestions.length + ' Question' +  (selectedQuestions.length!=1? 's': '')}}</span>&nbsp;<i
+                    class="fas fa-trash-alt" style="vertical-align:middle;"></i>
+            </button>
+        </div>
+        <div *ngIf="selectedType=='ASSIGNED'" class="float-right">
+            <button class="btn" [ngClass]="selectedQuestions?.length>0? 'btn-outline-default': 'disabled'"
+                [disabled]="selectedQuestions?.length==0" (click)="revertActionOnSelectedQuestions(accountId, 'ASSIGNED')">
+                <span>{{ 'Unassign '+ selectedQuestions.length + ' Question' +  (selectedQuestions.length!=1? 's': '')}}</span>
+            </button>
+        </div>
+        <div *ngIf="selectedType=='EVALUATED'" class="float-right">
+            <button class="btn" [ngClass]="selectedQuestions?.length>0? 'btn-outline-default': 'disabled'"
+                [disabled]="selectedQuestions?.length==0" (click)="revertActionOnSelectedQuestions(accountId, 'EVALUATED')">
+                <span>{{ 'Unevaluate '+ selectedQuestions.length + ' Question' +  (selectedQuestions.length!=1? 's': '')}}</span>
+            </button>
+        </div>
     </div>
 </div>
 

@@ -42,6 +42,15 @@ export class QuoraService {
       { params: this._apiService.getParameters(parameters) });
   }
 
+  deleteQuestionAndAccountAction(questionIds: number[], action: QuoraQuestionAccountAction, accountId: number): Observable<any> {
+    let parameters = {};
+    parameters['questionIds'] = questionIds;
+    parameters['action'] = action;
+    parameters['accountId'] = accountId;
+    return this._http.delete<any>(this._apiService.getBackendUrl() + '/quora/update',
+      { params: this._apiService.getParameters(parameters) });
+  }
+
   disregardQuestion(questionIds: number[]): Observable<any> {
     let parameters = {};
     parameters['questionIds'] = questionIds;

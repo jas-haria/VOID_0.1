@@ -255,7 +255,7 @@ export class QuoraQuestionListComponent implements OnInit, OnDestroy {
   }
 
   downloadAssignedQuestions(accountId: number): void {
-    let account = this.accountArray.find(account => accountId==account.id);
+    let account = this.accountArray.find(account => accountId == account.id);
     let filename = "quora_" + account.first_name + "_" + account.last_name + "_" + formatDate(new Date(), 'dd-MMM-hh-mm-a', 'en-US');
     this.subscription.add(
       this._quoraService.downloadPendingQuestionsExcel(accountId).subscribe(data => {
@@ -279,6 +279,12 @@ export class QuoraQuestionListComponent implements OnInit, OnDestroy {
   modifySelectedType(type: QuoraQuestionAccountAction): void {
     this.selectedType = type;
     this.refreshPage();
+  }
+
+  revertActionOnSelectedQuestions(accountId: number, action: QuoraQuestionAccountAction): void {
+    this._quoraService.deleteQuestionAndAccountAction(this.getIdsFromArray(this.selectedQuestions), action, accountId).subscribe(response => {
+      this.refreshDataSource();
+    });
   }
 
 }

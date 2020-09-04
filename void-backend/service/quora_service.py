@@ -125,13 +125,19 @@ def update_qqad(question_ids_list, action, account_id):
     action_object = session.query(QuoraQuestionAccountActions).filter(QuoraQuestionAccountActions.action == QuoraQuestionAccountAction[action]).first()
     if action_object is not None:
         for question in questions:
-            qqad = session.query(QuoraQuestionAccountDetails).filter(QuoraQuestionAccountDetails.question_id == question.id).filter(QuoraQuestionAccountDetails.account_id == account_id).first()
-            if qqad is None:
-                qqad = QuoraQuestionAccountDetails()
-                qqad.question_id = question.id
-                qqad.account_id = account_id
+            qqad = QuoraQuestionAccountDetails()
+            qqad.question_id = question.id
+            qqad.account_id = account_id
             qqad.action = action_object
             session.add(qqad)
+    session.commit()
+    return {}
+
+def delete_qqad(question_ids_list, action, account_id):
+    session = get_new_session()
+    action_object = session.query(QuoraQuestionAccountActions).filter(QuoraQuestionAccountActions.action == QuoraQuestionAccountAction[action]).first()
+    session.query(QuoraQuestionAccountDetails).filter(QuoraQuestionAccountDetails.question_id.in_(question_ids_list)).filter(QuoraQuestionAccountDetails.account_id == account_id)\
+        .filter(QuoraQuestionAccountDetails.action == action_object).delete(synchronize_session=False)
     session.commit()
     return {}
 
