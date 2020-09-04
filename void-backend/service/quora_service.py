@@ -179,7 +179,7 @@ def get_asked_questions_stats(question_ids, last_week):
     return convert_list_to_json(stats)
 
 # METHOD TO REFRESH QUESTIONS ANSWERED AND FOLLOWERS FOR EVERY ACCOUNT (WITHOUT LOGIN)
-def refresh_accounts_data():
+def refresh_accounts_data(capture_all = False):
     session = get_new_session()
     accounts = session.query(QuoraAccount).all()
     answered_action = session.query(QuoraQuestionAccountActions).filter(QuoraQuestionAccountActions.action == QuoraQuestionAccountAction.ANSWERED).first()
@@ -189,23 +189,24 @@ def refresh_accounts_data():
         if account.link == 'unavailable':
             continue
         driver.get(account.link)
-        persisted_date = session.query(QuoraQuestion.asked_on).join(QuoraQuestionAccountDetails).filter(QuoraQuestionAccountDetails.account_id == account.id)\
-            .filter(QuoraQuestionAccountDetails.question_id == QuoraQuestion.id).order_by(desc(QuoraQuestion.asked_on)).first()
-
-        last_height = driver.execute_script("return document.body.scrollHeight")
-        while True:
-            driver.execute_script("window.scrollTo(0, document.body.scrollHeight);")
-            time.sleep(LOAD_TIME)
-            if persisted_date is not None:
+        persisted_date = session.query(QuoraQuestion.asked_on).join(QuoraQuestionAccountDetails).filter(QuoraQuestionAccountDetails.account_id == account.id) \
+            .filter(QuoraQuestionAccountDetails.question_id == QuoraQuestion.id).filter(QuoraQuestionAccountDetails.action ==answered_action).order_by(desc(QuoraQuestion.asked_on)).first()
+        if capture_all is True or persisted_date is None or len(persisted_date) == 0:
+            scroll_to_bottom(driver, LOAD_TIME)
+        else:
+            last_height = driver.execute_script("return document.body.scrollHeight")
+            while True:
+                driver.execute_script("window.scrollTo(0, document.body.scrollHeight);")
+                time.sleep(LOAD_TIME)
                 dates = driver.find_elements_by_xpath("*//a[contains(@href, '/answer/" + account.link[account.link.rindex('/')+1: len(account.link)] + "')]")
                 last_date_string = replace_all(dates[-1].text, {"Answered": "", "Updated": ""})
                 last_date = datetime.strptime(last_date_string.strip(), '%B %d, %Y')
                 if last_date.date() < persisted_date[0]:
                     break
-            new_height = driver.execute_script("return document.body.scrollHeight")
-            if new_height == last_height:
-                break
-            last_height = new_height
+                new_height = driver.execute_script("return document.body.scrollHeight")
+                if new_height == last_height:
+                    break
+                last_height = new_height
 
         soup = BeautifulSoup(driver.page_source, 'html.parser')
         # LOOP IDENTIFIES CLASS OF EVERY QUESTION
@@ -570,7 +571,11 @@ def refresh_all_stats():
     else:
         refresh_data(TimePeriod.DAY.value, True)
 
-    refresh_accounts_data()
+    if execution_log.execution_time is None:
+        refresh_accounts_data(True)
+    else:
+        refresh_accounts_data(False)
+
     refresh_requested_questions()
     refresh_asked_questions_stats()
     refresh_accounts_stats()
