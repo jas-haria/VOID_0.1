@@ -29,7 +29,7 @@ export class QuoraAccountComponent implements OnInit, OnDestroy, AfterViewInit {
   updateChart: Subject<string> = new Subject<string>();
 
   charts: ChartDetails[] = [new ChartDetails('Views', 'views-chart', false),
-  new ChartDetails('Requested Questions', 'requested-questions-chart', false)];
+  new ChartDetails('Requested vs Answered Questions', 'requested-answered-chart', true)];
 
   topCards: any[] = [
     new TopCardDetails('Views', 'fas fa-eye', 'bg-danger'),
@@ -37,7 +37,7 @@ export class QuoraAccountComponent implements OnInit, OnDestroy, AfterViewInit {
     new TopCardDetails('Followers', 'fas fa-users', 'bg-yellow'),
     new TopCardDetails('Upvotes', 'fas fa-thumbs-up', 'bg-info')
   ];
-  followerTopCard: TopCardDetails =  new TopCardDetails('Total Followers', 'fas fa-user-secret', 'bg-dark')
+  followerTopCard: TopCardDetails = new TopCardDetails('Total Followers', 'fas fa-user-secret', 'bg-dark')
 
   constructor(private _route: ActivatedRoute,
     private _headerService: HeaderService,
@@ -46,6 +46,7 @@ export class QuoraAccountComponent implements OnInit, OnDestroy, AfterViewInit {
 
   ngOnInit(): void {
     this.createChartLabels();
+    this.charts[1].multipleTitles = ['Answered', 'Requested'];
     this.subscription.add(
       this._route.paramMap.subscribe(params => {
         this._httpRequestInterceptorService.displaySpinner(true);
@@ -105,7 +106,7 @@ export class QuoraAccountComponent implements OnInit, OnDestroy, AfterViewInit {
           this._quoraService.getQuestionsCount(QuoraQuestionAccountAction.ANSWERED, this.account.id).subscribe((rawAnsweredQuestionsCount: QuoraQuestionCount[]) => {
             this._quoraService.getQuestionsCount(QuoraQuestionAccountAction.ASSIGNED, this.account.id).subscribe((rawAssignedQuestionsCount: QuoraQuestionCount[]) => {
               this.setQuoraAccountStatsDetails(rawQuoraAccountStats);
-              this.setRequestedChart(rawRequestedQuestionsCount);
+              this.setAnsweredRequestedGraph(rawAnsweredQuestionsCount, rawRequestedQuestionsCount);
               this.setAnswersTopCard(rawAnsweredQuestionsCount, rawAssignedQuestionsCount);
               this._httpRequestInterceptorService.displaySpinner(false);
             })
@@ -135,6 +136,22 @@ export class QuoraAccountComponent implements OnInit, OnDestroy, AfterViewInit {
     }
   }
 
+  setAnsweredRequestedGraph(answered: QuoraQuestionCount[], requestedCount: QuoraQuestionCount[]): void {
+    let answeredCountChart = this.getArrayOfZeros(30);
+    for (let i = 0; i < answered.length; i++) {
+      let countDate = new Date(answered[i].date);
+      countDate.setHours(0, 0, 0, 0);
+      let position = this.monthLongValueArray.indexOf(countDate.getTime());
+      if (position != -1) {
+        answeredCountChart[position] = answeredCountChart[position] + answered[i].count;
+      }
+      if (i == answered.length - 1) {
+        this.charts[1].data[0] = answeredCountChart;
+        this.setRequestedGraphValues(requestedCount);
+      }
+    }
+  }
+
   setQuoraAccountStatsDetails(accountStats: QuoraAccountsStats[]): void {
     let viewsThisWeek = 0, totalFollowsThisWeek = 0, upvotesThisWeek = 0, viewsLastWeek = 0, totalFollowsLastWeek = 0, upvotesLastWeek = 0, totalFollowsWeekBeforeLast = 0;
     let viewsChart = this.getArrayOfZeros(30);
@@ -143,19 +160,21 @@ export class QuoraAccountComponent implements OnInit, OnDestroy, AfterViewInit {
       statDate.setHours(0, 0, 0, 0);
       let statDateTime = statDate.getTime();
       let position = this.monthLongValueArray.indexOf(statDateTime);
-      viewsChart[position] = viewsChart[position] + accountStats[i].view_count;
-      if (position >= 23 && position <= 29) {
-        viewsThisWeek = viewsThisWeek + accountStats[i].view_count;
-        upvotesThisWeek = upvotesThisWeek + accountStats[i].upvote_count;
-        totalFollowsThisWeek = accountStats[i].total_followers > totalFollowsThisWeek ? accountStats[i].total_followers : totalFollowsThisWeek;
-      }
-      else if (position >= 16 && position <= 22) {
-        viewsLastWeek = viewsLastWeek + accountStats[i].view_count;
-        upvotesLastWeek = upvotesLastWeek + accountStats[i].upvote_count;
-        totalFollowsLastWeek = accountStats[i].total_followers > totalFollowsLastWeek ? accountStats[i].total_followers : totalFollowsLastWeek;
-      }
-      else if (position >= 9 && position <= 15) {
-        totalFollowsWeekBeforeLast = accountStats[i].total_followers > totalFollowsWeekBeforeLast ? accountStats[i].total_followers : totalFollowsWeekBeforeLast;
+      if (position != -1) {
+        viewsChart[position] = viewsChart[position] + accountStats[i].view_count;
+        if (position >= 23 && position <= 29) {
+          viewsThisWeek = viewsThisWeek + accountStats[i].view_count;
+          upvotesThisWeek = upvotesThisWeek + accountStats[i].upvote_count;
+          totalFollowsThisWeek = accountStats[i].total_followers > totalFollowsThisWeek ? accountStats[i].total_followers : totalFollowsThisWeek;
+        }
+        else if (position >= 16 && position <= 22) {
+          viewsLastWeek = viewsLastWeek + accountStats[i].view_count;
+          upvotesLastWeek = upvotesLastWeek + accountStats[i].upvote_count;
+          totalFollowsLastWeek = accountStats[i].total_followers > totalFollowsLastWeek ? accountStats[i].total_followers : totalFollowsLastWeek;
+        }
+        else if (position >= 9 && position <= 15) {
+          totalFollowsWeekBeforeLast = accountStats[i].total_followers > totalFollowsWeekBeforeLast ? accountStats[i].total_followers : totalFollowsWeekBeforeLast;
+        }
       }
       if (i == accountStats.length - 1) {
         this.charts[0].data = viewsChart;
@@ -166,12 +185,12 @@ export class QuoraAccountComponent implements OnInit, OnDestroy, AfterViewInit {
         this.setBottomValues(totalFollowsThisWeek - totalFollowsLastWeek, totalFollowsLastWeek - totalFollowsWeekBeforeLast, this.topCards[2]);
         this.topCards[3].middleValue = upvotesThisWeek;
         this.setBottomValues(upvotesThisWeek, upvotesLastWeek, this.topCards[3]);
-        this.followerTopCard.middleValue = (totalFollowsThisWeek != 0 ? totalFollowsThisWeek: (totalFollowsLastWeek != 0 ? totalFollowsLastWeek : totalFollowsWeekBeforeLast)).toString();
+        this.followerTopCard.middleValue = (totalFollowsThisWeek != 0 ? totalFollowsThisWeek : (totalFollowsLastWeek != 0 ? totalFollowsLastWeek : totalFollowsWeekBeforeLast)).toString();
       }
     }
   }
 
-  setRequestedChart(rawRequestedQuestionsCount: QuoraQuestionCount[]): void {
+  setRequestedGraphValues(rawRequestedQuestionsCount: QuoraQuestionCount[]): void {
     let requestsChart = this.getArrayOfZeros(30);
     for (let i = 0; i < rawRequestedQuestionsCount.length; i++) {
       let questionCountDate = new Date(rawRequestedQuestionsCount[i].date);
@@ -181,7 +200,7 @@ export class QuoraAccountComponent implements OnInit, OnDestroy, AfterViewInit {
         requestsChart[position] = requestsChart[position] + rawRequestedQuestionsCount[i].count;
       }
       if (i == (rawRequestedQuestionsCount.length - 1)) {
-        this.charts[1].data = requestsChart;
+        this.charts[1].data[1] = requestsChart;
         this.updateChart.next(this.charts[1].name);
       }
     }

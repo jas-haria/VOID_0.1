@@ -32,8 +32,8 @@ export class QuoraSummaryComponent implements OnInit, OnDestroy, AfterViewInit {
 
   fileToUpload: File = null;
 
-  charts: ChartDetails[] = [new ChartDetails('Views', 'views-chart', false),
-  new ChartDetails('Requested vs Answered Questions', 'requested-answered-chart', true)
+  charts: ChartDetails[] = [new ChartDetails('Views', 'views-chart-summary', false),
+  new ChartDetails('Requested vs Answered Questions', 'requested-answered-chart-summary', true)
   ];
 
   topCards: any[] = [
@@ -161,10 +161,12 @@ export class QuoraSummaryComponent implements OnInit, OnDestroy, AfterViewInit {
       let countDate = new Date(answered[i].date);
       countDate.setHours(0, 0, 0, 0);
       let position = this.monthLongValueArray.indexOf(countDate.getTime());
-      if (position >= 23 && position <= 29) {
-        answeredWeeklyCount = answeredWeeklyCount + answered[i].count;
+      if (position != -1) {
+        if (position >= 23 && position <= 29) {
+          answeredWeeklyCount = answeredWeeklyCount + answered[i].count;
+        }
+        answeredCountChart[position] = answeredCountChart[position] + answered[i].count;
       }
-      answeredCountChart[position] = answeredCountChart[position] + answered[i].count;
       if (i == answered.length - 1) {
         this.progressBars[0].value = (answeredWeeklyCount > assignedWeeklyCount) ? 100 : (answeredWeeklyCount / assignedWeeklyCount) * 100;
         this.progressBars[0].message = answeredWeeklyCount + '/' + assignedWeeklyCount;
@@ -198,12 +200,14 @@ export class QuoraSummaryComponent implements OnInit, OnDestroy, AfterViewInit {
       statDate.setHours(0, 0, 0, 0);
       let statDateTime = statDate.getTime();
       let position = this.monthLongValueArray.indexOf(statDateTime);
-      viewsChart[position] = viewsChart[position] + accountStats[i].view_count;
-      if (position >= 23 && position <= 29) {
-        viewsThisWeek = viewsThisWeek + accountStats[i].view_count;
-      }
-      else if (position >= 16 && position <= 22) {
-        viewsLastWeek = viewsLastWeek + accountStats[i].view_count;
+      if (position != -1) {
+        viewsChart[position] = viewsChart[position] + accountStats[i].view_count;
+        if (position >= 23 && position <= 29) {
+          viewsThisWeek = viewsThisWeek + accountStats[i].view_count;
+        }
+        else if (position >= 16 && position <= 22) {
+          viewsLastWeek = viewsLastWeek + accountStats[i].view_count;
+        }
       }
       if (i == accountStats.length - 1) {
         this.charts[0].data = viewsChart;
