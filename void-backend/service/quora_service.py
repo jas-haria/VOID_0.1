@@ -110,8 +110,6 @@ def fill_dates(question_list, put_todays_date, session):
 
 def disregard_questions(question_ids_list):
     session = get_new_session()
-    #session.query(QuoraQuestion).filter(QuoraQuestion.id.in_(question_ids_list)).delete(synchronize_session=False)
-    #session.query(QuoraQuestion).filter(QuoraQuestion.id.in_(question_ids_list)).update({QuoraQuestion.disregard: True}, synchronize_session=False)
     questions = session.query(QuoraQuestion).filter(QuoraQuestion.id.in_(question_ids_list)).all()
     for question in questions:
         question.disregard = True
@@ -218,10 +216,10 @@ def refresh_accounts_data(capture_all = False):
         # LOOP IDENTIFIES CLASS OF EVERY QUESTION
         for i in soup.findAll('div', attrs={'class': 'q-box qu-pt--medium qu-pb--medium'}):
             # GET ALL QUESTIONS NEWLY ANSWERED
-            for k in i.findAll('a', attrs={'class': 'q-box qu-cursor--pointer qu-hover--textDecoration--underline'}):
+            for k in i.findAll('a', attrs={'class': 'q-box qu-cursor--pointer qu-hover--textDecoration--underline', 'target': '_top'}):
+                question_link = ("https://www.quora.com" + k.get('href'))
                 if '/answer' in k.get('href'):
-                    continue
-                question_link = ("https://www.quora.com"+k.get('href'))
+                    question_link = question_link[0: question_link.index('/answer')]
                 #SAVE QUESTION AS ANSWERED IN DB (TO DO)
                 question = session.query(QuoraQuestion).filter(QuoraQuestion.question_url == question_link).first()
                 if question is None:
