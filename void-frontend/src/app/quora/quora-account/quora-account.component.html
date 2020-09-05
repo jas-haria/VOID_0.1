@@ -30,15 +30,17 @@
                         [ngClass]="(account?.link != 'unavailable')?'btn-outline-danger':'disable'">
                         Visit Quora Account &nbsp;<i class="fab fa-quora"></i>
                     </a>
-                    <div class="d-flex align-items-center justify-content-between">
-                        <button class="btn mt-2" [disable]="(account?.email != 'unavailable')"
+                    <div class="row mt-2 mx-0">
+                        <button class="btn col" [disable]="(account?.email != 'unavailable')"
                             [cdkCopyToClipboard]="account?.email" placement="top" ngbTooltip="Copy to clipboard"
-                            [ngClass]="(account?.email != 'unavailable')?'btn-outline-danger':'disable'">
+                            [ngClass]="(account?.email != 'unavailable')?'btn-outline-danger':'disable'"
+                            #emailTooltip="ngbTooltip" (click)="emailTooltip.close()">
                             Email &nbsp;<i class="fas fa-clipboard"></i>
                         </button>
-                        <button class="btn mt-2" [disable]="(account?.password != 'unavailable')"
+                        <button class="btn col" [disable]="(account?.password != 'unavailable')"
                             [cdkCopyToClipboard]="account?.password" placement="top" ngbTooltip="Copy to clipboard"
-                            [ngClass]="(account?.password != 'unavailable')?'btn-outline-danger':'disable'">
+                            [ngClass]="(account?.password != 'unavailable')?'btn-outline-danger':'disable'"
+                            #passwordTooltip="ngbTooltip" (click)="passwordTooltip.close()">
                             Account Password &nbsp;<i class="fas fa-clipboard"></i>
                         </button>
                     </div>
@@ -51,7 +53,8 @@
             </div>
             <div class="card mt-2">
                 <div class="card-body">
-                    <a class="btn btn-outline-danger w-100" [routerLink]="'../../questions-list/requested/'+account?.id">
+                    <a class="btn btn-outline-danger w-100"
+                        [routerLink]="'../../questions-list/requested/'+account?.id">
                         Go to Questions &nbsp;<i class="fas fa-arrow-right"></i>
                     </a>
                 </div>

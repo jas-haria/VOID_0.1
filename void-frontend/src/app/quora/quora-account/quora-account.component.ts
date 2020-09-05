@@ -68,6 +68,11 @@ export class QuoraAccountComponent implements OnInit, OnDestroy, AfterViewInit {
       chart.monthSelected = false;
       chart.barSelected = false;
       chart.data = [];
+      if (chart.multipleDatasets) {
+        chart.multipleTitles.forEach(title => {
+          chart.data = [...chart.data, []];
+        })
+      }
       this.createOrRecreateChart.next(chart.name);
     });
   }
