@@ -23,20 +23,27 @@ def get_driver():
     return driver
 
 def scroll_to_bottom(driver, SCROLL_PAUSE_TIME):
+    reconfirmation_iteration = False
     # Get scroll height
     last_height = driver.execute_script("return document.body.scrollHeight")
 
     while True:
         # Scroll down to bottom
         driver.execute_script("window.scrollTo(0, document.body.scrollHeight);")
-
         # Wait to load page
         time.sleep(SCROLL_PAUSE_TIME)
-
-        # Calculate new scroll height and compare with last scroll height
+        if reconfirmation_iteration is True:
+            time.sleep(SCROLL_PAUSE_TIME*2)
+        # Calculate new scroll height
         new_height = driver.execute_script("return document.body.scrollHeight")
-        if new_height == last_height:
+        # Check if second time height is constant
+        if reconfirmation_iteration is True and new_height == last_height:
             break
+        # Check if first time height is constant
+        if new_height == last_height:
+            reconfirmation_iteration = True
+        else:
+            reconfirmation_iteration = False
         last_height = new_height
 
 def convert_list_to_json(list):

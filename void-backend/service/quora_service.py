@@ -44,7 +44,7 @@ def refresh_data(time, put_todays_date):
                     question_link = link['href']
                     # UNANSWERED QUESTIONS WILL REDIRECT TO ORIGINAL URL ANYWAY
                     if '/unanswered' in question_link:
-                        question_link = question_link.replace('/unanswered', '', 1)
+                        question_link = replace_all(question_link, {'/unanswered/': '/'})
                     if str(question_link) not in url_set:
                         url_set.add(question_link)
                         question = QuoraQuestion()
@@ -277,22 +277,27 @@ def refresh_requested_questions():
     default_division = session.query(Division).filter(Division.division == 'Vidyalankar').first()
     requested_action = session.query(QuoraQuestionAccountActions).filter(QuoraQuestionAccountActions.action == QuoraQuestionAccountAction.REQUESTED).first()
     for account in accounts:
+        if account.link == 'unavailable':
+            continue
         driver = get_driver()
         login_to_account(driver, account)
         driver.get("https://www.quora.com/answer/requests")
         scroll_to_bottom(driver, LOAD_TIME)
         soup = BeautifulSoup(driver.page_source, 'html.parser')
+        count = 0
         # GET REQUESTED QUESTIONS
         for i in soup.findAll('a', attrs={'class': 'q-box qu-cursor--pointer qu-hover--textDecoration--underline'}):
-            question_url = ("https://www.quora.com/" + i.get('href').replace('unanswered/', '', 1)).encode(encoding)
+            question_url = ("https://www.quora.com" + replace_all(i.get('href'), {'/unanswered/': '/'}))
             question = session.query(QuoraQuestion).filter(QuoraQuestion.question_url == question_url).first()
+            count = count + 1
+            print(count)
             if question is None:
                 question = QuoraQuestion()
-                question.question_url = question_url
+                question.question_url = question_url.encode(encoding)
                 question.question_text = i.get_text().encode(encoding)
+                session.add(question)
                 question.division = default_division
             question.asked_on = datetime.now().date()  # WE DONT HAVE DATE OF WHEN REQUEST WAS MADE, SO STORING LATEST DATE
-            session.add(question)
             qqad = session.query(QuoraQuestionAccountDetails).filter(QuoraQuestionAccountDetails.account == account).filter(QuoraQuestionAccountDetails.question == question)\
                 .filter(QuoraQuestionAccountDetails.action == requested_action).first()
             if qqad is None:
