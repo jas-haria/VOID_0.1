@@ -15,6 +15,8 @@ import { QuoraAskedQuestionStats } from 'src/app/shared/models/quora-asked-quest
 import { HeaderService } from 'src/app/shared/services/header.service';
 import { QuoraAccount } from 'src/app/shared/models/quora-account.model';
 import { HttpRequestInterceptorService } from 'src/app/shared/services/http-request-interceptor.service';
+import { NgbModal, NgbModalOptions } from '@ng-bootstrap/ng-bootstrap';
+import { ModalComponent } from 'src/app/shared/components/modal/modal.component';
 
 @Component({
   selector: 'app-quora-question-list',
@@ -56,7 +58,8 @@ export class QuoraQuestionListComponent implements OnInit, OnDestroy {
     private _quoraService: QuoraService,
     private _divisionService: DivisionService,
     private _headerService: HeaderService,
-    private _httpRequestInterceptorService: HttpRequestInterceptorService) { }
+    private _httpRequestInterceptorService: HttpRequestInterceptorService,
+    private _modalService: NgbModal) { }
 
   ngOnInit(): void {
     this._httpRequestInterceptorService.displaySpinner(true);
@@ -265,15 +268,24 @@ export class QuoraQuestionListComponent implements OnInit, OnDestroy {
   }
 
   disregardSelectedQuestions(): void {
-    this._quoraService.disregardQuestion(this.getIdsFromArray(this.selectedQuestions)).subscribe(response => {
-      this.refreshDataSource(); //since url parameters haven't changed
+    let modalRef = this.showConfirmationPopup()
+    modalRef.result.then(result => {
+      if (result == 'confirm') {
+        this.subscription.add(
+          this._quoraService.disregardQuestion(this.getIdsFromArray(this.selectedQuestions)).subscribe(response => {
+            this.refreshDataSource(); //since url parameters haven't changed
+          })
+        );
+      }
     });
   }
 
   updateQuestions(accountId: number, action: QuoraQuestionAccountAction): void {
-    this._quoraService.updateQuestionAndAccountAction(this.getIdsFromArray(this.selectedQuestions), action, accountId).subscribe(response => {
-      this.refreshDataSource();
-    });
+    this.subscription.add(
+      this._quoraService.updateQuestionAndAccountAction(this.getIdsFromArray(this.selectedQuestions), action, accountId).subscribe(response => {
+        this.refreshDataSource();
+      })
+    );
   }
 
   modifySelectedType(type: QuoraQuestionAccountAction): void {
@@ -282,9 +294,35 @@ export class QuoraQuestionListComponent implements OnInit, OnDestroy {
   }
 
   revertActionOnSelectedQuestions(accountId: number, action: QuoraQuestionAccountAction): void {
-    this._quoraService.deleteQuestionAndAccountAction(this.getIdsFromArray(this.selectedQuestions), action, accountId).subscribe(response => {
-      this.refreshDataSource();
+    this.subscription.add(
+      this._quoraService.deleteQuestionAndAccountAction(this.getIdsFromArray(this.selectedQuestions), action, accountId).subscribe(response => {
+        this.refreshDataSource();
+      })
+    );
+  }
+
+  passQuestions(): void {
+    let modalRef = this.showConfirmationPopup()
+    modalRef.result.then(result => {
+      if (result == 'confirm') {
+        this.updateQuestions(this.accountId, QuoraQuestionAccountAction.PASSED);
+      }
     });
+  }
+
+  showConfirmationPopup(): any {
+    this._modalService.dismissAll();
+    let ngbModalOptions: NgbModalOptions = {
+      backdrop: 'static',
+      keyboard: false
+    };
+    let modalRef = this._modalService.open(ModalComponent, ngbModalOptions);
+    modalRef.componentInstance.headerClass = 'danger';
+    modalRef.componentInstance.title = 'Confirmation';
+    modalRef.componentInstance.bodyContentBeforeList = 'This action is irreversable. Are you sure you want to proceed?';
+    modalRef.componentInstance.isLoading = false;
+    modalRef.componentInstance.showConfirm = true;
+    return modalRef;
   }
 
 }

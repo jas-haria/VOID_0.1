@@ -18,8 +18,10 @@
             </p>
         </div>
         <div class="modal-footer" *ngIf="!isLoading">
-            <button type="button" class="btn btn-outline-default  ml-auto" 
-                (click)="close('false')">Close</button>
+            <button type="button" class="btn btn-outline-danger float-right" *ngIf="showConfirm"
+                (click)="close('confirm')">Confirm</button>
+            <button type="button" class="btn btn-outline-default float-right" 
+                (click)="close('close')">Close</button>
         </div>
     </div>
 </div>

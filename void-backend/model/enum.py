@@ -15,6 +15,7 @@ class QuoraQuestionAccountAction(enum.Enum):
     EVALUATED = "EVALUATED"
     REQUESTED = "REQUESTED"
     ASSIGNED = "ASSIGNED"
+    PASSED = "PASSED"
     NEW = "NEW" #not persisted in db. for new questions that are unassigned
 
     def __str__(self):

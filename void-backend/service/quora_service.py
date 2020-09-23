@@ -147,11 +147,11 @@ def get_questions(division_ids, time, page_number, page_size, action, account_id
         length, paginated_query = paginate(query=query, page_number=int(page_number), page_limit=int(page_size))
         return {'totalLength': length, 'content': convert_list_to_json(paginated_query.all())}
     elif action == QuoraQuestionAccountAction.REQUESTED.__str__():
-        actions_to_ignore = [QuoraQuestionAccountAction.ASSIGNED, QuoraQuestionAccountAction.ANSWERED, QuoraQuestionAccountAction.EVALUATED]
+        actions_to_ignore = [QuoraQuestionAccountAction.ASSIGNED, QuoraQuestionAccountAction.ANSWERED, QuoraQuestionAccountAction.EVALUATED, QuoraQuestionAccountAction.PASSED]
     elif action == QuoraQuestionAccountAction.ASSIGNED.__str__():
-        actions_to_ignore = [QuoraQuestionAccountAction.ANSWERED, QuoraQuestionAccountAction.EVALUATED]
+        actions_to_ignore = [QuoraQuestionAccountAction.ANSWERED, QuoraQuestionAccountAction.EVALUATED, QuoraQuestionAccountAction.PASSED]
     elif action == QuoraQuestionAccountAction.ANSWERED.__str__():
-        actions_to_ignore = [QuoraQuestionAccountAction.EVALUATED]
+        actions_to_ignore = [QuoraQuestionAccountAction.EVALUATED, QuoraQuestionAccountAction.PASSED]
     else:
         actions_to_ignore = None
     query = session.query(QuoraQuestionAccountDetails.question_id).join(QuoraQuestion).join(
@@ -284,13 +284,10 @@ def refresh_requested_questions():
         driver.get("https://www.quora.com/answer/requests")
         scroll_to_bottom(driver, LOAD_TIME)
         soup = BeautifulSoup(driver.page_source, 'html.parser')
-        count = 0
         # GET REQUESTED QUESTIONS
         for i in soup.findAll('a', attrs={'class': 'q-box qu-cursor--pointer qu-hover--textDecoration--underline'}):
             question_url = ("https://www.quora.com" + replace_all(i.get('href'), {'/unanswered/': '/'}))
             question = session.query(QuoraQuestion).filter(QuoraQuestion.question_url == question_url).first()
-            count = count + 1
-            print(count)
             if question is None:
                 question = QuoraQuestion()
                 question.question_url = question_url.encode(encoding)
@@ -350,8 +347,8 @@ def refresh_accounts_stats():
         driver = get_driver()
         login_to_account(driver, account)
         driver.get('https://quora.com/stats')
-        list = driver.find_element_by_class_name("menu_link")
-        list.click()
+        menu_list = driver.find_element_by_class_name("menu_link")
+        menu_list.click()
         time.sleep(LOAD_TIME)
         last_week = driver.find_element_by_name("1")
         last_week.click()

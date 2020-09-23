@@ -4,5 +4,6 @@ export enum QuoraQuestionAccountAction {
     ASSIGNED = "ASSIGNED",
     EVALUATED = "EVALUATED",
     REQUESTED = "REQUESTED",
+    PASSED = "PASSED",
     NEW = "NEW"  //for unassigned questions. Not persisted in db
 }
