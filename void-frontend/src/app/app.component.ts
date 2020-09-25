@@ -76,8 +76,5 @@ export class AppComponent implements OnInit, OnDestroy {
       'Check if you provided the correct input'
     ];
     modalRef.componentInstance.bodyContentAfterList = 'If everything fails, kindly pray';
-    modalRef.result.then(result => {
-      modalRef.close();
-    })
   }
 }

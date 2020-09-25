@@ -9,7 +9,7 @@ import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
 export class ModalComponent implements OnInit {
 
   @Input('isSpinner') isLoading: boolean = false;
-  @Input('showConfirm') showConfirm: boolean = true;
+  @Input('showConfirm') showConfirm: boolean = false;
   @Input('headerClass') headerClass: string = 'default';
   @Input('title') title: string = '';
   @Input('bodyContentBeforeList') bodyContentBeforeList: string = '';

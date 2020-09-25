@@ -330,4 +330,22 @@ export class QuoraSummaryComponent implements OnInit, OnDestroy, AfterViewInit {
     );
   }
 
+  refreshPopup(): void {
+    let ngbModalOptions: NgbModalOptions = {
+      backdrop: 'static',
+      keyboard: false
+    };
+    let modalRef = this._modalService.open(ModalComponent, ngbModalOptions);
+    modalRef.componentInstance.headerClass = 'danger';
+    modalRef.componentInstance.title = 'Refresh All Quora Statistics';
+    modalRef.componentInstance.bodyContentBeforeList = 'This will take a long time. Are you sure you want to run it now?'
+    modalRef.componentInstance.bodyContentAfterList = 'Tip: Run it when you are done using the application for the day'
+    modalRef.componentInstance.showConfirm = true;
+    modalRef.result.then(result => {
+      if (result == 'confirm') {
+        this.refreshAllStats()
+      }
+    });
+  }
+
 }

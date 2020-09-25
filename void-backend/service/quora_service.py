@@ -271,6 +271,44 @@ def login_to_account(driver, account):
     time.sleep(LOAD_TIME)
     return
 
+def pass_requested_questions():
+    session = get_new_session()
+    accounts = session.query(QuoraAccount).all()
+    passed_action_object = session.query(QuoraQuestionAccountActions).filter(QuoraQuestionAccountActions.action == QuoraQuestionAccountAction.PASSED).first()
+    requested_action_object = session.query(QuoraQuestionAccountActions).filter(QuoraQuestionAccountActions.action == QuoraQuestionAccountAction.REQUESTED).first()
+    actions_to_delete = [passed_action_object, requested_action_object]
+    for account in accounts:
+        if account.link == 'unavailable':
+            continue
+        driver = get_driver()
+        login_to_account(driver, account)
+        driver.get("https://www.quora.com/answer/requests")
+        scroll_to_bottom(driver, LOAD_TIME)
+        questions_to_pass = session.query(QuoraQuestion).join(QuoraQuestionAccountDetails).filter(QuoraQuestionAccountDetails.account_id == account.id)\
+            .filter(QuoraQuestionAccountDetails.action == passed_action_object).all()
+        urls = [o.question_url for o in questions_to_pass]
+        questions_passed = set()
+        if questions_to_pass is None:
+            continue
+        y = driver.find_elements_by_xpath("*//div[contains(@class, 'q-box') and contains(@class, 'qu-pt--medium') and contains(@class, 'qu-pb--tiny')]")
+        for i in y:
+            z = i.find_element_by_xpath("*//a[contains(@class, 'q-box') and contains(@class, 'qu-cursor--pointer') and contains(@class, 'qu-hover--textDecoration--underline') and not(contains(@class, 'qu-color--gray_dark'))]")
+            url = replace_all(z.get_attribute('href'), {'/unanswered/': '/'})
+            if url in (urls):
+                element = i.find_element_by_id("cant_answer")
+                element.click()
+                questions_passed.add(url)
+        passed_questions_ids = set()
+        for question in questions_to_pass:
+            if question.question_url in questions_passed:
+                passed_questions_ids.add(question.id)
+        session.query(QuoraQuestionAccountDetails).filter(QuoraQuestionAccountDetails.question_id.in_(passed_questions_ids)).filter(QuoraQuestionAccountDetails.account_id == account.id)\
+            .filter(QuoraQuestionAccountDetails.action_id.in_([passed_action_object.id, requested_action_object.id])).delete(synchronize_session=False)
+        driver.quit()
+        session.commit()
+    return {}
+
+
 def refresh_requested_questions():
     session = get_new_session()
     accounts = session.query(QuoraAccount).all()
@@ -582,6 +620,7 @@ def refresh_all_stats():
     else:
         refresh_accounts_data(False)
 
+    pass_requested_questions()
     refresh_requested_questions()
     refresh_asked_questions_stats()
     refresh_accounts_stats()
