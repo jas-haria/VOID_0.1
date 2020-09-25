@@ -30,6 +30,10 @@ def update_qqad():
 def delete_qqad():
     return Response(json.dumps(quora_service.delete_qqad(ast.literal_eval(request.args.get('questionIds')), request.args.get('action'), request.args.get('accountId'))), status=200, mimetype='application/json')
 
+@app.route(base_url+'/pass', methods=['PUT'])
+def add_pass_qqad():
+    return Response(json.dumps(quora_service.add_pass_qqad(ast.literal_eval(request.args.get('questionIds')), request.args.get('accountId'))), status=200, mimetype='application/json')
+
 
 @app.route(base_url, methods=['GET'])
 def get_questions():

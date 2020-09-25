@@ -118,6 +118,7 @@ def disregard_questions(question_ids_list):
     return {}
 
 def update_qqad(question_ids_list, action, account_id):
+    print(question_ids_list, action, account_id)
     session = get_new_session()
     questions = session.query(QuoraQuestion).filter(QuoraQuestion.id.in_(question_ids_list)).all()
     action_object = session.query(QuoraQuestionAccountActions).filter(QuoraQuestionAccountActions.action == QuoraQuestionAccountAction[action]).first()
@@ -137,6 +138,24 @@ def delete_qqad(question_ids_list, action, account_id):
     session.query(QuoraQuestionAccountDetails).filter(QuoraQuestionAccountDetails.question_id.in_(question_ids_list)).filter(QuoraQuestionAccountDetails.account_id == account_id)\
         .filter(QuoraQuestionAccountDetails.action == action_object).delete(synchronize_session=False)
     session.commit()
+    return {}
+
+def add_pass_qqad(question_ids_list, account_id):
+    if account_id is not None:
+        update_qqad(question_ids_list, QuoraQuestionAccountAction.PASSED.__str__(), account_id)
+    else:
+        session = get_new_session()
+        passed_action_object = session.query(QuoraQuestionAccountActions).filter(QuoraQuestionAccountActions.action == QuoraQuestionAccountAction.PASSED).first()
+        requested_action_object = session.query(QuoraQuestionAccountActions).filter(QuoraQuestionAccountActions.action == QuoraQuestionAccountAction.REQUESTED).first()
+        requested_qqads = session.query(QuoraQuestionAccountDetails).join(QuoraQuestion).filter(QuoraQuestion.id.in_(question_ids_list)) \
+            .filter(QuoraQuestionAccountDetails.action == requested_action_object).all()
+        for requested_qqad in requested_qqads:
+            qqad = QuoraQuestionAccountDetails()
+            qqad.question_id = requested_qqad.question_id
+            qqad.account_id = requested_qqad.account_id
+            qqad.action = passed_action_object
+            session.add(qqad)
+        session.commit()
     return {}
 
 def get_questions(division_ids, time, page_number, page_size, action, account_id):

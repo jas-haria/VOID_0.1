@@ -1,6 +1,6 @@
 import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
-import { Observable  } from 'rxjs';
+import { Observable } from 'rxjs';
 import { ApiService } from '../shared/services/api.service';
 import { QuoraQuestion } from '../shared/models/quora-question.model';
 import { Page } from '../shared/models/page.model';
@@ -42,6 +42,16 @@ export class QuoraService {
       { params: this._apiService.getParameters(parameters) });
   }
 
+  passQuoraQuestions(questionIds: number[], accountId: number): Observable<any> {
+    let parameters = {};
+    parameters['questionIds'] = questionIds;
+    if (accountId) {
+      parameters['accountId'] = accountId;
+    }
+    return this._http.put<any>(this._apiService.getBackendUrl() + '/quora/pass', {},
+      { params: this._apiService.getParameters(parameters) });
+  }
+
   deleteQuestionAndAccountAction(questionIds: number[], action: QuoraQuestionAccountAction, accountId: number): Observable<any> {
     let parameters = {};
     parameters['questionIds'] = questionIds;
@@ -68,7 +78,7 @@ export class QuoraService {
   downloadTemplateExcel(): Observable<any> {
     return this._http.get(this._apiService.getBackendUrl() + '/quora/asked-questions-sample-excel',
       { headers: this._apiService.getHeadersToAvoidCache(), responseType: "arraybuffer" });
-   }
+  }
 
   getAccounts(): Observable<QuoraAccount[]> {
     return this._http.get<QuoraAccount[]>(this._apiService.getBackendUrl() + '/quora/accounts');
@@ -112,7 +122,7 @@ export class QuoraService {
 
   uploadQuoraAskedQuestionsFile(formData: FormData): Observable<boolean> {
     return this._http.post<boolean>(this._apiService.getBackendUrl() + '/quora/upload-quora-asked-questions',
-    formData);
+      formData);
   }
 
   refreshAllStats(): Observable<ExecutionLog> {

@@ -305,7 +305,11 @@ export class QuoraQuestionListComponent implements OnInit, OnDestroy {
     let modalRef = this.showConfirmationPopup()
     modalRef.result.then(result => {
       if (result == 'confirm') {
-        this.updateQuestions(this.accountId, QuoraQuestionAccountAction.PASSED);
+        this.subscription.add(
+          this._quoraService.passQuoraQuestions(this.getIdsFromArray(this.selectedQuestions), (this.accountId? this.accountId: null)).subscribe((response) => {
+            this.refreshDataSource();
+          })
+        );
       }
     });
   }
@@ -320,7 +324,6 @@ export class QuoraQuestionListComponent implements OnInit, OnDestroy {
     modalRef.componentInstance.headerClass = 'danger';
     modalRef.componentInstance.title = 'Confirmation';
     modalRef.componentInstance.bodyContentBeforeList = 'This action is irreversable. Are you sure you want to proceed?';
-    modalRef.componentInstance.isLoading = false;
     modalRef.componentInstance.showConfirm = true;
     return modalRef;
   }
