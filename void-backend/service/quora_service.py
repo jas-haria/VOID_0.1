@@ -118,7 +118,6 @@ def disregard_questions(question_ids_list):
     return {}
 
 def update_qqad(question_ids_list, action, account_id):
-    print(question_ids_list, action, account_id)
     session = get_new_session()
     questions = session.query(QuoraQuestion).filter(QuoraQuestion.id.in_(question_ids_list)).all()
     action_object = session.query(QuoraQuestionAccountActions).filter(QuoraQuestionAccountActions.action == QuoraQuestionAccountAction[action]).first()
