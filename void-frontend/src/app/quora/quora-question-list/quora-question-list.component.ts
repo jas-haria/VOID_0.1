@@ -2,7 +2,7 @@ import { Component, OnInit, OnDestroy } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
 import { QuoraService } from '../quora.service';
 import { DivisionService } from 'src/app/division/division.service';
-import { Subscription, Subject } from 'rxjs';
+import { Subscription, Subject, forkJoin } from 'rxjs';
 import { Division } from 'src/app/shared/models/division.model';
 import { TimePeriod } from 'src/app/shared/models/enums/time-period.enum';
 import { QuoraQuestion } from 'src/app/shared/models/quora-question.model';
@@ -64,16 +64,28 @@ export class QuoraQuestionListComponent implements OnInit, OnDestroy {
   ngOnInit(): void {
     this._httpRequestInterceptorService.displaySpinner(true);
     this.subscription.add(
-      this._divisionService.getAllDivision().subscribe((response: Division[]) => {
-        this.initialiseDivisions(response);
+      forkJoin([
+        this._divisionService.getAllDivision(), //0
+        this._quoraService.getAccounts()        //1
+      ]).subscribe((response: any[]) => {
+        this.initialiseDivisions(response[0]);
         this.routeListner();
-        this._quoraService.getAccounts().subscribe((response: QuoraAccount[]) => {
-          this.accountArray = response;
-          this.setHeaderValue();
-          this._httpRequestInterceptorService.displaySpinner(false);
-        })
+        this.accountArray = response[1];
+        this.setHeaderValue();
+        this._httpRequestInterceptorService.displaySpinner(false);
       })
-    )
+    );
+    // this.subscription.add(
+    //   this._divisionService.getAllDivision().subscribe((response: Division[]) => {
+    //     this.initialiseDivisions(response);
+    //     this.routeListner();
+    //     this._quoraService.getAccounts().subscribe((response: QuoraAccount[]) => {
+    //       this.accountArray = response;
+    //       this.setHeaderValue();
+    //       this._httpRequestInterceptorService.displaySpinner(false);
+    //     })
+    //   })
+    // )
   }
 
   routeListner(): void {
@@ -306,7 +318,7 @@ export class QuoraQuestionListComponent implements OnInit, OnDestroy {
     modalRef.result.then(result => {
       if (result == 'confirm') {
         this.subscription.add(
-          this._quoraService.passQuoraQuestions(this.getIdsFromArray(this.selectedQuestions), (this.accountId? this.accountId: null)).subscribe((response) => {
+          this._quoraService.passQuoraQuestions(this.getIdsFromArray(this.selectedQuestions), (this.accountId ? this.accountId : null)).subscribe((response) => {
             this.refreshDataSource();
           })
         );

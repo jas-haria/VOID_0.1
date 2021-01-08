@@ -222,7 +222,12 @@ def refresh_accounts_data(capture_all = False):
                 time.sleep(LOAD_TIME)
                 dates = driver.find_elements_by_xpath("*//a[contains(@href, '/answer/" + account.link[account.link.rindex('/')+1: len(account.link)] + "')]")
                 last_date_string = replace_all(dates[-1].text, {"Answered": "", "Updated": ""})
-                last_date = datetime.strptime(last_date_string.strip(), '%B %d, %Y')
+                try:
+                    last_date = datetime.strptime(last_date_string.strip(), '%B %d, %Y')
+                except ValueError:
+                    last_date = datetime.strptime(last_date_string.strip() + ', ' + str(datetime.now().year), '%B %d, %Y')
+                    if last_date.date() > datetime.now().date():
+                        last_date = last_date - relativedelta(years=1)
                 if last_date.date() < persisted_date[0]:
                     break
                 new_height = driver.execute_script("return document.body.scrollHeight")
