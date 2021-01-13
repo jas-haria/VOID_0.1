@@ -1,11 +1,11 @@
 import { NgModule } from '@angular/core';
-import { HttpClientModule } from '@angular/common/http';import { RouterModule } from '@angular/router';
+import { HttpClientModule } from '@angular/common/http';
+import { RouterModule, Routes } from '@angular/router';
 import { CommonModule } from '@angular/common';
-import { FormsModule, ReactiveFormsModule } from '@angular/forms';
+import { FormsModule } from '@angular/forms';
 
 import { ClipboardModule } from 'ngx-clipboard';
 
-import { AdminLayoutRoutes } from './admin-layout.routing';
 import { DashboardComponent } from '../../pages/dashboard/dashboard.component';
 import { IconsComponent } from '../../pages/icons/icons.component';
 import { MapsComponent } from '../../pages/maps/maps.component';
@@ -15,19 +15,21 @@ import { NgbModule } from '@ng-bootstrap/ng-bootstrap';
 import { GmbModule } from 'src/app/gmb/gmb.module';
 import { DivisionModule } from 'src/app/division/division.module';
 import { QuoraModule } from 'src/app/quora/quora.module';
-// import { ToastrModule } from 'ngx-toastr';
+import { HomeModule } from 'src/app/home/home.module';
+
 
 @NgModule({
   imports: [
     CommonModule,
-    RouterModule.forChild(AdminLayoutRoutes),
     FormsModule,
+    RouterModule,
     HttpClientModule,
     NgbModule,
     ClipboardModule,
     GmbModule,
     DivisionModule,
-    QuoraModule
+    QuoraModule,
+    HomeModule
   ],
   declarations: [
     DashboardComponent,
@@ -38,4 +40,4 @@ import { QuoraModule } from 'src/app/quora/quora.module';
   ]
 })
 
-export class AdminLayoutModule {}
+export class AuthenticatedLayoutModule {}

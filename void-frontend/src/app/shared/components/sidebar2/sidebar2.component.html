@@ -1,5 +1,5 @@
 <nav class="navbar navbar-vertical navbar-expand-md navbar-light bg-white" id="sidenav-main">
-    <a class="navbar-brand pt-0" [style.height.px]="80" routerLinkActive="active" [routerLink]="['/dashboard']">
+    <a class="navbar-brand pt-0" [style.height.px]="80" routerLinkActive="active" [routerLink]="['/home']">
         <img src="./assets/img/void/vidyalankar_bird.png"  class="navbar-brand-img" [style.max-height.em]="4" alt="...">
     </a>
     <hr class="my-3">
@@ -31,21 +31,6 @@
                      &nbsp; {{ tab.substring(0,1).toUpperCase() + tab.substring(1,tab.length).toLowerCase() + " Questions"  }}
                 </a>
             </li>
-            <!-- <li class="nav-link">
-                <a class="nav-link-inner--text" (click)="navigate('/quora/questions-list/requested')">
-                     &nbsp; Requested Questions
-                </a>
-            </li>
-            <li class="nav-link">
-                <a class="nav-link-inner--text" (click)="navigate('/quora/questions-list/asked')">
-                     &nbsp; Asked Questions
-                </a>
-            </li> -->
-            <!-- <li class="nav-link" *ngFor="let account of quoraAccounts">
-                <a class="nav-link-inner--text">
-                     &nbsp; {{ account.first_name + " " + account.last_name }}
-                </a>
-            </li> -->
         </div>
         <li class="nav-link" style="cursor: pointer;" (click)="expandedQuoraAccounts = !expandedQuoraAccounts">
             <a class="nav-link-inner--text">

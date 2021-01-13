@@ -75,17 +75,6 @@ export class QuoraQuestionListComponent implements OnInit, OnDestroy {
         this._httpRequestInterceptorService.displaySpinner(false);
       })
     );
-    // this.subscription.add(
-    //   this._divisionService.getAllDivision().subscribe((response: Division[]) => {
-    //     this.initialiseDivisions(response);
-    //     this.routeListner();
-    //     this._quoraService.getAccounts().subscribe((response: QuoraAccount[]) => {
-    //       this.accountArray = response;
-    //       this.setHeaderValue();
-    //       this._httpRequestInterceptorService.displaySpinner(false);
-    //     })
-    //   })
-    // )
   }
 
   routeListner(): void {

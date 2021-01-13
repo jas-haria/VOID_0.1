@@ -1,6 +1,6 @@
 import { Injectable } from '@angular/core';
-import { HttpClient } from '@angular/common/http';
-import { Observable } from 'rxjs';
+import { HttpClient, HttpHeaders } from '@angular/common/http';
+import { from, Observable } from 'rxjs';
 import { ApiService } from '../shared/services/api.service';
 import { QuoraQuestion } from '../shared/models/quora-question.model';
 import { Page } from '../shared/models/page.model';
@@ -11,13 +11,19 @@ import { QuoraAskedQuestionStats } from '../shared/models/quora-asked-question-s
 import { QuoraAccountsStats } from '../shared/models/quora-accounts-stats.model';
 import { QuoraQuestionCount } from '../shared/models/quora-question-count.model';
 import { ExecutionLog } from '../shared/models/execution-log.model';
+import { OktaAuthService } from '@okta/okta-angular';
+import { switchMap } from 'rxjs/operators';
 
 @Injectable({
   providedIn: 'root'
 })
 export class QuoraService {
 
-  constructor(private _http: HttpClient, private _apiService: ApiService) { }
+  baseUrl: string = "/quora";
+
+  constructor(private _http: HttpClient,
+    private _apiService: ApiService,
+    private _oktaAuth: OktaAuthService) { }
 
   getQuestions(pageNumber: number, pageSize: number, divisions: number[], timePeriod: TimePeriod, qqaa: QuoraQuestionAccountAction, accountId: Number): Observable<Page<QuoraQuestion>> {
     let parameters = {};
@@ -29,8 +35,7 @@ export class QuoraService {
     if (accountId) {
       parameters['accountId'] = accountId;
     }
-    return this._http.get<Page<QuoraQuestion>>(this._apiService.getBackendUrl() + '/quora',
-      { params: this._apiService.getParameters(parameters) });
+    return <Observable<Page<QuoraQuestion>>>this._apiService.createRequest('get', this.baseUrl, parameters, null, false, null);
   }
 
   updateQuestionAndAccountAction(questionIds: number[], action: QuoraQuestionAccountAction, accountId: number): Observable<any> {
@@ -38,8 +43,7 @@ export class QuoraService {
     parameters['questionIds'] = questionIds;
     parameters['action'] = action;
     parameters['accountId'] = accountId;
-    return this._http.put<any>(this._apiService.getBackendUrl() + '/quora/update', {},
-      { params: this._apiService.getParameters(parameters) });
+    return <Observable<any>>this._apiService.createRequest('put', this.baseUrl + '/update', parameters, null, false, null);
   }
 
   passQuoraQuestions(questionIds: number[], accountId: number): Observable<any> {
@@ -48,8 +52,7 @@ export class QuoraService {
     if (accountId) {
       parameters['accountId'] = accountId;
     }
-    return this._http.put<any>(this._apiService.getBackendUrl() + '/quora/pass', {},
-      { params: this._apiService.getParameters(parameters) });
+    return <Observable<any>>this._apiService.createRequest('put', this.baseUrl + '/pass', parameters, null, false, null);
   }
 
   deleteQuestionAndAccountAction(questionIds: number[], action: QuoraQuestionAccountAction, accountId: number): Observable<any> {
@@ -57,38 +60,34 @@ export class QuoraService {
     parameters['questionIds'] = questionIds;
     parameters['action'] = action;
     parameters['accountId'] = accountId;
-    return this._http.delete<any>(this._apiService.getBackendUrl() + '/quora/update',
-      { params: this._apiService.getParameters(parameters) });
+    return <Observable<any>>this._apiService.createRequest('delete', this.baseUrl + '/update', parameters, null, false, null);
   }
 
   disregardQuestion(questionIds: number[]): Observable<any> {
     let parameters = {};
     parameters['questionIds'] = questionIds;
-    return this._http.put<any>(this._apiService.getBackendUrl() + '/quora/disregard', {},
-      { params: this._apiService.getParameters(parameters) });
+    return <Observable<any>>this._apiService.createRequest('put', this.baseUrl + '/disregard', parameters, null, false, null);
   }
 
   downloadPendingQuestionsExcel(accountId: number): Observable<any> {
     let parameters = {};
     parameters['accountId'] = accountId;
-    return this._http.get(this._apiService.getBackendUrl() + '/quora/pending-questions-excel',
-      { params: this._apiService.getParameters(parameters), headers: this._apiService.getHeadersToAvoidCache(), responseType: "arraybuffer" });
+    return <Observable<any>>this._apiService.createRequest('get', this.baseUrl + '/pending-questions-excel', null, null, true, 'arraybuffer');
   }
 
   downloadTemplateExcel(): Observable<any> {
-    return this._http.get(this._apiService.getBackendUrl() + '/quora/asked-questions-sample-excel',
-      { headers: this._apiService.getHeadersToAvoidCache(), responseType: "arraybuffer" });
+    return <Observable<any>>this._apiService.createRequest('get', this.baseUrl + '/asked-questions-sample-excel', null, null, true, 'arraybuffer');
   }
 
   getAccounts(): Observable<QuoraAccount[]> {
-    return this._http.get<QuoraAccount[]>(this._apiService.getBackendUrl() + '/quora/accounts');
+    return <Observable<QuoraAccount[]>>this._apiService.createRequest('get', this.baseUrl + '/accounts', null, null, false, null);
   }
 
   getAccount(id: number): Observable<QuoraAccount> {
     let parameters = {};
     parameters['id'] = id;
-    return this._http.get<QuoraAccount>(this._apiService.getBackendUrl() + '/quora/accounts',
-      { params: this._apiService.getParameters(parameters) });
+    return <Observable<QuoraAccount>>this._apiService.createRequest('get', this.baseUrl + '/accounts', parameters, null, false, null);
+
   }
 
   getAskedQuestionsStats(lastWeek: boolean, questionIds?: number[]): Observable<QuoraAskedQuestionStats[]> {
@@ -97,8 +96,7 @@ export class QuoraService {
     if (questionIds) {
       parameters['questionIds'] = questionIds;
     }
-    return this._http.get<QuoraAskedQuestionStats[]>(this._apiService.getBackendUrl() + '/quora/askedQuestionsStats',
-      { params: this._apiService.getParameters(parameters) });
+    return <Observable<QuoraAskedQuestionStats[]>>this._apiService.createRequest('get', this.baseUrl + '/asked-questions-stats', parameters, null, false, null);
   }
 
   getAccountStats(accountId?: number): Observable<QuoraAccountsStats[]> {
@@ -106,8 +104,7 @@ export class QuoraService {
     if (accountId) {
       parameters['accountId'] = accountId;
     }
-    return this._http.get<QuoraAccountsStats[]>(this._apiService.getBackendUrl() + '/quora/accounts/stats',
-      { params: this._apiService.getParameters(parameters) });
+    return <Observable<QuoraAccountsStats[]>>this._apiService.createRequest('get', this.baseUrl + '/accounts/stats', parameters, null, false, null);
   }
 
   getQuestionsCount(action: QuoraQuestionAccountAction, accountId?: number): Observable<QuoraQuestionCount[]> {
@@ -116,20 +113,18 @@ export class QuoraService {
     if (accountId) {
       parameters['accountId'] = accountId;
     }
-    return this._http.get<QuoraQuestionCount[]>(this._apiService.getBackendUrl() + '/quora/accounts/questions-count',
-      { params: this._apiService.getParameters(parameters) });
+    return <Observable<QuoraQuestionCount[]>>this._apiService.createRequest('get', this.baseUrl + '/accounts/questions-count', parameters, null, false, null);
   }
 
   uploadQuoraAskedQuestionsFile(formData: FormData): Observable<boolean> {
-    return this._http.post<boolean>(this._apiService.getBackendUrl() + '/quora/upload-quora-asked-questions',
-      formData);
+    return <Observable<boolean>>this._apiService.createRequest('post', this.baseUrl + '/upload-quora-asked-questions', null, formData, false, null);
   }
 
   refreshAllStats(): Observable<ExecutionLog> {
-    return this._http.get<ExecutionLog>(this._apiService.getBackendUrl() + '/quora/refresh-all');
+    return <Observable<ExecutionLog>>this._apiService.createRequest('get', this.baseUrl + '/refresh-all', null, null, false, null);
   }
 
   getLastRefreshed(): Observable<ExecutionLog> {
-    return this._http.get<ExecutionLog>(this._apiService.getBackendUrl() + '/quora/last-refreshed');
+    return <Observable<ExecutionLog>>this._apiService.createRequest('get', this.baseUrl + '/last-refreshed', null, null, false, null);
   }
 }

@@ -3,21 +3,31 @@ import { CommonModule, } from '@angular/common';
 import { BrowserModule  } from '@angular/platform-browser';
 import { Routes, RouterModule } from '@angular/router';
 
-import { AdminLayoutComponent } from './layouts/admin-layout/admin-layout.component';
 import { AuthLayoutComponent } from './layouts/auth-layout/auth-layout.component';
+import { AuthenticatedLayoutComponent } from './layouts/authenticated-layout/authenticated-layout.component';
+import { LoginComponent } from './login/login/login.component';
+import { OktaAuthModule, OktaCallbackComponent, OKTA_CONFIG } from '@okta/okta-angular';
+import { LoginModule } from './login/login.module';
+
+const oktaConfig = {
+  issuer: 'https://dev-3128210.okta.com/oauth2/default',
+  clientId: '0oa3m9c5rTyDl5Z7I5d6',
+  redirectUri: window.location.origin + '/callback',
+  scope: 'openid profile email'
+}
 
 const routes: Routes =[
   {
     path: '',
-    redirectTo: 'dashboard',
+    redirectTo: 'login',
     pathMatch: 'full',
   }, {
     path: '',
-    component: AdminLayoutComponent,
+    component: AuthenticatedLayoutComponent,
     children: [
       {
         path: '',
-        loadChildren: './layouts/admin-layout/admin-layout.module#AdminLayoutModule'
+        loadChildren: './layouts/authenticated-layout/authenticated-layout.module#AuthenticatedLayoutModule'
       }
     ]
   }, {
@@ -29,6 +39,9 @@ const routes: Routes =[
         loadChildren: './layouts/auth-layout/auth-layout.module#AuthLayoutModule'
       }
     ]
+  }, { 
+    path: 'callback',
+    component: OktaCallbackComponent 
   }, {
     path: '**',
     redirectTo: 'dashboard'
@@ -39,14 +52,15 @@ const routes: Routes =[
   imports: [
     CommonModule,
     BrowserModule,
-    RouterModule.forRoot(routes)
+    RouterModule.forRoot(routes),
+    OktaAuthModule,
+    LoginModule
   ],
   exports: [
     RouterModule
   ],
+  providers: [
+    { provide: OKTA_CONFIG, useValue: oktaConfig }
+  ]
 })
 export class AppRoutingModule { }
-
-//,{
-//  useHash: true
-// }
