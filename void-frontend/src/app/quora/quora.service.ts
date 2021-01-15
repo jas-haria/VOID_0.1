@@ -1,7 +1,7 @@
 import { Injectable } from '@angular/core';
 import { HttpClient, HttpHeaders } from '@angular/common/http';
 import { from, Observable } from 'rxjs';
-import { ApiService } from '../shared/services/api.service';
+import { ApiService } from '../shared/services/api/api.service';
 import { QuoraQuestion } from '../shared/models/quora-question.model';
 import { Page } from '../shared/models/page.model';
 import { TimePeriod } from '../shared/models/enums/time-period.enum';
@@ -12,7 +12,6 @@ import { QuoraAccountsStats } from '../shared/models/quora-accounts-stats.model'
 import { QuoraQuestionCount } from '../shared/models/quora-question-count.model';
 import { ExecutionLog } from '../shared/models/execution-log.model';
 import { OktaAuthService } from '@okta/okta-angular';
-import { switchMap } from 'rxjs/operators';
 
 @Injectable({
   providedIn: 'root'
@@ -22,8 +21,7 @@ export class QuoraService {
   baseUrl: string = "/quora";
 
   constructor(private _http: HttpClient,
-    private _apiService: ApiService,
-    private _oktaAuth: OktaAuthService) { }
+    private _apiService: ApiService) { }
 
   getQuestions(pageNumber: number, pageSize: number, divisions: number[], timePeriod: TimePeriod, qqaa: QuoraQuestionAccountAction, accountId: Number): Observable<Page<QuoraQuestion>> {
     let parameters = {};

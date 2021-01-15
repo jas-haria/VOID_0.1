@@ -1,6 +1,7 @@
 import { Component, OnInit } from '@angular/core';
 import { OktaAuthService } from '@okta/okta-angular';
 import { Router } from '@angular/router';
+import { LoggedInUserService } from 'src/app/shared/services/logged-in-user/logged-in-user.service';
 
 @Component({
   selector: 'app-login',
@@ -9,18 +10,20 @@ import { Router } from '@angular/router';
 })
 export class LoginComponent implements OnInit {
 
-  constructor(private oktaAuth: OktaAuthService, private router: Router) {
-  }
+  constructor(private _oktaAuth: OktaAuthService,
+     private _router: Router,
+     private _loggedInUserService: LoggedInUserService) {}
 
   async ngOnInit() {
-    const isAuthenticated = await this.oktaAuth.isAuthenticated();
+    this._loggedInUserService.updateUser(null);
+    const isAuthenticated = await this._oktaAuth.isAuthenticated();
     if (isAuthenticated) {
-      this.router.navigate(['/home'], {replaceUrl: true})
+      this._router.navigate(['/home'], {replaceUrl: true})
     }
   }
 
   async login(event) {
     event.preventDefault();
-    await this.oktaAuth.loginRedirect('/home');
+    await this._oktaAuth.loginRedirect('/home');
   }
 }

@@ -12,11 +12,12 @@ import { PageEvent } from '@angular/material/paginator';
 import * as saveAS from 'file-saver';
 import { QuoraQuestionAccountAction } from 'src/app/shared/models/enums/quora-question-account-action.enum';
 import { QuoraAskedQuestionStats } from 'src/app/shared/models/quora-asked-question-stats.model';
-import { HeaderService } from 'src/app/shared/services/header.service';
+import { HeaderService } from 'src/app/shared/services/header/header.service';
 import { QuoraAccount } from 'src/app/shared/models/quora-account.model';
-import { HttpRequestInterceptorService } from 'src/app/shared/services/http-request-interceptor.service';
+import { HttpRequestInterceptorService } from 'src/app/shared/services/http-request-interceptor/http-request-interceptor.service';
 import { NgbModal, NgbModalOptions } from '@ng-bootstrap/ng-bootstrap';
 import { ModalComponent } from 'src/app/shared/components/modal/modal.component';
+import { LoggedInUserService } from 'src/app/shared/services/logged-in-user/logged-in-user.service';
 
 @Component({
   selector: 'app-quora-question-list',
@@ -34,8 +35,8 @@ export class QuoraQuestionListComponent implements OnInit, OnDestroy {
   dataSource: any[] = [];
   totalLength: number = 0;
   pageSizeOptions: number[] = [10, 15, 20];
-  clearSelect: Subject<void> = new Subject<void>()
-
+  clearSelect: Subject<void> = new Subject<void>();
+  isLoggedInUserAdmin: boolean = false;
 
   subscription: Subscription = new Subscription();
   divisionArray: Division[] = [];
@@ -59,7 +60,8 @@ export class QuoraQuestionListComponent implements OnInit, OnDestroy {
     private _divisionService: DivisionService,
     private _headerService: HeaderService,
     private _httpRequestInterceptorService: HttpRequestInterceptorService,
-    private _modalService: NgbModal) { }
+    private _modalService: NgbModal,
+    private _loggedInUserService: LoggedInUserService) { }
 
   ngOnInit(): void {
     this._httpRequestInterceptorService.displaySpinner(true);
@@ -73,6 +75,10 @@ export class QuoraQuestionListComponent implements OnInit, OnDestroy {
         this.accountArray = response[1];
         this.setHeaderValue();
         this._httpRequestInterceptorService.displaySpinner(false);
+      })
+    ).add(
+      this._loggedInUserService.getUserAsObservable().subscribe(user => {
+        this.isLoggedInUserAdmin = user ? user.admin: false;
       })
     );
   }

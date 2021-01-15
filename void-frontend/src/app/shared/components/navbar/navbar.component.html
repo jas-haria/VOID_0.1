@@ -3,6 +3,9 @@
     <span class="heading-title">
       <span style="vertical-align:middle;">{{ title }}</span>
     </span>
-    <button class="btn btn-danger" (click)="logout()">Logout</button>
+    <div>
+      <span style="vertical-align:middle;" class="mr-3"> {{ loggedInUser?.email + (loggedInUser?.admin? " (Admin)": "") }}</span>
+      <button class="btn btn-outline-dark" (click)="logout()">Logout</button>
+    </div>
   </div>
 </nav>

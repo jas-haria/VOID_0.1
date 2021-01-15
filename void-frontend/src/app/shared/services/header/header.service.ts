@@ -6,7 +6,7 @@ import { BehaviorSubject, Observable } from 'rxjs';
 })
 export class HeaderService {
 
-  defaultHeader: string = "Vidyalankar Online Integrated Dashboard";
+  defaultHeader: string = "Online Integrated Dashboard";
   private header = new BehaviorSubject<string>(this.defaultHeader);
 
   constructor() { }

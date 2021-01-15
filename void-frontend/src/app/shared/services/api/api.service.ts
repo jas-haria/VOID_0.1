@@ -31,14 +31,6 @@ export class ApiService {
     return parameters;
   }
 
-  getHeadersToAvoidCache(): HttpHeaders {
-    return new HttpHeaders({
-      'Cache-Control': 'no-cache, no-store, must-revalidate, post- check=0, pre-check=0',
-      'Pragma': 'no-cache',
-      'Expires': '0'
-    });
-  }
-
   getHeaders(accessToken: string, avoidCache: boolean): HttpHeaders {
     let headers = new HttpHeaders();
     headers = headers.append('Authorization', `Bearer ${accessToken}`);

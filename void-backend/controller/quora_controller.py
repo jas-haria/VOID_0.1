@@ -1,4 +1,4 @@
-from flask import Response, request, send_file
+from flask import Response, request, send_file, g
 import json
 import ast
 from distutils.util import strtobool

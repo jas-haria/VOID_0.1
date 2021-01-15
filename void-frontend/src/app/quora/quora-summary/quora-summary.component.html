@@ -47,7 +47,7 @@
                     </button>
                 </div>
             </div>
-            <div class="card mt-2">
+            <div class="card mt-2" *ngIf="isLoggedInUserAdmin">
                 <div class="card-body">
                     <span>Upload Quora Asked Questions</span>
                     <div class="custom-file mt-2">
@@ -63,7 +63,7 @@
                     </button>
                 </div>
             </div>
-            <div class="card mt-2">
+            <div class="card mt-2" *ngIf="isLoggedInUserAdmin">
                 <div class="card-body">
                     <span>{{ 'Refreshed at ' + lastRefreshed?.execution_time }} </span>
                     <div class="w-100">

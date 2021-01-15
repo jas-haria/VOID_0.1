@@ -1,5 +1,5 @@
 import { Component, OnInit, OnDestroy, AfterViewInit } from '@angular/core';
-import { HeaderService } from 'src/app/shared/services/header.service';
+import { HeaderService } from 'src/app/shared/services/header/header.service';
 import { ActivatedRoute } from '@angular/router';
 import { Subscription, Subject, forkJoin } from 'rxjs';
 import { QuoraService } from '../quora.service';
@@ -9,7 +9,8 @@ import { QuoraQuestionAccountAction } from 'src/app/shared/models/enums/quora-qu
 import { QuoraQuestionCount } from 'src/app/shared/models/quora-question-count.model';
 import { ChartDetails } from 'src/app/shared/models/chart-details.model';
 import { TopCardDetails } from 'src/app/shared/models/topcard-details.model';
-import { HttpRequestInterceptorService } from 'src/app/shared/services/http-request-interceptor.service';
+import { HttpRequestInterceptorService } from 'src/app/shared/services/http-request-interceptor/http-request-interceptor.service';
+import { LoggedInUserService } from 'src/app/shared/services/logged-in-user/logged-in-user.service';
 
 
 @Component({
@@ -24,6 +25,7 @@ export class QuoraAccountComponent implements OnInit, OnDestroy, AfterViewInit {
   weekLabels: string[] = [];
   monthLabels: string[] = [];
   account: QuoraAccount;
+  isLoggedInUserAdmin: boolean = false;
 
   createOrRecreateChart: Subject<string> = new Subject<string>();
   updateChart: Subject<string> = new Subject<string>();
@@ -42,7 +44,8 @@ export class QuoraAccountComponent implements OnInit, OnDestroy, AfterViewInit {
   constructor(private _route: ActivatedRoute,
     private _headerService: HeaderService,
     private _quoraService: QuoraService,
-    private _httpRequestInterceptorService: HttpRequestInterceptorService) { }
+    private _httpRequestInterceptorService: HttpRequestInterceptorService,
+    private _loggedInUserService: LoggedInUserService) { }
 
   ngOnInit(): void {
     this.createChartLabels();
@@ -56,6 +59,10 @@ export class QuoraAccountComponent implements OnInit, OnDestroy, AfterViewInit {
           this._headerService.updateHeader(this.account.first_name + " " + this.account.last_name);
           this.loadData();
         })
+      })
+    ).add(
+      this._loggedInUserService.getUserAsObservable().subscribe(user => {
+        this.isLoggedInUserAdmin = user ? user.admin: false;
       })
     );
   }

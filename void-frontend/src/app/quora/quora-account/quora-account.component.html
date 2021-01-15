@@ -40,7 +40,7 @@
                         <button class="btn col" [disable]="(account?.password != 'unavailable')"
                             [cdkCopyToClipboard]="account?.password" placement="top" ngbTooltip="Copy to clipboard"
                             [ngClass]="(account?.password != 'unavailable')?'btn-outline-danger':'disable'"
-                            #passwordTooltip="ngbTooltip" (click)="passwordTooltip.close()">
+                            #passwordTooltip="ngbTooltip" (click)="passwordTooltip.close()" *ngIf="isLoggedInUserAdmin">
                             Account Password &nbsp;<i class="fas fa-clipboard"></i>
                         </button>
                     </div>

@@ -1,7 +1,7 @@
 import { Component, OnInit, OnDestroy, NgModuleRef } from '@angular/core';
 import { NgbModal, NgbModalOptions } from '@ng-bootstrap/ng-bootstrap';
 import { ModalComponent } from './shared/components/modal/modal.component';
-import { HttpRequestInterceptorService } from './shared/services/http-request-interceptor.service';
+import { HttpRequestInterceptorService } from './shared/services/http-request-interceptor/http-request-interceptor.service';
 import { Subscription } from 'rxjs';
 
 @Component({

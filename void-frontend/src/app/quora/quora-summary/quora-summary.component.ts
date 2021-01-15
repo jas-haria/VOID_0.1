@@ -1,6 +1,6 @@
 import { Component, OnInit, OnDestroy, AfterViewInit, ViewChild, TemplateRef, NgModuleRef } from '@angular/core';
 import { QuoraService } from '../quora.service';
-import { HeaderService } from 'src/app/shared/services/header.service';
+import { HeaderService } from 'src/app/shared/services/header/header.service';
 import { QuoraAccountsStats } from 'src/app/shared/models/quora-accounts-stats.model';
 import { Subscription, Subject, forkJoin } from 'rxjs';
 import * as saveAS from 'file-saver';
@@ -11,8 +11,9 @@ import { ChartDetails } from 'src/app/shared/models/chart-details.model';
 import { TopCardDetails } from 'src/app/shared/models/topcard-details.model';
 import { NgbModal, NgbModalOptions } from '@ng-bootstrap/ng-bootstrap';
 import { ModalComponent } from 'src/app/shared/components/modal/modal.component';
-import { HttpRequestInterceptorService } from 'src/app/shared/services/http-request-interceptor.service';
+import { HttpRequestInterceptorService } from 'src/app/shared/services/http-request-interceptor/http-request-interceptor.service';
 import { ExecutionLog } from 'src/app/shared/models/execution-log.model';
+import { LoggedInUserService } from 'src/app/shared/services/logged-in-user/logged-in-user.service';
 
 @Component({
   selector: 'app-quora-summary',
@@ -26,6 +27,7 @@ export class QuoraSummaryComponent implements OnInit, OnDestroy, AfterViewInit {
   monthLongValueArray: number[] = [];
   weekLabels: string[] = [];
   monthLabels: string[] = [];
+  isLoggedInUserAdmin: boolean = false;
 
   createOrRecreateChart: Subject<string> = new Subject<string>();
   updateChart: Subject<string> = new Subject<string>();
@@ -51,13 +53,19 @@ export class QuoraSummaryComponent implements OnInit, OnDestroy, AfterViewInit {
   constructor(private _quoraService: QuoraService,
     private _headerService: HeaderService,
     private _modalService: NgbModal,
-    private _httpRequestInterceptorService: HttpRequestInterceptorService) { }
+    private _httpRequestInterceptorService: HttpRequestInterceptorService,
+    private _loggedInUserService: LoggedInUserService) { }
 
   ngOnInit(): void {
     this.charts[1].multipleTitles = ['Answered', 'Requested'];
     this._headerService.updateHeader("Quora Summary");
     this.createChartLabels();
     this.loadData();
+    this.subscription.add(
+      this._loggedInUserService.getUserAsObservable().subscribe(user => {
+        this.isLoggedInUserAdmin = user ? user.admin: false;
+      })
+    )
   }
 
   ngOnDestroy(): void {

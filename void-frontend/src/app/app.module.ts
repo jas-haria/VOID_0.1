@@ -9,7 +9,7 @@ import { NgbModule } from '@ng-bootstrap/ng-bootstrap';
 import { AppRoutingModule } from './app-routing.module';
 import { BrowserModule } from '@angular/platform-browser';
 import { SharedModule } from './shared/shared.module';
-import { HttpRequestInterceptorProvider } from './shared/http-request-interceptor';
+import { HttpRequestInterceptorProvider } from './shared/services/http-request-interceptor/http-request-interceptor';
 import { AuthenticatedLayoutComponent } from './layouts/authenticated-layout/authenticated-layout.component';
 
 

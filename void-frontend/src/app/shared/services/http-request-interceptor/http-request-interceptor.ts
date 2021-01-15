@@ -2,7 +2,7 @@ import { Injectable } from '@angular/core';
 import { HttpInterceptor, HttpRequest, HttpErrorResponse, HttpHandler, HttpEvent, HTTP_INTERCEPTORS, HttpResponse } from '@angular/common/http';
 import { Observable, EMPTY } from 'rxjs';
 import { catchError, tap, map } from 'rxjs/operators';
-import { HttpRequestInterceptorService } from './services/http-request-interceptor.service';
+import { HttpRequestInterceptorService } from './http-request-interceptor.service';
 
 @Injectable()
 export class HttpRequestInterceptor implements HttpInterceptor {
