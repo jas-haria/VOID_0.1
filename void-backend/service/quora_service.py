@@ -1,4 +1,4 @@
-from sqlalchemy import asc, desc, func
+from sqlalchemy import asc, desc, func, and_
 from bs4 import BeautifulSoup
 from datetime import datetime
 from dateutil.relativedelta import relativedelta
@@ -8,6 +8,7 @@ from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
 import time
 import io
+import re
 import pandas
 
 from model.quora_model import Division, QuoraKeyword, QuoraQuestion, Script, QuoraAccount, ExecutionLog, \
@@ -17,19 +18,17 @@ from service.util_service import get_new_session, scroll_to_bottom, get_driver, 
 
 LOAD_TIME = 3
 encoding = 'utf-8'
-quora_asked_question_excel_headers = ['Question Url', 'Division', 'Account', 'Asked On'];
+quora_asked_question_excel_headers = ['Question Url', 'Question Text', 'Division', 'Account', 'Asked On'];
 
 
 def refresh_data(time, put_todays_date):
     session = get_new_session()
-    divisions = session.query(Division).order_by(asc(Division.id))
+    driver = get_driver()
+    #divisions = session.query(Division).order_by(asc(Division.id))
+    divisions = session.query(Division).filter(Division.id == 2).all()
     keywords = session.query(QuoraKeyword).all()
     question_list = []
-    url_set = set()
-    driver = get_driver()
-
-    for row in session.query(QuoraQuestion.question_url).filter(QuoraQuestion.asked_on > get_time_interval(time)):
-        url_set.add(replace_all(str(row.question_url), {"https://www.quora.com": ""}))
+    parsed_question_urls = set()
 
     for divisionIndexer in divisions:
         for keywordIndexer in keywords:
@@ -39,17 +38,21 @@ def refresh_data(time, put_todays_date):
                 scroll_to_bottom(driver, LOAD_TIME)
                 soup = BeautifulSoup(driver.page_source, 'html.parser')
 
-                # GET EACH QUESTION LINK & QUESTION TEXT
-                for link in soup.findAll('a', attrs={'class': 'question_link'}):
+                # GET EACH QUESTION LINK & QUESTION TEXT (REGEX CHECKS STARTING WITH / AND HAS MINIMUM 1 CHARACTER AFTER)
+                for link in soup.findAll('a', attrs={'target': '_blank', 'href': re.compile("^\/[a-zA-z]")}):
                     question_link = link['href']
+                    # EXCLUDING URLS THAT ARE NOT QUESTIONS
+                    if question_link.startswith('/contact') or question_link.startswith('/profile/'):
+                        continue
                     # UNANSWERED QUESTIONS WILL REDIRECT TO ORIGINAL URL ANYWAY
-                    if '/unanswered' in question_link:
-                        question_link = replace_all(question_link, {'/unanswered/': '/'})
-                    if str(question_link) not in url_set:
-                        url_set.add(question_link)
+                    question_link = replace_all(question_link, {'/unanswered/': '/'})
+                    question_link = 'https://www.quora.com' + question_link
+                    persisted_question = session.query(QuoraQuestion).filter(QuoraQuestion.question_url.like(str(question_link))).first()
+                    if persisted_question is None and question_link not in parsed_question_urls:
+                        parsed_question_urls.add(question_link)
                         question = QuoraQuestion()
-                        question.question_url = ('https://www.quora.com' + question_link).encode(encoding)
-                        question.question_text = link.find('span', attrs={'class': 'ui_qtext_rendered_qtext'}).text.encode(encoding)
+                        question.question_url = question_link.encode(encoding)
+                        question.question_text = link.find('span').text.encode(encoding)
                         question.division_id = divisionIndexer.id
                         question_list.append(question)
     driver.quit()
@@ -160,11 +163,13 @@ def add_pass_qqad(question_ids_list, account_id):
 def get_questions(division_ids, time, page_number, page_size, action, account_id):
     session = get_new_session()
     if action == QuoraQuestionAccountAction.NEW.__str__():
-        query = session.query(QuoraQuestion).filter(QuoraQuestion.division_id.in_(division_ids)).filter(QuoraQuestion.asked_on > get_time_interval(time))\
-            .filter((QuoraQuestion.disregard).is_(False)).filter(~QuoraQuestion.accounts.any()).order_by(desc(QuoraQuestion.id))
+        query = session.query(QuoraQuestion).filter(and_(QuoraQuestion.division_id.in_(division_ids)),
+                                                    QuoraQuestion.asked_on > get_time_interval(time),
+                                                    (QuoraQuestion.disregard).is_(False),
+                                                    ~QuoraQuestion.accounts.any()).order_by(desc(QuoraQuestion.id))
         length, paginated_query = paginate(query=query, page_number=int(page_number), page_limit=int(page_size))
         return {'totalLength': length, 'content': convert_list_to_json(paginated_query.all())}
-    elif action == QuoraQuestionAccountAction.REQUESTED.__str__():
+    if action == QuoraQuestionAccountAction.REQUESTED.__str__():
         actions_to_ignore = [QuoraQuestionAccountAction.ASSIGNED, QuoraQuestionAccountAction.ANSWERED, QuoraQuestionAccountAction.EVALUATED, QuoraQuestionAccountAction.PASSED]
     elif action == QuoraQuestionAccountAction.ASSIGNED.__str__():
         actions_to_ignore = [QuoraQuestionAccountAction.ANSWERED, QuoraQuestionAccountAction.EVALUATED, QuoraQuestionAccountAction.PASSED]
@@ -173,13 +178,19 @@ def get_questions(division_ids, time, page_number, page_size, action, account_id
     else:
         actions_to_ignore = None
     query = session.query(QuoraQuestionAccountDetails.question_id).join(QuoraQuestion).join(
-        QuoraQuestionAccountActions).filter(QuoraQuestion.division_id.in_(division_ids)) \
-        .filter(QuoraQuestion.asked_on > get_time_interval(time)).filter((QuoraQuestion.disregard).is_(False)).filter(
-        QuoraQuestionAccountActions.action == action)
+        QuoraQuestionAccountActions)
     if actions_to_ignore is not None:
         questions_to_ignore = session.query(QuoraQuestionAccountDetails.question_id).join(QuoraQuestionAccountActions).filter(
-            QuoraQuestionAccountActions.action.in_(actions_to_ignore)).all()
+            QuoraQuestionAccountActions.action.in_(actions_to_ignore))
+        if account_id is not None:
+            questions_to_ignore = questions_to_ignore.filter(QuoraQuestionAccountDetails.account_id == account_id)
+        questions_to_ignore = questions_to_ignore.subquery()
         query = query.filter(QuoraQuestion.id.notin_(questions_to_ignore))
+    query = query.filter(and_(
+        QuoraQuestion.division_id.in_(division_ids),
+        QuoraQuestion.asked_on > get_time_interval(time),
+        (QuoraQuestion.disregard).is_(False),
+        QuoraQuestionAccountActions.action == action))
     if account_id is not None:
         query = query.filter(QuoraQuestionAccountDetails.account_id == account_id)
     length, paginated_query = paginate(query=query.order_by(desc(QuoraQuestion.id)), page_number=int(page_number), page_limit=int(page_size))
@@ -584,10 +595,11 @@ def get_asked_questions_sample_excel():
     dataframe.to_excel(excel_writer, sheet_name="sheet 1", index=False)
     worksheet = excel_writer.sheets["sheet 1"]
     worksheet.data_validation(1, 0, 1001, 0, {'validate': 'length', 'criteria': '>', 'minimum': '5', 'input_message': 'Fill up to 1000 Rows only'})
-    worksheet.data_validation(1, 1, 1001, 1, {'validate': 'list', 'source': division_name_list})
-    worksheet.data_validation(1, 2, 1001, 2, {'validate': 'list', 'source': account_name_list})
-    worksheet.data_validation(1, 3, 1001, 3, {'validate': 'date', 'criteria': '>', 'minimum': get_time_interval(TimePeriod.MONTH.value), 'input_title': 'Enter a date greater than',
-                                              'input_message': get_time_interval(TimePeriod.MONTH.value).date().__str__() + ' (YYYY-MM-DD)'})
+    worksheet.data_validation(1, 0, 1001, 1, {'validate': 'length', 'criteria': '>', 'minimum': '5', 'input_message': 'Text of the question as displayed on Quora'})
+    worksheet.data_validation(1, 1, 1001, 2, {'validate': 'list', 'source': division_name_list})
+    worksheet.data_validation(1, 2, 1001, 3, {'validate': 'list', 'source': account_name_list})
+    worksheet.data_validation(1, 3, 1001, 4, {'validate': 'date', 'criteria': '>', 'minimum': get_time_interval(TimePeriod.MONTH.value), 'input_title': 'Enter a date after',
+                                              'input_message': get_time_interval(TimePeriod.MONTH.value).date().__format__('%d %b, %Y').__str__()})
     excel_writer.save()
     strIO.seek(0)
     return strIO
@@ -600,18 +612,26 @@ def upload_asked_questions(file):
     asked_action_object = session.query(QuoraQuestionAccountActions).filter(QuoraQuestionAccountActions.action == QuoraQuestionAccountAction.ASKED).first()
     for index, row in df.iterrows():
         persisted_question = session.query(QuoraQuestion).filter(QuoraQuestion.question_url.like(row['Question Url'])).first()
+        account_id = row['Account'][row['Account'].index('(')+1: row['Account'].index(')')]
         if persisted_question is None:
             persisted_question = QuoraQuestion()
             persisted_question.question_url = row['Question Url'].encode(encoding)
-            persisted_question.question_text = (replace_all(row['Question Url'], {'https:': '', 'www.': '', 'quora.com': '', 'unanswered/': '', '/': '', '-': ' '})).encode(encoding)
+            persisted_question.question_text = row['Question Text'].encode(encoding)
             persisted_question.asked_on = row['Asked On']
             persisted_question.division_id = row['Division'][row['Division'].index('(')+1: row['Division'].index(')')]
             session.add(persisted_question)
-        qqad = QuoraQuestionAccountDetails()
-        qqad.question = persisted_question
-        qqad.action = asked_action_object
-        qqad.account_id = row['Account'][row['Account'].index('(')+1: row['Account'].index(')')]
-        session.add(qqad)
+            persisted_qqad = None
+        else:
+            persisted_qqad = session.query(QuoraQuestionAccountDetails).filter(and_(
+                QuoraQuestionAccountDetails.question_id == persisted_question.id,
+                QuoraQuestionAccountDetails.account_id == account_id,
+                QuoraQuestionAccountDetails.action_id == asked_action_object.id)).first()
+        if persisted_qqad is None:
+            qqad = QuoraQuestionAccountDetails()
+            qqad.question = persisted_question
+            qqad.action = asked_action_object
+            qqad.account_id = account_id
+            session.add(qqad)
     session.commit()
     return True
 
