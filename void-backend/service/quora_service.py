@@ -6,6 +6,8 @@ from selenium.webdriver.common.keys import Keys
 from selenium.webdriver.common.by import By
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
+from selenium.common.exceptions import NoSuchElementException
+
 import time
 import io
 import re
@@ -24,8 +26,7 @@ quora_asked_question_excel_headers = ['Question Url', 'Question Text', 'Division
 def refresh_data(time, put_todays_date):
     session = get_new_session()
     driver = get_driver()
-    #divisions = session.query(Division).order_by(asc(Division.id))
-    divisions = session.query(Division).filter(Division.id == 2).all()
+    divisions = session.query(Division).order_by(asc(Division.id))
     keywords = session.query(QuoraKeyword).all()
     question_list = []
     parsed_question_urls = set()
@@ -39,10 +40,10 @@ def refresh_data(time, put_todays_date):
                 soup = BeautifulSoup(driver.page_source, 'html.parser')
 
                 # GET EACH QUESTION LINK & QUESTION TEXT (REGEX CHECKS STARTING WITH / AND HAS MINIMUM 1 CHARACTER AFTER)
-                for link in soup.findAll('a', attrs={'target': '_blank', 'href': re.compile("^\/[a-zA-z]")}):
+                for link in soup.findAll('a', attrs={'target': '_blank'}):
                     question_link = link['href']
                     # EXCLUDING URLS THAT ARE NOT QUESTIONS
-                    if question_link.startswith('/contact') or question_link.startswith('/profile/'):
+                    if not is_question_url(question_link):
                         continue
                     # UNANSWERED QUESTIONS WILL REDIRECT TO ORIGINAL URL ANYWAY
                     question_link = replace_all(question_link, {'/unanswered/': '/'})
@@ -60,6 +61,17 @@ def refresh_data(time, put_todays_date):
     session.commit()
 
     return {}
+
+def is_question_url(url):
+    if url.startswith("/") and len(url) == 1:
+        return False
+    if url.startswith("/contact") and url.count("/") == 1:
+        return False
+    if url.startswith("/profile/"):
+        return False
+    if url.startswith("/q/") and url.count("/") == 2:
+        return False
+    return True
 
 #can be deleted, missing dates should be replaced by current date
 def fill_missing_dates():
@@ -259,7 +271,7 @@ def refresh_accounts_data(capture_all = False):
                 if question is None:
                     question = QuoraQuestion()
                     question.question_url = question_link.encode(encoding)
-                    question.question_text = (replace_all(question_link,{'https:': '', 'www.': '', 'quora.com': '',  'unanswered/': '', '/': '', '-': ' '})).encode(encoding)
+                    question.question_text = (replace_all(question_link, {'https:': '', 'www.': '', 'quora.com': '',  'unanswered/': '', '/': '', '-': ' '})).encode(encoding)
                     question.asked_on = datetime.now().date()
                     question.division = default_division
                     session.add(question)
@@ -310,7 +322,6 @@ def pass_requested_questions():
     accounts = session.query(QuoraAccount).all()
     passed_action_object = session.query(QuoraQuestionAccountActions).filter(QuoraQuestionAccountActions.action == QuoraQuestionAccountAction.PASSED).first()
     requested_action_object = session.query(QuoraQuestionAccountActions).filter(QuoraQuestionAccountActions.action == QuoraQuestionAccountAction.REQUESTED).first()
-    actions_to_delete = [passed_action_object, requested_action_object]
     for account in accounts:
         if account.link == 'unavailable':
             continue
@@ -320,24 +331,21 @@ def pass_requested_questions():
         scroll_to_bottom(driver, LOAD_TIME)
         questions_to_pass = session.query(QuoraQuestion).join(QuoraQuestionAccountDetails).filter(QuoraQuestionAccountDetails.account_id == account.id)\
             .filter(QuoraQuestionAccountDetails.action == passed_action_object).all()
-        urls = [o.question_url for o in questions_to_pass]
-        questions_passed = set()
         if questions_to_pass is None:
             continue
-        y = driver.find_elements_by_xpath("*//div[contains(@class, 'q-box') and contains(@class, 'qu-pt--medium') and contains(@class, 'qu-pb--tiny')]")
-        for i in y:
-            z = i.find_element_by_xpath("*//a[contains(@class, 'q-box') and contains(@class, 'qu-cursor--pointer') and contains(@class, 'qu-hover--textDecoration--underline') and not(contains(@class, 'qu-color--gray_dark'))]")
-            url = replace_all(z.get_attribute('href'), {'/unanswered/': '/'})
-            if url in (urls):
-                element = i.find_element_by_id("cant_answer")
-                element.click()
-                questions_passed.add(url)
-        passed_questions_ids = set()
         for question in questions_to_pass:
-            if question.question_url in questions_passed:
-                passed_questions_ids.add(question.id)
-        session.query(QuoraQuestionAccountDetails).filter(QuoraQuestionAccountDetails.question_id.in_(passed_questions_ids)).filter(QuoraQuestionAccountDetails.account_id == account.id)\
-            .filter(QuoraQuestionAccountDetails.action_id.in_([passed_action_object.id, requested_action_object.id])).delete(synchronize_session=False)
+            link_in_quora = replace_all(question.question_url, {"https://www.quora.com": ""})
+            try:
+                link_element = driver.find_element_by_xpath("*//a[contains(@href, '" + link_in_quora + "')]")
+            except NoSuchElementException:
+                # IF QUESTION EXISTS BUT WAS NOT FOUND, IT'LL GET SCRAPED WITH REQUESTED QUESTIONS
+                continue
+            parent_element = link_element.find_element_by_xpath("../../../..")
+            parent_element.find_element_by_xpath("*//button[contains(., 'Pass')]").click()
+        session.query(QuoraQuestionAccountDetails).filter(and_(
+            QuoraQuestionAccountDetails.question_id.in_(q.id for q in questions_to_pass),
+            QuoraQuestionAccountDetails.action_id.in_([passed_action_object.id, requested_action_object.id]),
+            QuoraQuestionAccountDetails.account_id == account.id)).delete(synchronize_session=False)
         driver.quit()
         session.commit()
     return {}
@@ -357,8 +365,12 @@ def refresh_requested_questions():
         scroll_to_bottom(driver, LOAD_TIME)
         soup = BeautifulSoup(driver.page_source, 'html.parser')
         # GET REQUESTED QUESTIONS
-        for i in soup.findAll('a', attrs={'class': 'q-box qu-cursor--pointer qu-hover--textDecoration--underline'}):
-            question_url = ("https://www.quora.com" + replace_all(i.get('href'), {'/unanswered/': '/'}))
+        for i in soup.findAll('a', attrs={'target': '_blank'}):
+            link = i.get('href')
+            if not is_question_url(link):
+                continue
+            question_url = ("https://www.quora.com" + replace_all(link, {'/unanswered/': '/'}))
+            print(question_url)
             question = session.query(QuoraQuestion).filter(QuoraQuestion.question_url == question_url).first()
             if question is None:
                 question = QuoraQuestion()
