@@ -63,13 +63,13 @@ def refresh_data(time, put_todays_date):
     return {}
 
 def is_question_url(url):
-    if url.startswith("/") and len(url) == 1:
+    if url in ["/contact", "/"]:
         return False
-    if url.startswith("/contact") and url.count("/") == 1:
-        return False
-    if url.startswith("/profile/"):
+    if any(substring in url for substring in ["/profile/", "/answer/", "/topic/"]):
         return False
     if url.startswith("/q/") and url.count("/") == 2:
+        return False
+    if not url.startswith("/"):
         return False
     return True
 
@@ -244,7 +244,7 @@ def refresh_accounts_data(capture_all = False):
                 driver.execute_script("window.scrollTo(0, document.body.scrollHeight);")
                 time.sleep(LOAD_TIME)
                 dates = driver.find_elements_by_xpath("*//a[contains(@href, '/answer/" + account.link[account.link.rindex('/')+1: len(account.link)] + "')]")
-                last_date_string = replace_all(dates[-1].text, {"Answered": "", "Updated": ""})
+                last_date_string = dates[-1].text
                 try:
                     last_date = datetime.strptime(last_date_string.strip(), '%B %d, %Y')
                 except ValueError:
@@ -257,40 +257,38 @@ def refresh_accounts_data(capture_all = False):
                 if new_height == last_height:
                     break
                 last_height = new_height
-
         soup = BeautifulSoup(driver.page_source, 'html.parser')
-        # LOOP IDENTIFIES CLASS OF EVERY QUESTION
-        for i in soup.findAll('div', attrs={'class': 'q-box qu-pt--medium qu-pb--medium'}):
-            # GET ALL QUESTIONS NEWLY ANSWERED
-            for k in i.findAll('a', attrs={'class': 'q-box qu-cursor--pointer qu-hover--textDecoration--underline', 'target': '_top'}):
-                question_link = ("https://www.quora.com" + k.get('href'))
-                if '/answer' in k.get('href'):
-                    question_link = question_link[0: question_link.index('/answer')]
-                #SAVE QUESTION AS ANSWERED IN DB (TO DO)
-                question = session.query(QuoraQuestion).filter(QuoraQuestion.question_url == question_link).first()
-                if question is None:
-                    question = QuoraQuestion()
-                    question.question_url = question_link.encode(encoding)
-                    question.question_text = (replace_all(question_link, {'https:': '', 'www.': '', 'quora.com': '',  'unanswered/': '', '/': '', '-': ' '})).encode(encoding)
-                    question.asked_on = datetime.now().date()
-                    question.division = default_division
-                    session.add(question)
-                    qqad = QuoraQuestionAccountDetails()
-                else:
-                    qqad = session.query(QuoraQuestionAccountDetails).filter(QuoraQuestionAccountDetails.account == account).filter(QuoraQuestionAccountDetails.question == question)\
-                        .filter(QuoraQuestionAccountDetails.action == answered_action).first()
-                if qqad is None:
-                    qqad = QuoraQuestionAccountDetails()
-                    qqad.account = account
-                    qqad.question = question
-                    qqad.action = answered_action
-                    session.add(qqad)
+        for i in soup.findAll('a', attrs={"target": "_blank"}):
+            link = i.get('href')
+            if not is_question_url(link):
+                continue
+            question = session.query(QuoraQuestion).filter(QuoraQuestion.question_url == link).first()
+            if question is None:
+                question = QuoraQuestion()
+                question.question_url = link.encode(encoding)
+                question.question_text = i.get_text().encode(encoding)
+                question.asked_on = datetime.now().date()
+                question.division = default_division
+                session.add(question)
+                qqad = QuoraQuestionAccountDetails()
+            else:
+                qqad = session.query(QuoraQuestionAccountDetails).filter(
+                    QuoraQuestionAccountDetails.account == account).filter(
+                    QuoraQuestionAccountDetails.question == question) \
+                    .filter(QuoraQuestionAccountDetails.action == answered_action).first()
+            if qqad is None:
+                qqad = QuoraQuestionAccountDetails()
+                qqad.account = account
+                qqad.question = question
+                qqad.action = answered_action
+                session.add(qqad)
         # GET FOLLOWERS COUNT
-        count = 0
-        for i in soup.findAll('div', attrs={'class': 'q-box qu-display--flex'}):
-            if count == 4:
-                follower_count = get_number_from_string(replace_all(i.getText(), {"Follower": "", "s": ""}))
-                follower_count_object = session.query(QuoraAccountStats).filter(QuoraAccountStats.recorded_on == datetime.now().date()).filter(QuoraAccountStats.account_id == account.id).first()
+        for i in soup.findAll('div'):
+            if re.compile('^[0-9.,]+[mMkK]? Follower[s]?$').match(i.get_text()):
+                follower_count = get_number_from_string(replace_all(i.get_text(), {"Follower": "", "s": ""}))
+                follower_count_object = session.query(QuoraAccountStats).filter(
+                    QuoraAccountStats.recorded_on == datetime.now().date()).filter(
+                    QuoraAccountStats.account_id == account.id).first()
                 if follower_count_object is None:
                     follower_count_object = QuoraAccountStats()
                     follower_count_object.account = account
@@ -298,8 +296,6 @@ def refresh_accounts_data(capture_all = False):
                 follower_count_object.total_followers = follower_count
                 session.add(follower_count_object)
                 break
-            count += 1
-
     driver.quit()
     session.commit()
     return {}
