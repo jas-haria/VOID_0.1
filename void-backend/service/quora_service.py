@@ -370,7 +370,6 @@ def refresh_requested_questions():
             if not is_question_url(link):
                 continue
             question_url = ("https://www.quora.com" + replace_all(link, {'/unanswered/': '/'}))
-            print(question_url)
             question = session.query(QuoraQuestion).filter(QuoraQuestion.question_url == question_url).first()
             if question is None:
                 question = QuoraQuestion()
@@ -403,20 +402,24 @@ def refresh_asked_questions_stats():
             qaqs = QuoraAskedQuestionStats()
             qaqs.question_id = question_detail.question_id
             qaqs.recorded_on = datetime.now().date()
-        # GET NUMBER OF ANSWERS
-        for i in soup.findAll('div', attrs={'class': 'q-text qu-medium qu-fontSize--regular qu-color--gray_dark qu-passColorToLinks'}):
-            if "Answer" in i.get_text():
-                qaqs.answer_count = int(replace_all(i.get_text(), {'Answer': '', 's': '', ',': ''}).strip())
-
+            qaqs.answer_count = 0
+            qaqs.follower_count = 0
+            qaqs.view_count = 0
+        # GET NUMBER OF ANSWERS (MAXES OUT AT 100, THEN DISPLAYS 100+)
+        for i in soup.findAll('div'):
+            if re.compile('^[0-9]+[+]? Answer[s]?$').match(i.get_text()):
+                qaqs.answer_count = int(replace_all(i.get_text(), {'Answer': '', 's': '', ',': '', '+': ''}).strip())
+                break
         driver.get(question_detail.question.question_url+'/log')
         soup = BeautifulSoup(driver.page_source, 'html.parser')
         # IDENTIFIES STATS PER QUESTION
-        for j in soup.findAll('div', attrs={'class': 'q-flex qu-py--tiny qu-px--medium qu-alignItems--center'}):
-            if "Public Follower" in j.get_text():
-                qaqs.follower_count = get_number_from_string(replace_all(j.get_text(), {'Public Follower': '', 's': ''}).strip())
-            if "View" in j.get_text():
-                qaqs.view_count = get_number_from_string(replace_all(j.get_text(), {'View': '', 's': ''}).strip())
+        for i in soup.findAll('div'):
+            if re.compile('^[0-9.,]+[mMkK]? Public Follower[s]?$').match(i.get_text()):
+                qaqs.follower_count = get_number_from_string(replace_all(i.get_text(), {'Public Follower': '', 's': ''}).strip())
+            if re.compile('^[0-9.,]+[mMkK]? View[s]?$').match(i.get_text()):
+                qaqs.view_count = get_number_from_string(replace_all(i.get_text(), {'View': '', 's': ''}).strip())
         session.add(qaqs)
+        break
 
     driver.quit()
     session.commit()

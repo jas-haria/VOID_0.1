@@ -68,12 +68,18 @@ def replace_all(text, dict):
 
 def get_number_from_string(num):
     num = replace_all(num, {',': ''})
-    if ('K' in num):
+    if 'K' in num:
         num = num[0: num.index('K')]
         num = float(num)*1000
-    elif ('k' in num):
+    elif 'k' in num:
         num = num[0: num.index('k')]
         num = float(num)*1000
+    elif 'M' in num:
+        num = num[0: num.index('M')]
+        num = float(num)*1000000
+    elif 'm' in num:
+        num = num[0: num.index('m')]
+        num = float(num)*1000000
 
     return float(num)
 
