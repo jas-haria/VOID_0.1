@@ -336,8 +336,20 @@ def pass_requested_questions():
             except NoSuchElementException:
                 # IF QUESTION EXISTS BUT WAS NOT FOUND, IT'LL GET SCRAPED WITH REQUESTED QUESTIONS
                 continue
-            parent_element = link_element.find_element_by_xpath("../../../..")
-            parent_element.find_element_by_xpath("*//button[contains(., 'Pass')]").click()
+            estimated_parent_elements = 6
+            while True:
+                estimated_parent_elements -= 1
+                try:
+                    link_element = link_element.find_element_by_xpath("..")
+                    pass_element = link_element.find_element_by_xpath("*//button[contains(., 'Pass')]")
+                except NoSuchElementException:
+                    #PASS BUTTON NOT FOUND
+                    if estimated_parent_elements <= 0:
+                        break
+                    continue
+                if pass_element is not None:
+                    pass_element.click()
+                    break
         session.query(QuoraQuestionAccountDetails).filter(and_(
             QuoraQuestionAccountDetails.question_id.in_(q.id for q in questions_to_pass),
             QuoraQuestionAccountDetails.action_id.in_([passed_action_object.id, requested_action_object.id]),
