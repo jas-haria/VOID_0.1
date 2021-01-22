@@ -318,9 +318,9 @@ export class QuoraSummaryComponent implements OnInit, OnDestroy, AfterViewInit {
     let modalRef = this._modalService.open(ModalComponent, ngbModalOptions);
     modalRef.componentInstance.headerClass = 'danger';
     modalRef.componentInstance.title = title;
-    modalRef.componentInstance.bodyContentBeforeList = 'Please recheck the file you have uploaded!'
+    modalRef.componentInstance.beforeBodyContentList = 'Please recheck the file you have uploaded!'
     modalRef.componentInstance.bodyContentList = bodyContentList;
-    modalRef.componentInstance.bodyContentAfterList = 'Tip: Download the sample file again and fill it.'
+    modalRef.componentInstance.afterBodyContentList = 'Tip: Download the sample file again and fill it.'
   }
 
   refreshAllStats(): void {
@@ -341,8 +341,8 @@ export class QuoraSummaryComponent implements OnInit, OnDestroy, AfterViewInit {
     let modalRef = this._modalService.open(ModalComponent, ngbModalOptions);
     modalRef.componentInstance.headerClass = 'danger';
     modalRef.componentInstance.title = 'Refresh All Quora Statistics';
-    modalRef.componentInstance.bodyContentBeforeList = 'This will take a long time. Are you sure you want to run it now?'
-    modalRef.componentInstance.bodyContentAfterList = 'Tip: Run it when you are done using the application for the day'
+    modalRef.componentInstance.beforeBodyContentList = 'This will take a long time. Are you sure you want to run it now?'
+    modalRef.componentInstance.afterBodyContentList = 'Tip: Run it when you are done using the application for the day'
     modalRef.componentInstance.showConfirm = true;
     modalRef.result.then(result => {
       if (result == 'confirm') {

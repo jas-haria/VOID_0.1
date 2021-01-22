@@ -330,7 +330,7 @@ export class QuoraQuestionListComponent implements OnInit, OnDestroy {
     let modalRef = this._modalService.open(ModalComponent, ngbModalOptions);
     modalRef.componentInstance.headerClass = 'danger';
     modalRef.componentInstance.title = 'Confirmation';
-    modalRef.componentInstance.bodyContentBeforeList = 'This action is irreversable. Are you sure you want to proceed?';
+    modalRef.componentInstance.beforeBodyContentList = 'This action is irreversable. Are you sure you want to proceed?';
     modalRef.componentInstance.showConfirm = true;
     return modalRef;
   }

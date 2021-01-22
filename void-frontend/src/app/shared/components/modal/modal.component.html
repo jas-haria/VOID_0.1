@@ -7,14 +7,14 @@
             </button>
         </div>
         <div class="modal-body">
-            <p *ngIf="bodyContentBeforeList && bodyContentBeforeList.length>0">
-                {{ bodyContentBeforeList }}
+            <p *ngIf="beforeBodyContentList && beforeBodyContentList.length>0">
+                {{ beforeBodyContentList }}
             </p>
             <ul *ngIf="bodyContentList && bodyContentList.length>0">
                 <li *ngFor="let listItem of bodyContentList">{{ listItem }}</li>
             </ul>
-            <p *ngIf="bodyContentAfterList && bodyContentAfterList.length>0">
-                {{ bodyContentAfterList }}
+            <p *ngIf="afterBodyContentList && afterBodyContentList.length>0">
+                {{ afterBodyContentList }}
             </p>
         </div>
         <div class="modal-footer" *ngIf="!isLoading">

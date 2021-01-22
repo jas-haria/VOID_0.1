@@ -88,6 +88,21 @@ def get_last_refreshed():
 def refresh_all():
     return Response(json.dumps(quora_scraping_service.refresh_all_stats()), status=200, mimetype='application/json')
 
+@app.route(base_url+'/keyword', methods=['GET'])
+@login_required
+def get_all_keywords():
+    return Response(json.dumps(quora_service.get_all_keywords()), status=200, mimetype='application/json')
+
+@app.route(base_url+'/keyword', methods=['DELETE'])
+@login_required
+def delete_keyword():
+    return Response(json.dumps(quora_service.delete_keyword(request.args.get('keyword'))), status=200, mimetype='application/json')
+
+@app.route(base_url+'/keyword', methods=['POST'])
+@login_required
+def add_keyword():
+    return Response(json.dumps(quora_service.add_keyword(request.args.get('keyword'), request.args.get('division_id'))), status=200, mimetype='application/json')
+
 # @app.route(base_url+'/refreshQuestions', methods=['GET'])
 # def refresh_questions_data():
 #     return Response(json.dumps(quora_scraping_service.refresh_data('week', True)), status=200, mimetype='application/json')

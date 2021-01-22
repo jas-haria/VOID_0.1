@@ -1,0 +1,34 @@
+<div class="card-columns">
+    <div class="card" *ngFor="let division of divisions">
+        <div class="card-header border-danger d-flex justify-content-between align-items-center"
+            style="cursor: pointer;"
+            (click)="divisionKeywordMap.get(division.id).expanded = !divisionKeywordMap.get(division.id).expanded">
+            <span>{{ division.division }}</span>
+            <span class="d-flex align-items-center">
+                <span class="badge badge-primary badge-pill">{{ divisionKeywordMap.get(division.id).keywords.size
+                    }}</span>
+                &nbsp;&nbsp;
+                <i class="ni ni-bold-right" *ngIf="!divisionKeywordMap.get(division.id).expanded"></i>
+                <i class="ni ni-bold-down" *ngIf="divisionKeywordMap.get(division.id).expanded"></i>
+            </span>
+        </div>
+        <div class="card-body" *ngIf="divisionKeywordMap.get(division.id).expanded">
+            <div class="input-group mb-2" *ngIf="isLoggedInUserAdmin">
+                <input type="text" class="form-control" placeholder="new keyword" #keywordInput>
+                <div class="input-group-append">
+                    <button class="btn btn-outline-primary" type="button"
+                        (click)="addKeyword(keywordInput.value, division.id);keywordInput.value=''">Add</button>
+                </div>
+            </div>
+            <ul class="list-group">
+                <li class="list-group-item" *ngFor="let keyword of divisionKeywordMap.get(division.id).keywords">
+                    <div class="d-flex justify-content-between">
+                        {{ keyword.keyword }}
+                        <i class="fas fa-trash" style="cursor: pointer;" (click)="deleteKeyword(keyword)"
+                            *ngIf="isLoggedInUserAdmin"></i>
+                    </div>
+                </li>
+            </ul>
+        </div>
+    </div>
+</div>

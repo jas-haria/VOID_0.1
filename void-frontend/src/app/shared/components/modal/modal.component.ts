@@ -12,9 +12,9 @@ export class ModalComponent implements OnInit {
   @Input('showConfirm') showConfirm: boolean = false;
   @Input('headerClass') headerClass: string = 'default';
   @Input('title') title: string = '';
-  @Input('bodyContentBeforeList') bodyContentBeforeList: string = '';
+  @Input('beforeBodyContentList') beforeBodyContentList: string = '';
   @Input('bodyContentList') bodyContentList: string[] = [];
-  @Input('bodyContentAfterList') bodyContentAfterList: string = '';
+  @Input('afterBodyContentList') afterBodyContentList: string = '';
 
   constructor(private _ngbActiveModal: NgbActiveModal) { }
 

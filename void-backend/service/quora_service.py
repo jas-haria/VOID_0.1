@@ -3,7 +3,7 @@ from sqlalchemy import asc, desc, func, and_
 import io
 import pandas
 
-from model.quora_model import Division, QuoraQuestion, Script, QuoraAccount, ExecutionLog, \
+from model.quora_model import Division, QuoraQuestion, Script, QuoraAccount, ExecutionLog, QuoraKeyword, \
     QuoraQuestionAccountDetails, QuoraQuestionAccountActions, QuoraAccountStats, QuoraAskedQuestionStats
 from model.enum import TimePeriod, QuoraQuestionAccountAction
 from service.util_service import get_new_session, paginate, convert_list_to_json, get_time_interval
@@ -38,8 +38,10 @@ def update_qqad(question_ids_list, action, account_id):
 def delete_qqad(question_ids_list, action, account_id):
     session = get_new_session()
     action_object = session.query(QuoraQuestionAccountActions).filter(QuoraQuestionAccountActions.action == QuoraQuestionAccountAction[action]).first()
-    session.query(QuoraQuestionAccountDetails).filter(QuoraQuestionAccountDetails.question_id.in_(question_ids_list)).filter(QuoraQuestionAccountDetails.account_id == account_id)\
-        .filter(QuoraQuestionAccountDetails.action == action_object).delete(synchronize_session=False)
+    session.query(QuoraQuestionAccountDetails).filter(and_(
+        QuoraQuestionAccountDetails.question_id.in_(question_ids_list),
+        QuoraQuestionAccountDetails.account_id == account_id,
+        QuoraQuestionAccountDetails.action_id == action_object.id)).delete(synchronize_session=False)
     session.commit()
     return {}
 
@@ -228,3 +230,23 @@ def get_last_refreshed():
     if execution_log is None:
         return {}
     return execution_log._asdict()
+
+def get_all_keywords():
+    session = get_new_session()
+    keywords = session.query(QuoraKeyword).order_by(QuoraKeyword.keyword).all()
+    return convert_list_to_json(keywords)
+
+def delete_keyword(keyword):
+    session = get_new_session()
+    session.query(QuoraKeyword).filter(QuoraKeyword.keyword.like(keyword)).delete(synchronize_session=False)
+    session.commit()
+    return {}
+
+def add_keyword(keyword, division_id):
+    session = get_new_session()
+    new_keyword = QuoraKeyword()
+    new_keyword.division_id = division_id
+    new_keyword.keyword = keyword
+    session.add(new_keyword)
+    session.commit()
+    return new_keyword._asdict()

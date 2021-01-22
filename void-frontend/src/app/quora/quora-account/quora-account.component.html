@@ -24,7 +24,7 @@
                 <div class="card-header">
                     <span class="text-uppercase">External Actions</span>
                 </div>
-                <div class="card-body">
+                <div class="card-body" *ngIf="account?.email != 'unavailable'">
                     <a class="btn w-100 mt-2" [disable]="(account?.link != 'unavailable')" target="_blank"
                         [href]="account?.link"
                         [ngClass]="(account?.link != 'unavailable')?'btn-outline-danger':'disable'">

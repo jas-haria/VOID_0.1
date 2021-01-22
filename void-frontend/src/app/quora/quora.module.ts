@@ -8,6 +8,7 @@ import { QuoraAccountComponent } from './quora-account/quora-account.component';
 import { QuoraSummaryComponent } from './quora-summary/quora-summary.component';
 import { ModalComponent } from '../shared/components/modal/modal.component';
 import { OktaAuthGuard } from '@okta/okta-angular';
+import { QuoraKeywordComponent } from './quora-keyword/quora-keyword.component';
 
 
 export const QuoraRoutes: Routes = [
@@ -15,7 +16,8 @@ export const QuoraRoutes: Routes = [
       { path: 'summary', component: QuoraSummaryComponent, pathMatch: 'full' },
       { path: 'questions-list/:type/:accountId', component: QuoraQuestionListComponent, pathMatch: 'full' },
       { path: 'questions-list/:type', component: QuoraQuestionListComponent, pathMatch: 'full' },
-      { path: 'account/:id', component: QuoraAccountComponent, pathMatch: 'full' }
+      { path: 'account/:id', component: QuoraAccountComponent, pathMatch: 'full' },
+      { path: 'keywords', component: QuoraKeywordComponent, pathMatch: 'full' }
     ]
   }
 ];
@@ -24,7 +26,8 @@ export const QuoraRoutes: Routes = [
   declarations: [
     QuoraQuestionListComponent,
     QuoraAccountComponent,
-    QuoraSummaryComponent
+    QuoraSummaryComponent,
+    QuoraKeywordComponent
   ],
   imports: [
     CommonModule,

@@ -59,9 +59,8 @@ class QuoraKeyword(Base):
     __tablename__ = "quora_keywords"
     __table_args__ = schema
 
-    id = Column('id', Integer, primary_key=True, autoincrement=True)
+    keyword = Column('keyword', String(50), primary_key=True, nullable=False)
     division_id = Column('division', Integer, ForeignKey('void_dev.divisions.id'), nullable=False)
-    keyword = Column('keyword', String(50), nullable=False)
 
     division = relationship('Division')
 

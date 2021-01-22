@@ -49,13 +49,13 @@ export class AppComponent implements OnInit, OnDestroy {
     let modalRef = this._modalService.open(ModalComponent, ngbModalOptions);
     modalRef.componentInstance.headerClass = 'default';
     modalRef.componentInstance.title = 'Loading...';
-    modalRef.componentInstance.bodyContentBeforeList = 'This may take a while. Please ensure:';
+    modalRef.componentInstance.beforeBodyContentList = 'This may take a while. Please ensure:';
     modalRef.componentInstance.bodyContentList = [
       'Your machine is connected to the internet at all times',
       'Your machine does not sleep due to inactivity',
       'You do not close this window'
     ];
-    modalRef.componentInstance.bodyContentAfterList = 'It will be worth the wait, really.'
+    modalRef.componentInstance.afterBodyContentList = 'It will be worth the wait, really.'
     modalRef.componentInstance.isLoading = true;
   }
 
@@ -68,13 +68,13 @@ export class AppComponent implements OnInit, OnDestroy {
     let modalRef = this._modalService.open(ModalComponent, ngbModalOptions);
     modalRef.componentInstance.headerClass = 'danger';
     modalRef.componentInstance.title = 'Oops';
-    modalRef.componentInstance.bodyContentBeforeList = 'Something went wrong. You can try the following:';
+    modalRef.componentInstance.beforeBodyContentList = 'Something went wrong. You can try the following:';
     modalRef.componentInstance.bodyContentList = [
       'Check your internet connection',
       'Check if both the servers are up',
       'Restart your browser and your servers',
       'Check if you provided the correct input'
     ];
-    modalRef.componentInstance.bodyContentAfterList = 'If everything fails, kindly pray';
+    modalRef.componentInstance.afterBodyContentList = 'If everything fails, kindly pray';
   }
 }

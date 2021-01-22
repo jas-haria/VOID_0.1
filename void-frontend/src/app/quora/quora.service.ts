@@ -12,6 +12,7 @@ import { QuoraAccountsStats } from '../shared/models/quora-accounts-stats.model'
 import { QuoraQuestionCount } from '../shared/models/quora-question-count.model';
 import { ExecutionLog } from '../shared/models/execution-log.model';
 import { OktaAuthService } from '@okta/okta-angular';
+import { QuoraKeyword } from '../shared/models/quora-keyword';
 
 @Injectable({
   providedIn: 'root'
@@ -124,5 +125,22 @@ export class QuoraService {
 
   getLastRefreshed(): Observable<ExecutionLog> {
     return <Observable<ExecutionLog>>this._apiService.createRequest('get', this.baseUrl + '/last-refreshed', null, null, false, null);
+  }
+
+  getKeywords(): Observable<QuoraKeyword[]> {
+    return <Observable<QuoraKeyword[]>>this._apiService.createRequest('get', this.baseUrl + '/keyword', null, null, true, null);
+  }
+
+  deleteKeyword(keyword: string): Observable<any> {
+    let parameters = {};
+    parameters['keyword'] = keyword;
+    return <Observable<any>>this._apiService.createRequest('delete', this.baseUrl + '/keyword', parameters, null, false, null);
+  }
+
+  addKeyWord(keyword: string, division_id: number): Observable<QuoraKeyword> {
+    let parameters = {};
+    parameters['keyword'] = keyword;
+    parameters['division_id'] = division_id;
+    return <Observable<QuoraKeyword>>this._apiService.createRequest('post', this.baseUrl + '/keyword', parameters, null, false, null);
   }
 }
