@@ -5,19 +5,11 @@ from distutils.util import strtobool
 
 from authentication.authenticator import login_required
 from controller import app_controller
-from service import quora_service, util_service
+from service import quora_service, util_service, quora_scraping_service
 
 app = app_controller.app
 
 base_url = '/quora'
-
-# @app.route(base_url+'/refreshQuestions', methods=['GET'])
-# def refresh_questions_data():
-#     return Response(json.dumps(quora_service.refresh_data('week', True)), status=200, mimetype='application/json')
-#
-# @app.route(base_url+'/fillAllMissingDates', methods=['GET'])
-# def fill_all_missing_dates():
-#     return Response(json.dumps(quora_service.fill_missing_dates()), status=200, mimetype='application/json')
 
 @app.route(base_url+'/disregard', methods=['PUT'])
 @login_required
@@ -53,26 +45,7 @@ def get_asked_questions_stats():
         questionIds = ast.literal_eval(request.args.get('questionIds'))
     return Response(json.dumps(quora_service.get_asked_questions_stats(questionIds, bool(strtobool(request.args.get('lastWeek'))))), status=200, mimetype='application/json')
 
-# @app.route(base_url+'/refreshAccountsData', methods=['GET'])
-# def refresh_accounts_data():
-#     return Response(json.dumps(quora_service.refresh_accounts_data()), status=200, mimetype='application/json')
-#
-# @app.route(base_url+'/passRequestedQuestions', methods=['GET'])
-# def pass_requested_questions():
-#     return Response(json.dumps(quora_service.pass_requested_questions()), status=200, mimetype='application/json')
-#
-# @app.route(base_url+'/refreshRequestedQuestions', methods=['GET'])
-# def refresh_requested_questions():
-#     return Response(json.dumps(quora_service.refresh_requested_questions()), status=200, mimetype='application/json')
-#
-# @app.route(base_url+'/refreshAskedQuestionsStats', methods=['GET'])
-# def refresh_asked_questions_stats():
-#     return Response(json.dumps(quora_service.refresh_asked_questions_stats()), status=200, mimetype='application/json')
-#
-# @app.route(base_url+'/refreshAccountStats', methods=['GET'])
-# def refresh_accounts_stats():
-#     return Response(json.dumps(quora_service.refresh_accounts_stats()), status=200, mimetype='application/json')
-
+# HAS SOME ISSUE
 @app.route(base_url+'/pending-questions-excel', methods=['GET'])
 @login_required
 def generate_pending_questions_excel():
@@ -113,4 +86,32 @@ def get_last_refreshed():
 @app.route(base_url+'/refresh-all', methods=['GET'])
 @login_required
 def refresh_all():
-    return Response(json.dumps(quora_service.refresh_all_stats()), status=200, mimetype='application/json')
+    return Response(json.dumps(quora_scraping_service.refresh_all_stats()), status=200, mimetype='application/json')
+
+# @app.route(base_url+'/refreshQuestions', methods=['GET'])
+# def refresh_questions_data():
+#     return Response(json.dumps(quora_scraping_service.refresh_data('week', True)), status=200, mimetype='application/json')
+#
+# @app.route(base_url+'/fillAllMissingDates', methods=['GET'])
+# def fill_all_missing_dates():
+#     return Response(json.dumps(quora_scraping_service.fill_missing_dates()), status=200, mimetype='application/json')
+
+# @app.route(base_url+'/refreshAccountsData', methods=['GET'])
+# def refresh_accounts_data():
+#     return Response(json.dumps(quora_scraping_service.refresh_accounts_data()), status=200, mimetype='application/json')
+#
+# @app.route(base_url+'/passRequestedQuestions', methods=['GET'])
+# def pass_requested_questions():
+#     return Response(json.dumps(quora_scraping_service.pass_requested_questions()), status=200, mimetype='application/json')
+#
+# @app.route(base_url+'/refreshRequestedQuestions', methods=['GET'])
+# def refresh_requested_questions():
+#     return Response(json.dumps(quora_scraping_service.refresh_requested_questions()), status=200, mimetype='application/json')
+#
+# @app.route(base_url+'/refreshAskedQuestionsStats', methods=['GET'])
+# def refresh_asked_questions_stats():
+#     return Response(json.dumps(quora_scraping_service.refresh_asked_questions_stats()), status=200, mimetype='application/json')
+#
+# @app.route(base_url+'/refreshAccountStats', methods=['GET'])
+# def refresh_accounts_stats():
+#     return Response(json.dumps(quora_scraping_service.refresh_accounts_stats()), status=200, mimetype='application/json')
