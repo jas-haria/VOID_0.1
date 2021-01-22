@@ -70,6 +70,9 @@ export class QuoraKeywordComponent implements OnInit, OnDestroy {
   }
 
   addKeyword(keyword: string, division_id: number): void {
+    if (keyword.length == 0) {
+      return;
+    }
     let existingKeyword = this.keywords.find(key => key.keyword.toLowerCase() === keyword.toLowerCase());
     if (existingKeyword) {
       this.showDuplicateKeywordPopup(keyword, this.divisions.find(div => div.id === existingKeyword.division_id));
