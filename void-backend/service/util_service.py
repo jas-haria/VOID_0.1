@@ -19,7 +19,7 @@ def get_new_session():
 def get_driver():
     options = Options()
     options.add_argument("--headless")
-    driver = webdriver.Chrome(ChromeDriverManager().install())#, options=options)
+    driver = webdriver.Chrome(ChromeDriverManager().install(), options=options)
     #driver = webdriver.Chrome(r"C:/Users/jasha/.wdm/drivers/chromedriver/win32/86.0.4240.22/chromedriver.exe")#, options=options)
     return driver
 
