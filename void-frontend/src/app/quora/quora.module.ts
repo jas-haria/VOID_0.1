@@ -6,7 +6,6 @@ import { QuoraService } from './quora.service';
 import { SharedModule } from '../shared/shared.module';
 import { QuoraAccountComponent } from './quora-account/quora-account.component';
 import { QuoraSummaryComponent } from './quora-summary/quora-summary.component';
-import { ModalComponent } from '../shared/components/modal/modal.component';
 import { OktaAuthGuard } from '@okta/okta-angular';
 import { QuoraKeywordComponent } from './quora-keyword/quora-keyword.component';
 

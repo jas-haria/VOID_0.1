@@ -3,10 +3,8 @@ import { CommonModule, } from '@angular/common';
 import { BrowserModule  } from '@angular/platform-browser';
 import { Routes, RouterModule } from '@angular/router';
 
-import { AuthLayoutComponent } from './layouts/auth-layout/auth-layout.component';
 import { AuthenticatedLayoutComponent } from './layouts/authenticated-layout/authenticated-layout.component';
-import { LoginComponent } from './login/login/login.component';
-import { OktaAuthModule, OktaCallbackComponent, OKTA_CONFIG } from '@okta/okta-angular';
+import { OktaAuthGuard, OktaAuthModule, OktaCallbackComponent, OKTA_CONFIG } from '@okta/okta-angular';
 import { LoginModule } from './login/login.module';
 
 const oktaConfig = {
@@ -24,19 +22,11 @@ const routes: Routes =[
   }, {
     path: '',
     component: AuthenticatedLayoutComponent,
+    canActivateChild: [OktaAuthGuard],
     children: [
       {
         path: '',
         loadChildren: './layouts/authenticated-layout/authenticated-layout.module#AuthenticatedLayoutModule'
-      }
-    ]
-  }, {
-    path: '',
-    component: AuthLayoutComponent,
-    children: [
-      {
-        path: '',
-        loadChildren: './layouts/auth-layout/auth-layout.module#AuthLayoutModule'
       }
     ]
   }, { 
@@ -44,7 +34,7 @@ const routes: Routes =[
     component: OktaCallbackComponent 
   }, {
     path: '**',
-    redirectTo: 'dashboard'
+    redirectTo: 'login'
   }
 ];
 

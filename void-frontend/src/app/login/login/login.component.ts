@@ -10,6 +10,8 @@ import { LoggedInUserService } from 'src/app/shared/services/logged-in-user/logg
 })
 export class LoginComponent implements OnInit {
 
+  currentDate: Date = new Date();
+
   constructor(private _oktaAuth: OktaAuthService,
      private _router: Router,
      private _loggedInUserService: LoggedInUserService) {}

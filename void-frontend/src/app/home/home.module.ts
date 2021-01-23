@@ -5,9 +5,7 @@ import { OktaAuthGuard } from '@okta/okta-angular';
 import { RouterModule, Routes } from '@angular/router';
 
 const HomeRoute: Routes = [
-  { path: 'home', 
-  component: HomeComponent, 
-  canActivate: [OktaAuthGuard]}
+  { path: 'home', component: HomeComponent, canActivate: [OktaAuthGuard] }
 ];
 
 @NgModule({

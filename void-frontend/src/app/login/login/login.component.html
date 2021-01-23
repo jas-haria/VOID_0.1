@@ -1,5 +1,35 @@
-<mat-card>
-    <mat-card-content>
-      <button mat-button (click)="login($event)" color="primary">Login</button>
-    </mat-card-content>
-  </mat-card>
+<div class="d-flex flex-column h-100vh justify-content-center align-items-center">
+  <img src="./assets/img/void/vidyalankar_bird.png" class="w-25 mb-2" alt="Responsive image">
+  <span class="text-black-50 my-4">ONLINE INTEGRATED DASHBOARD</span>
+  <button (click)="login($event)" class="btn btn-outline-primary">Login</button>
+</div>
+
+
+<footer class="footer mx-4 fixed-bottom">
+  <div class="row align-items-center justify-content-xl-between">
+    <div class="col-xl-6">
+      <div class="copyright text-center text-xl-left text-muted">
+        &copy; {{ currentDate | date: "yyyy" }} <a href="https://www.vidyalankar.org/" class="font-weight-bold ml-1" target="_blank">Vidyalankar</a>
+      </div>
+    </div>
+    <div class="col-xl-6">
+      <ul class="nav nav-footer justify-content-center justify-content-xl-end">
+        <li class="nav-item">
+          <span class="nav-link">Developed by Jas Haria:</span>
+        </li>
+        <li class="nav-item">
+          <a href="https://www.linkedin.com/in/jas-haria/" class="nav-link" target="_blank"><i class="fab fa-linkedin"></i></a>
+        </li>
+        <li class="nav-item">
+          <a href="mailto:jasharia1998@gmail.com" class="nav-link" target="_blank"><i class="fas fa-envelope"></i></a>
+        </li>
+        <li class="nav-item">
+          <a href="https://medium.com/@jasharia" class="nav-link" target="_blank"><i class="fab fa-medium"></i></a>
+        </li>
+        <li class="nav-item">
+          <a href="https://github.com/jas-haria" class="nav-link" target="_blank"><i class="fab fa-github"></i></a>
+        </li>
+      </ul>
+    </div>
+  </div>
+</footer>
