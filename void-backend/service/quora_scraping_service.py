@@ -481,7 +481,7 @@ def refresh_all_stats():
     refresh_requested_questions()
     refresh_asked_questions_stats()
     refresh_accounts_stats()
-    delete_old_data()
+    #delete_old_data()
 
     execution_log.execution_time = datetime.now()
     session.add(execution_log)
