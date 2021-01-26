@@ -1,8 +1,8 @@
 import { Injectable } from '@angular/core';
 import { HttpParams, HttpHeaders, HttpClient } from '@angular/common/http';
-import { OktaAuthService } from '@okta/okta-angular';
 import { from, Observable } from 'rxjs';
 import { switchMap } from 'rxjs/operators';
+import { AuthService } from '../auth/auth.service';
 
 @Injectable({
   providedIn: 'root'
@@ -11,8 +11,8 @@ export class ApiService {
 
   private backendUrl: string = 'http://localhost:5000';
 
-  constructor(private _oktaAuth: OktaAuthService,
-    private _http: HttpClient) { }
+  constructor(private _http: HttpClient,
+    private _authService: AuthService) { }
 
   getBackendUrl(): string {
     return this.backendUrl;
@@ -43,7 +43,7 @@ export class ApiService {
   }
 
   createRequest(method: string, url: string, parameters: any, body: FormData, avoidCache: boolean, responseType: string): Observable<Object> {
-    return from(this._oktaAuth.getAccessToken()).pipe(switchMap((accessToken: string) => {
+    return this._authService.getAccessToken().pipe(switchMap((accessToken: string) => {
       let options = {};
       options['headers'] = this.getHeaders(accessToken, avoidCache);
       if (parameters) {

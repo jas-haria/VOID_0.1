@@ -6,8 +6,8 @@ import { ModalComponent } from 'src/app/shared/components/modal/modal.component'
 import { Division } from 'src/app/shared/models/division.model';
 import { QuoraKeyword } from 'src/app/shared/models/quora-keyword';
 import { User } from 'src/app/shared/models/user.model';
+import { AuthService } from 'src/app/shared/services/auth/auth.service';
 import { HeaderService } from 'src/app/shared/services/header/header.service';
-import { LoggedInUserService } from 'src/app/shared/services/logged-in-user/logged-in-user.service';
 import { QuoraService } from '../quora.service';
 
 @Component({
@@ -27,7 +27,7 @@ export class QuoraKeywordComponent implements OnInit, OnDestroy {
     private _divisionService: DivisionService,
     private _quoraService: QuoraService,
     private _modalService: NgbModal,
-    private _loggedInUserService: LoggedInUserService) { }
+    private _authService: AuthService) { }
 
   ngOnInit(): void {
     this._headerService.updateHeader("Quora Keywords");
@@ -43,7 +43,7 @@ export class QuoraKeywordComponent implements OnInit, OnDestroy {
         this.populateMap();
       })
     ).add(
-      this._loggedInUserService.getUserAsObservable().subscribe(user => {
+      this._authService.userProfile$.subscribe(user => {
         this.isLoggedInUserAdmin = user ? user.admin: false;
       })
     );

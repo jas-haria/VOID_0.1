@@ -17,7 +17,7 @@ import { QuoraAccount } from 'src/app/shared/models/quora-account.model';
 import { HttpRequestInterceptorService } from 'src/app/shared/services/http-request-interceptor/http-request-interceptor.service';
 import { NgbModal, NgbModalOptions } from '@ng-bootstrap/ng-bootstrap';
 import { ModalComponent } from 'src/app/shared/components/modal/modal.component';
-import { LoggedInUserService } from 'src/app/shared/services/logged-in-user/logged-in-user.service';
+import { AuthService } from 'src/app/shared/services/auth/auth.service';
 
 @Component({
   selector: 'app-quora-question-list',
@@ -61,7 +61,7 @@ export class QuoraQuestionListComponent implements OnInit, OnDestroy {
     private _headerService: HeaderService,
     private _httpRequestInterceptorService: HttpRequestInterceptorService,
     private _modalService: NgbModal,
-    private _loggedInUserService: LoggedInUserService) { }
+    private _authService: AuthService) { }
 
   ngOnInit(): void {
     this._httpRequestInterceptorService.displaySpinner(true);
@@ -77,8 +77,9 @@ export class QuoraQuestionListComponent implements OnInit, OnDestroy {
         this._httpRequestInterceptorService.displaySpinner(false);
       })
     ).add(
-      this._loggedInUserService.getUserAsObservable().subscribe(user => {
+      this._authService.userProfile$.subscribe(user => {
         this.isLoggedInUserAdmin = user ? user.admin: false;
+        console.log(1, this.isLoggedInUserAdmin, user)
       })
     );
   }

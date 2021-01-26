@@ -7,10 +7,11 @@ import { SharedModule } from '../shared/shared.module';
 import { QuoraAccountComponent } from './quora-account/quora-account.component';
 import { QuoraSummaryComponent } from './quora-summary/quora-summary.component';
 import { QuoraKeywordComponent } from './quora-keyword/quora-keyword.component';
+import { AuthGuard } from '../shared/gaurd/auth.guard';
 
 
 export const QuoraRoutes: Routes = [
-  { path: 'quora', children: [
+  { path: 'quora', canActivate: [AuthGuard], children: [
       { path: 'summary', component: QuoraSummaryComponent, pathMatch: 'full' },
       { path: 'questions-list/:type/:accountId', component: QuoraQuestionListComponent, pathMatch: 'full' },
       { path: 'questions-list/:type', component: QuoraQuestionListComponent, pathMatch: 'full' },

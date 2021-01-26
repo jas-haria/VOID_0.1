@@ -1,34 +1,36 @@
-import { Component, OnInit } from '@angular/core';
-import * as Auth0 from 'auth0-web';
+import { Component, OnDestroy, OnInit } from '@angular/core';
 import { Router } from '@angular/router';
-import { LoggedInUserService } from 'src/app/shared/services/logged-in-user/logged-in-user.service';
+import { AuthService } from 'src/app/shared/services/auth/auth.service';
+import { Subscription } from 'rxjs';
 
 @Component({
   selector: 'app-login',
   templateUrl: './login.component.html',
   styleUrls: ['./login.component.css']
 })
-export class LoginComponent implements OnInit {
+export class LoginComponent implements OnInit, OnDestroy {
 
   currentDate: Date = new Date();
+  subscription: Subscription = new Subscription();
 
   constructor(private _router: Router,
-     private _loggedInUserService: LoggedInUserService) {}
+     private _authService: AuthService) {}
 
   ngOnInit() {
-    this._loggedInUserService.updateUser(null);
-    console.log(Auth0.isAuthenticated());
-    Auth0.handleAuthCallback((err) => {
-      if (err) console.log(err);
-    });
-    Auth0.subscribe((authenticated) => {
-      if(authenticated) {
-        this._router.navigate(['/home'], {replaceUrl: true})
-      }
-    });
+    this.subscription.add(
+      this._authService.isAuthenticated$.subscribe(isAuthenticated => {
+        if (isAuthenticated) {
+          this._router.navigate(["../home"]);
+        }
+      })
+    );
+  }
+
+  ngOnDestroy(): void {
+    this.subscription.unsubscribe();
   }
 
   login(): void {
-    Auth0.signIn();
+    this._authService.login();
   }
 }

@@ -10,7 +10,7 @@ import { QuoraQuestionCount } from 'src/app/shared/models/quora-question-count.m
 import { ChartDetails } from 'src/app/shared/models/chart-details.model';
 import { TopCardDetails } from 'src/app/shared/models/topcard-details.model';
 import { HttpRequestInterceptorService } from 'src/app/shared/services/http-request-interceptor/http-request-interceptor.service';
-import { LoggedInUserService } from 'src/app/shared/services/logged-in-user/logged-in-user.service';
+import { AuthService } from 'src/app/shared/services/auth/auth.service';
 
 
 @Component({
@@ -45,7 +45,7 @@ export class QuoraAccountComponent implements OnInit, OnDestroy, AfterViewInit {
     private _headerService: HeaderService,
     private _quoraService: QuoraService,
     private _httpRequestInterceptorService: HttpRequestInterceptorService,
-    private _loggedInUserService: LoggedInUserService) { }
+    private _authService: AuthService) { }
 
   ngOnInit(): void {
     this.createChartLabels();
@@ -61,7 +61,7 @@ export class QuoraAccountComponent implements OnInit, OnDestroy, AfterViewInit {
         })
       })
     ).add(
-      this._loggedInUserService.getUserAsObservable().subscribe(user => {
+      this._authService.userProfile$.subscribe(user => {
         this.isLoggedInUserAdmin = user ? user.admin: false;
       })
     );

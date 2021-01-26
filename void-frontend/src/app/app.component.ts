@@ -3,6 +3,7 @@ import { NgbModal, NgbModalOptions } from '@ng-bootstrap/ng-bootstrap';
 import { ModalComponent } from './shared/components/modal/modal.component';
 import { HttpRequestInterceptorService } from './shared/services/http-request-interceptor/http-request-interceptor.service';
 import { Subscription } from 'rxjs';
+import { AuthService } from './shared/services/auth/auth.service';
 
 @Component({
   selector: 'app-root',
@@ -15,9 +16,11 @@ export class AppComponent implements OnInit, OnDestroy {
   subscription: Subscription = new Subscription();
 
   constructor(private _modalService: NgbModal,
-    private _httpRequestInterceptorService: HttpRequestInterceptorService) { }
+    private _httpRequestInterceptorService: HttpRequestInterceptorService,
+    private _authService: AuthService) { }
 
   ngOnInit(): void {
+    this._authService.localAuthSetup();
     this.subscription.add(
       this._httpRequestInterceptorService.getSpinnerDisplay().subscribe((show) => {
         if (show) {

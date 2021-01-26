@@ -1,9 +1,8 @@
 import { Component, OnDestroy, OnInit } from '@angular/core';
 import { HeaderService } from '../../services/header/header.service';
 import { Subscription } from 'rxjs';
-import { LoggedInUserService } from '../../services/logged-in-user/logged-in-user.service';
 import { User } from '../../models/user.model';
-import * as Auth0 from 'auth0-web';
+import { AuthService } from '../../services/auth/auth.service';
 
 
 @Component({
@@ -18,7 +17,7 @@ export class NavbarComponent implements OnInit, OnDestroy {
   loggedInUser: User = null;
 
   constructor(private _headerService: HeaderService,
-    private _loggedInUserService: LoggedInUserService) {
+    private _authService: AuthService) {
   }
 
   ngOnInit(): void {
@@ -27,9 +26,9 @@ export class NavbarComponent implements OnInit, OnDestroy {
         this.title = header;
       })
     ).add(
-      this._loggedInUserService.getUserAsObservable().subscribe(user => {
-        console.log(user)
+      this._authService.userProfile$.subscribe(user => {
         this.loggedInUser = user;
+        console.log(user)
       })
     );
   }
@@ -39,10 +38,7 @@ export class NavbarComponent implements OnInit, OnDestroy {
   }
 
   logout(): void {
-    Auth0.signOut({
-      returnTo: 'http://localhost:4200/login',
-      clientID: 'TecKzu7OhQKztXweiBO5Lv8pDSffkpfh'
-    });
+    this._authService.logout();
   }
 
 }

@@ -13,7 +13,7 @@ import { NgbModal, NgbModalOptions } from '@ng-bootstrap/ng-bootstrap';
 import { ModalComponent } from 'src/app/shared/components/modal/modal.component';
 import { HttpRequestInterceptorService } from 'src/app/shared/services/http-request-interceptor/http-request-interceptor.service';
 import { ExecutionLog } from 'src/app/shared/models/execution-log.model';
-import { LoggedInUserService } from 'src/app/shared/services/logged-in-user/logged-in-user.service';
+import { AuthService } from 'src/app/shared/services/auth/auth.service';
 
 @Component({
   selector: 'app-quora-summary',
@@ -54,7 +54,7 @@ export class QuoraSummaryComponent implements OnInit, OnDestroy, AfterViewInit {
     private _headerService: HeaderService,
     private _modalService: NgbModal,
     private _httpRequestInterceptorService: HttpRequestInterceptorService,
-    private _loggedInUserService: LoggedInUserService) { }
+    private _authService: AuthService) { }
 
   ngOnInit(): void {
     this.charts[1].multipleTitles = ['Answered', 'Requested'];
@@ -62,7 +62,7 @@ export class QuoraSummaryComponent implements OnInit, OnDestroy, AfterViewInit {
     this.createChartLabels();
     this.loadData();
     this.subscription.add(
-      this._loggedInUserService.getUserAsObservable().subscribe(user => {
+      this._authService.userProfile$.subscribe(user => {
         this.isLoggedInUserAdmin = user ? user.admin: false;
       })
     )
