@@ -1,5 +1,5 @@
 import { Component, OnInit } from '@angular/core';
-import { OktaAuthService } from '@okta/okta-angular';
+import * as Auth0 from 'auth0-web';
 import { Router } from '@angular/router';
 import { LoggedInUserService } from 'src/app/shared/services/logged-in-user/logged-in-user.service';
 
@@ -12,20 +12,23 @@ export class LoginComponent implements OnInit {
 
   currentDate: Date = new Date();
 
-  constructor(private _oktaAuth: OktaAuthService,
-     private _router: Router,
+  constructor(private _router: Router,
      private _loggedInUserService: LoggedInUserService) {}
 
-  async ngOnInit() {
+  ngOnInit() {
     this._loggedInUserService.updateUser(null);
-    const isAuthenticated = await this._oktaAuth.isAuthenticated();
-    if (isAuthenticated) {
-      this._router.navigate(['/home'], {replaceUrl: true})
-    }
+    console.log(Auth0.isAuthenticated());
+    Auth0.handleAuthCallback((err) => {
+      if (err) console.log(err);
+    });
+    Auth0.subscribe((authenticated) => {
+      if(authenticated) {
+        this._router.navigate(['/home'], {replaceUrl: true})
+      }
+    });
   }
 
-  async login(event) {
-    event.preventDefault();
-    await this._oktaAuth.loginRedirect('/home');
+  login(): void {
+    Auth0.signIn();
   }
 }

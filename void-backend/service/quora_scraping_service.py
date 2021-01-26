@@ -217,14 +217,14 @@ def pass_requested_questions():
     for account in accounts:
         if account.link == 'unavailable':
             continue
-        driver = get_driver()
-        login_to_account(driver, account)
-        driver.get("https://www.quora.com/answer/requests")
-        scroll_to_bottom(driver, LOAD_TIME)
         questions_to_pass = session.query(QuoraQuestion).join(QuoraQuestionAccountDetails).filter(QuoraQuestionAccountDetails.account_id == account.id)\
             .filter(QuoraQuestionAccountDetails.action == passed_action_object).all()
         if questions_to_pass is None:
             continue
+        driver = get_driver()
+        login_to_account(driver, account)
+        driver.get("https://www.quora.com/answer/requests")
+        scroll_to_bottom(driver, LOAD_TIME)
         for question in questions_to_pass:
             link_in_quora = replace_all(question.question_url, {"https://www.quora.com": ""})
             try:

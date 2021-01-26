@@ -7,7 +7,7 @@ app = app_controller.app
 CORS(app)
 
 #IMPORTING ROUTES
-from controller import quora_controller, division_controller
+from controller import app_controller, quora_controller, division_controller
 
 #IMPORTING SCHEDULER
 scheduler.scheduler.start()

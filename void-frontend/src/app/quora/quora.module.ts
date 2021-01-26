@@ -6,12 +6,11 @@ import { QuoraService } from './quora.service';
 import { SharedModule } from '../shared/shared.module';
 import { QuoraAccountComponent } from './quora-account/quora-account.component';
 import { QuoraSummaryComponent } from './quora-summary/quora-summary.component';
-import { OktaAuthGuard } from '@okta/okta-angular';
 import { QuoraKeywordComponent } from './quora-keyword/quora-keyword.component';
 
 
 export const QuoraRoutes: Routes = [
-  { path: 'quora', canActivate: [OktaAuthGuard], children: [
+  { path: 'quora', children: [
       { path: 'summary', component: QuoraSummaryComponent, pathMatch: 'full' },
       { path: 'questions-list/:type/:accountId', component: QuoraQuestionListComponent, pathMatch: 'full' },
       { path: 'questions-list/:type', component: QuoraQuestionListComponent, pathMatch: 'full' },

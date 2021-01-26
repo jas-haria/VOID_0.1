@@ -9,12 +9,11 @@ import { ReactiveFormsModule } from '@angular/forms';
 import { MatSlideToggleModule } from '@angular/material/slide-toggle';
 import { MatButtonToggleModule } from '@angular/material/button-toggle';
 import { AuthenticatedLayoutComponent } from '../layouts/authenticated-layout/authenticated-layout.component';
-import { OktaAuthGuard } from '@okta/okta-angular';
 
 
 
 export const GmbRoutes: Routes = [
-  { path: 'gmb', canActivate: [OktaAuthGuard], children: [
+  { path: 'gmb', children: [
       { path: 'summary', component: AuthenticatedLayoutComponent, children: [
         { path: '', component: GmbSummaryComponent },
       ]

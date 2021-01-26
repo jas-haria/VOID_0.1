@@ -1,11 +1,10 @@
 import { Component, OnDestroy, OnInit } from '@angular/core';
-// import { ROUTES } from '../sidebar/sidebar.component';
-import { Location } from '@angular/common';
 import { HeaderService } from '../../services/header/header.service';
-import { OktaAuthService } from '@okta/okta-angular';
 import { Subscription } from 'rxjs';
 import { LoggedInUserService } from '../../services/logged-in-user/logged-in-user.service';
 import { User } from '../../models/user.model';
+import * as Auth0 from 'auth0-web';
+
 
 @Component({
   selector: 'app-navbar',
@@ -19,7 +18,6 @@ export class NavbarComponent implements OnInit, OnDestroy {
   loggedInUser: User = null;
 
   constructor(private _headerService: HeaderService,
-    private _oktaAuth: OktaAuthService,
     private _loggedInUserService: LoggedInUserService) {
   }
 
@@ -40,8 +38,11 @@ export class NavbarComponent implements OnInit, OnDestroy {
     this.subscription.unsubscribe();
   }
 
-  async logout() {
-    await this._oktaAuth.logout('/');
+  logout(): void {
+    Auth0.signOut({
+      returnTo: 'http://localhost:4200/login',
+      clientID: 'TecKzu7OhQKztXweiBO5Lv8pDSffkpfh'
+    });
   }
 
 }

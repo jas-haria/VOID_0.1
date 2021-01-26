@@ -11,7 +11,6 @@ import { QuoraAskedQuestionStats } from '../shared/models/quora-asked-question-s
 import { QuoraAccountsStats } from '../shared/models/quora-accounts-stats.model';
 import { QuoraQuestionCount } from '../shared/models/quora-question-count.model';
 import { ExecutionLog } from '../shared/models/execution-log.model';
-import { OktaAuthService } from '@okta/okta-angular';
 import { QuoraKeyword } from '../shared/models/quora-keyword';
 
 @Injectable({
