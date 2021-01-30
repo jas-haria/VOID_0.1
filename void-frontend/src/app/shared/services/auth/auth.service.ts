@@ -37,9 +37,6 @@ export class AuthService {
   // Create subject and public observable of user profile data
   private userProfileSubject$ = new BehaviorSubject<User>(null);
   userProfile$ = this.userProfileSubject$.asObservable();
-  // Create subject and public observable of access token data
-  private accessTokenSubject$ = new BehaviorSubject<any>(null);
-  accessToken$ = this.accessTokenSubject$.asObservable();
   // Create a local property for login status
   loggedIn: boolean = null;
 
@@ -54,7 +51,7 @@ export class AuthService {
       map(user => {
         let admin = false;
         Object.keys(user).forEach(function (key, index) {
-          if (key.endsWith('/roles') && (user[key] instanceof Array) && user[key].includes('Admin')) {
+          if (key.endsWith('/roles') && (user[key] instanceof Array) && user[key].includes('admin')) {
             admin = true;
           }
         });
@@ -137,8 +134,7 @@ export class AuthService {
 
   getAccessToken(): Observable<any> {
     return this.auth0Client$.pipe(
-      concatMap((client: Auth0Client) => from(client.getTokenSilently())),
-      tap(token => this.accessTokenSubject$.next(token)),
+      concatMap((client: Auth0Client) => from(client.getTokenSilently()))
     );
   }
 }
