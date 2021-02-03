@@ -9,9 +9,12 @@ from datetime import datetime
 
 from model.enum import TimePeriod
 
+import config
+
 
 def get_new_session():
-    engine = create_engine("mysql://root:rootroot@localhost/VOID_DEV?charset=utf8mb4")
+    engine = create_engine(config.db_server_name + '://' + config.db_username + ':' + config.db_password + '@'
+                           + config.db_hostname + '/' + config.db_schema_name + '?charset=' + config.db_charset)
     engine.connect()
     Session = sessionmaker(bind=engine)
     return Session()

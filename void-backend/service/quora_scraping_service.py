@@ -15,9 +15,8 @@ from model.quora_model import Division, QuoraKeyword, QuoraQuestion, Script, Quo
     QuoraQuestionAccountDetails, QuoraQuestionAccountActions, QuoraAccountStats, QuoraAskedQuestionStats
 from model.enum import TimePeriod, QuoraQuestionAccountAction
 from service.util_service import get_new_session, scroll_to_bottom, get_driver, replace_all, get_number_from_string, get_time_interval
+import config
 
-LOAD_TIME = 3
-encoding = 'utf-8'
 
 # METHOD TO GET NEW QUESTIONS
 def refresh_data(time, put_todays_date):
@@ -33,7 +32,7 @@ def refresh_data(time, put_todays_date):
             if keywordIndexer.division == divisionIndexer:
                 url = "https://www.quora.com/search?q=" + replace_all(keywordIndexer.keyword, {" ": "+"}) + "&time=" + time + "&type=question"
                 driver.get(url)
-                scroll_to_bottom(driver, LOAD_TIME)
+                scroll_to_bottom(driver, config.load_time)
                 soup = BeautifulSoup(driver.page_source, 'html.parser')
 
                 # GET EACH QUESTION LINK & QUESTION TEXT (REGEX CHECKS STARTING WITH / AND HAS MINIMUM 1 CHARACTER AFTER)
@@ -49,8 +48,8 @@ def refresh_data(time, put_todays_date):
                     if persisted_question is None and question_link not in parsed_question_urls:
                         parsed_question_urls.add(question_link)
                         question = QuoraQuestion()
-                        question.question_url = question_link.encode(encoding)
-                        question.question_text = link.find('span').text.encode(encoding)
+                        question.question_url = question_link.encode(config.encoding)
+                        question.question_text = link.find('span').text.encode(config.encoding)
                         question.division_id = divisionIndexer.id
                         question_list.append(question)
     driver.quit()
@@ -90,11 +89,11 @@ def fill_dates(question_list, put_todays_date, session):
         for question in question_list:
             link = question.question_url
             if type(link) != str:
-                link = link.decode(encoding)
+                link = link.decode(config.encoding)
             link += '/log'
 
             driver.get(link)
-            scroll_to_bottom(driver, LOAD_TIME)
+            scroll_to_bottom(driver, config.load_time)
             soup = BeautifulSoup(driver.page_source, 'html.parser')
 
             # GET DATE
@@ -133,12 +132,12 @@ def refresh_accounts_data(capture_all = False):
         persisted_date = session.query(QuoraQuestion.asked_on).join(QuoraQuestionAccountDetails).filter(QuoraQuestionAccountDetails.account_id == account.id) \
             .filter(QuoraQuestionAccountDetails.question_id == QuoraQuestion.id).filter(QuoraQuestionAccountDetails.action ==answered_action).order_by(desc(QuoraQuestion.asked_on)).first()
         if capture_all is True or persisted_date is None or len(persisted_date) == 0:
-            scroll_to_bottom(driver, LOAD_TIME)
+            scroll_to_bottom(driver, config.load_time)
         else:
             last_height = driver.execute_script("return document.body.scrollHeight")
             while True:
                 driver.execute_script("window.scrollTo(0, document.body.scrollHeight);")
-                time.sleep(LOAD_TIME)
+                time.sleep(config.load_time)
                 dates = driver.find_elements_by_xpath("*//a[contains(@href, '/answer/" + account.link[account.link.rindex('/')+1: len(account.link)] + "')]")
                 last_date_string = dates[-1].text
                 try:
@@ -161,8 +160,8 @@ def refresh_accounts_data(capture_all = False):
             question = session.query(QuoraQuestion).filter(QuoraQuestion.question_url == link).first()
             if question is None:
                 question = QuoraQuestion()
-                question.question_url = link.encode(encoding)
-                question.question_text = i.get_text().encode(encoding)
+                question.question_url = link.encode(config.encoding)
+                question.question_text = i.get_text().encode(config.encoding)
                 question.asked_on = datetime.now().date()
                 question.division = default_division
                 session.add(question)
@@ -205,7 +204,7 @@ def login_to_account(driver, account):
     password = driver.find_element_by_xpath("*//input[contains(@placeholder, 'assword')]")
     password.send_keys(account.password)
     password.send_keys(Keys.RETURN)
-    time.sleep(LOAD_TIME)
+    time.sleep(config.load_time)
     return
 
 # METHOD TO PASS SELECTED REQUESTED QUESTIONS
@@ -224,7 +223,7 @@ def pass_requested_questions():
         driver = get_driver()
         login_to_account(driver, account)
         driver.get("https://www.quora.com/answer/requests")
-        scroll_to_bottom(driver, LOAD_TIME)
+        scroll_to_bottom(driver, config.load_time)
         for question in questions_to_pass:
             link_in_quora = replace_all(question.question_url, {"https://www.quora.com": ""})
             try:
@@ -266,7 +265,7 @@ def refresh_requested_questions():
         driver = get_driver()
         login_to_account(driver, account)
         driver.get("https://www.quora.com/answer/requests")
-        scroll_to_bottom(driver, LOAD_TIME)
+        scroll_to_bottom(driver, config.load_time)
         soup = BeautifulSoup(driver.page_source, 'html.parser')
         # GET REQUESTED QUESTIONS
         for i in soup.findAll('a', attrs={'target': '_blank'}):
@@ -277,8 +276,8 @@ def refresh_requested_questions():
             question = session.query(QuoraQuestion).filter(QuoraQuestion.question_url == question_url).first()
             if question is None:
                 question = QuoraQuestion()
-                question.question_url = question_url.encode(encoding)
-                question.question_text = i.get_text().encode(encoding)
+                question.question_url = question_url.encode(config.encoding)
+                question.question_text = i.get_text().encode(config.encoding)
                 session.add(question)
                 question.division = default_division
             question.asked_on = datetime.now().date()  # WE DONT HAVE DATE OF WHEN REQUEST WAS MADE, SO STORING LATEST DATE
@@ -342,10 +341,10 @@ def refresh_accounts_stats():
         driver.get('https://quora.com/stats')
         menu_list = driver.find_element_by_class_name("menu_link")
         menu_list.click()
-        time.sleep(LOAD_TIME)
+        time.sleep(config.load_time)
         last_week = driver.find_element_by_name("1")
         last_week.click()
-        time.sleep(LOAD_TIME)
+        time.sleep(config.load_time)
 
         soup = BeautifulSoup(driver.page_source, 'html.parser')
         stats_count = []
@@ -373,7 +372,7 @@ def refresh_accounts_stats():
             if i[0] < 2:
                 next_stat_element = driver.find_elements_by_class_name("heads_up_item")[i[0]+1]
                 next_stat_element.click()
-                time.sleep(LOAD_TIME)
+                time.sleep(config.load_time)
                 soup = BeautifulSoup(driver.page_source, 'html.parser')
 
         count = 0

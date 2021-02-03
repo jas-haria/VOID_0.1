@@ -4,9 +4,7 @@ from functools import wraps
 from jose import jwt
 from urllib.request import urlopen
 
-AUTH0_DOMAIN = 'dev-void.us.auth0.com'
-ALGORITHMS = ['RS256']
-API_AUDIENCE = 'dev_void_be'
+import config
 
 
 class AuthError(Exception):
@@ -56,7 +54,7 @@ def requires_auth(f):
     @wraps(f)
     def decorated(*args, **kwargs):
         token = get_token_auth_header()
-        jsonurl = urlopen(f'https://{AUTH0_DOMAIN}/.well-known/jwks.json')
+        jsonurl = urlopen(f'https://{config.auth0_domain}/.well-known/jwks.json')
         jwks = json.loads(jsonurl.read())
         unverified_header = jwt.get_unverified_header(token)
         rsa_key = {}
@@ -74,9 +72,9 @@ def requires_auth(f):
                 payload = jwt.decode(
                     token,
                     rsa_key,
-                    algorithms=ALGORITHMS,
-                    audience=API_AUDIENCE,
-                    issuer='https://' + AUTH0_DOMAIN + '/'
+                    algorithms=config.auth0_algorithms,
+                    audience=config.auth0_api_audience,
+                    issuer='https://' + config.auth0_domain + '/'
                 )
 
             except jwt.ExpiredSignatureError:

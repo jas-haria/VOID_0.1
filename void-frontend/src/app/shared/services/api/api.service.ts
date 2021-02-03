@@ -1,15 +1,16 @@
 import { Injectable } from '@angular/core';
 import { HttpParams, HttpHeaders, HttpClient } from '@angular/common/http';
-import { from, Observable } from 'rxjs';
+import { Observable } from 'rxjs';
 import { switchMap } from 'rxjs/operators';
 import { AuthService } from '../auth/auth.service';
+import { config } from '../../../../config';
 
 @Injectable({
   providedIn: 'root'
 })
 export class ApiService {
 
-  private backendUrl: string = 'http://localhost:5000';
+  private backendUrl: string = config.backend_api;
 
   constructor(private _http: HttpClient,
     private _authService: AuthService) { }

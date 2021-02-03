@@ -5,6 +5,8 @@ import { from, of, Observable, BehaviorSubject, combineLatest, throwError } from
 import { tap, catchError, concatMap, shareReplay, map } from 'rxjs/operators';
 import { Router } from '@angular/router';
 import { User } from '../../models/user.model';
+import { config } from '../../../../config';
+
 
 @Injectable({
   providedIn: 'root',
@@ -13,11 +15,11 @@ export class AuthService {
   // Create an observable of Auth0 instance of client
   auth0Client$ = (from(
     createAuth0Client({
-      domain: 'dev-void.us.auth0.com',
-      client_id: 'TecKzu7OhQKztXweiBO5Lv8pDSffkpfh',
-      redirect_uri: 'http://localhost:4200/callback',
-      audience: 'dev_void_be',
-      scope: 'openid profile email'
+      domain: config.auth0_domain,
+      client_id: config.auth0_client_id,
+      redirect_uri: config.frontend_hostname + '/callback',
+      audience: config.auth0_audience,
+      scope: config.auth0_scope
     }),
   ) as Observable<Auth0Client>).pipe(
     shareReplay(1), // Every subscription receives the same shared value
@@ -51,7 +53,7 @@ export class AuthService {
       map(user => {
         let admin = false;
         Object.keys(user).forEach(function (key, index) {
-          if (key.endsWith('/roles') && (user[key] instanceof Array) && user[key].includes('admin')) {
+          if (key.endsWith(config.auth0_role_key_ends_with) && (user[key] instanceof Array) && user[key].includes(config.auth0_role_value_admin)) {
             admin = true;
           }
         });
@@ -92,7 +94,7 @@ export class AuthService {
     this.auth0Client$.subscribe((client: Auth0Client) => {
       // Call method to log in
       client.loginWithRedirect({
-        redirect_uri: 'http://localhost:4200/callback',
+        redirect_uri: config.frontend_hostname + '/callback',
         appState: { target: redirectPath },
       });
     });
@@ -126,8 +128,8 @@ export class AuthService {
     this.auth0Client$.subscribe((client: Auth0Client) => {
       // Call method to log out
       client.logout({
-        client_id: 'TecKzu7OhQKztXweiBO5Lv8pDSffkpfh',
-        returnTo: 'http://localhost:4200/login',
+        client_id: config.auth0_client_id,
+        returnTo: config.frontend_hostname + '/login',
       });
     });
   }

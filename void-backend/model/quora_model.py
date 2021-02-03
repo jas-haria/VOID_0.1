@@ -3,9 +3,11 @@ from sqlalchemy import inspect, Column, String, ForeignKey, Integer, Date, Boole
 from sqlalchemy.orm import relationship
 from datetime import date
 
+import config
+
 Base = declarative_base()
 
-schema = {'schema' : 'void_dev'}
+schema = {'schema': config.db_schema_name}
 
 def _asdictmethod(object):
     return {c.key: (str(getattr(object, c.key)) if isinstance(getattr(object, c.key), date) else getattr(object, c.key))

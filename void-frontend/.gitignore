@@ -39,3 +39,6 @@ testem.log
 Thumbs.db
 
 #/src/assets
+
+#config files
+config.ts

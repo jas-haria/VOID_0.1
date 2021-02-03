@@ -33,7 +33,7 @@ export const GmbRoutes: Routes = [
   ],
   imports: [
     CommonModule,
-    RouterModule.forChild(GmbRoutes),
+    //RouterModule.forChild(GmbRoutes),
     SharedModule,
     ReactiveFormsModule,
     MatSlideToggleModule,

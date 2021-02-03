@@ -7,8 +7,8 @@ from model.quora_model import Division, QuoraQuestion, Script, QuoraAccount, Exe
     QuoraQuestionAccountDetails, QuoraQuestionAccountActions, QuoraAccountStats, QuoraAskedQuestionStats
 from model.enum import TimePeriod, QuoraQuestionAccountAction
 from service.util_service import get_new_session, paginate, convert_list_to_json, get_time_interval
+import config
 
-encoding = 'utf-8'
 quora_asked_question_excel_headers = ['Question Url', 'Question Text', 'Division', 'Account', 'Asked On']
 
 
@@ -203,8 +203,8 @@ def upload_asked_questions(file):
         account_id = row['Account'][row['Account'].index('(')+1: row['Account'].index(')')]
         if persisted_question is None:
             persisted_question = QuoraQuestion()
-            persisted_question.question_url = row['Question Url'].encode(encoding)
-            persisted_question.question_text = row['Question Text'].encode(encoding)
+            persisted_question.question_url = row['Question Url'].encode(config.encoding)
+            persisted_question.question_text = row['Question Text'].encode(config.encoding)
             persisted_question.asked_on = row['Asked On']
             persisted_question.division_id = row['Division'][row['Division'].index('(')+1: row['Division'].index(')')]
             session.add(persisted_question)
