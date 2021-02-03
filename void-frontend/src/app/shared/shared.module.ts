@@ -7,7 +7,7 @@ import { TableComponent } from './components/table/table.component';
 import { NgbModule } from '@ng-bootstrap/ng-bootstrap';
 import { FooterComponent } from './components/footer/footer.component';
 import { NavbarComponent } from './components/navbar/navbar.component';
-import { Sidebar2Component } from './components/sidebar2/sidebar2.component';
+import { SidebarComponent } from './components/sidebar/sidebar.component';
 import { ChartComponent } from './components/chart/chart.component';
 import { TopCardComponent } from './components/top-card/top-card.component';
 import { ModalComponent } from './components/modal/modal.component';
@@ -19,7 +19,7 @@ import { ClipboardModule } from '@angular/cdk/clipboard';
     TableComponent,
     FooterComponent,
     NavbarComponent,
-    Sidebar2Component,
+    SidebarComponent,
     ChartComponent,
     TopCardComponent,
     ModalComponent,
@@ -37,7 +37,7 @@ import { ClipboardModule } from '@angular/cdk/clipboard';
     NgbModule,
     FooterComponent,
     NavbarComponent,
-    Sidebar2Component,
+    SidebarComponent,
     ChartComponent,
     TopCardComponent,
     ModalComponent,

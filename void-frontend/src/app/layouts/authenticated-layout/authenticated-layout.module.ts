@@ -12,7 +12,6 @@ import { MapsComponent } from '../../pages/maps/maps.component';
 import { UserProfileComponent } from '../../pages/user-profile/user-profile.component';
 import { TablesComponent } from '../../pages/tables/tables.component';
 import { NgbModule } from '@ng-bootstrap/ng-bootstrap';
-import { GmbModule } from 'src/app/gmb/gmb.module';
 import { DivisionModule } from 'src/app/division/division.module';
 import { QuoraModule } from 'src/app/quora/quora.module';
 import { HomeModule } from 'src/app/home/home.module';
@@ -26,7 +25,6 @@ import { HomeModule } from 'src/app/home/home.module';
     HttpClientModule,
     NgbModule,
     ClipboardModule,
-    GmbModule,
     DivisionModule,
     QuoraModule,
     HomeModule
