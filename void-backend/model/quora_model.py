@@ -31,7 +31,7 @@ class ExecutionLog(Base):
     __tablename__ = "execution_log"
     __table_args__ = schema
 
-    script_id = Column('script_id', Integer, ForeignKey('void_dev.scripts.id'), primary_key=True)
+    script_id = Column('script_id', Integer, ForeignKey(config.db_schema_name + '.scripts.id'), primary_key=True)
     execution_time = Column('execution_time', DateTime)
 
     script = relationship('Script')
@@ -62,7 +62,7 @@ class QuoraKeyword(Base):
     __table_args__ = schema
 
     keyword = Column('keyword', String(50), primary_key=True, nullable=False)
-    division_id = Column('division', Integer, ForeignKey('void_dev.divisions.id'), nullable=False)
+    division_id = Column('division', Integer, ForeignKey(config.db_schema_name + '.divisions.id'), nullable=False)
 
     division = relationship('Division')
 
@@ -80,7 +80,7 @@ class QuoraQuestion(Base):
     id = Column('id', Integer, primary_key=True, nullable=False, autoincrement=True)
     question_url = Column('question_url', String, nullable=False)
     question_text = Column('question_text', String)
-    division_id = Column('division', Integer, ForeignKey('void_dev.divisions.id'), nullable=False)
+    division_id = Column('division', Integer, ForeignKey(config.db_schema_name + '.divisions.id'), nullable=False)
     asked_on = Column('asked_on', Date)
     disregard = Column('disregard', Boolean, default=False)
 
@@ -110,9 +110,9 @@ class QuoraQuestionAccountDetails(Base):
     __tablename__ = "quora_question_account_details"
     __table_args__ = schema
 
-    question_id = Column('question_id', Integer, ForeignKey('void_dev.quora_questions.id'), primary_key=True)
-    account_id = Column('quora_account_id', Integer, ForeignKey('void_dev.quora_accounts.id'), primary_key=True)
-    action_id = Column('action_id', Integer, ForeignKey('void_dev.quora_question_account_actions.id'), primary_key=True)
+    question_id = Column('question_id', Integer, ForeignKey(config.db_schema_name + '.quora_questions.id'), primary_key=True)
+    account_id = Column('quora_account_id', Integer, ForeignKey(config.db_schema_name + '.quora_accounts.id'), primary_key=True)
+    action_id = Column('action_id', Integer, ForeignKey(config.db_schema_name + '.quora_question_account_actions.id'), primary_key=True)
 
     question = relationship('QuoraQuestion', back_populates='accounts')
     account = relationship('QuoraAccount', back_populates='questions')
@@ -164,7 +164,7 @@ class QuoraAccountStats(Base):
     __tablename__ = "quora_account_stats"
     __table_args__ = schema
 
-    account_id = Column('account_id', Integer, ForeignKey('void_dev.quora_accounts.id'), primary_key=True)
+    account_id = Column('account_id', Integer, ForeignKey(config.db_schema_name + '.quora_accounts.id'), primary_key=True)
     recorded_on = Column('recorded_on', Date, primary_key=True)
     total_followers = Column('total_followers', Integer, default=0, nullable=False)
     view_count = Column('view_count', Integer, default=0, nullable=False)
@@ -183,7 +183,7 @@ class QuoraAskedQuestionStats(Base):
     __tablename__ = "quora_asked_questions_stats"
     __table_args__ = schema
 
-    question_id = Column('question_id', Integer, ForeignKey('void_dev.quora_questions.id'), primary_key=True)
+    question_id = Column('question_id', Integer, ForeignKey(config.db_schema_name + '.quora_questions.id'), primary_key=True)
     recorded_on = Column('recorded_on', Date, primary_key=True)
     follower_count = Column('follower_count', Integer, default=0, nullable=False)
     view_count = Column('view_count', Integer, default=0, nullable=False)

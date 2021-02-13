@@ -5,11 +5,12 @@ from distutils.util import strtobool
 
 from authentication.authenticator import requires_auth
 from controller import app_controller
-from service import quora_service, util_service, quora_scraping_service
+from service import quora_service, quora_scraping_service
+import config
 
 app = app_controller.app
 
-base_url = '/quora'
+base_url = config.base_api + '/quora'
 
 @app.route(base_url+'/disregard', methods=['PUT'])
 @requires_auth
