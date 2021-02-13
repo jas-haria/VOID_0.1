@@ -218,7 +218,7 @@ def pass_requested_questions():
             continue
         questions_to_pass = session.query(QuoraQuestion).join(QuoraQuestionAccountDetails).filter(QuoraQuestionAccountDetails.account_id == account.id)\
             .filter(QuoraQuestionAccountDetails.action == passed_action_object).all()
-        if questions_to_pass is None:
+        if questions_to_pass is None or len(questions_to_pass) == 0:
             continue
         driver = get_driver()
         login_to_account(driver, account)
