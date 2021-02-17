@@ -487,3 +487,10 @@ def refresh_all_stats():
     session.commit()
     return execution_log._asdict()
 
+def test():
+    session = get_new_session()
+    script = session.query(Script).filter(Script.name == 'Refresh_Quora_Stats').first()
+    execution_log = session.query(ExecutionLog).filter(ExecutionLog.script_id == script.id).first()
+    return execution_log._asdict()
+
+
