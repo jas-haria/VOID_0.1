@@ -103,20 +103,3 @@ def requires_auth(f):
         }, 400)
 
     return decorated
-
-
-def validate_origin(f):
-    """Determines if origin is from the same server
-    """
-
-    @wraps(f)
-    def decorated(*args, **kwargs):
-        if request.remote_addr is not None:
-            return f(*args, **kwargs)
-
-        raise AuthError({
-            'code': 'invalid_origin',
-            'description': 'Unable to process request from current client.'
-        }, 400)
-
-    return decorated

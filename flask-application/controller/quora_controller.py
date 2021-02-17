@@ -3,7 +3,7 @@ import json
 import ast
 from distutils.util import strtobool
 
-from authentication.authenticator import requires_auth, validate_origin
+from authentication.authenticator import requires_auth
 from controller import app_controller
 from service import quora_service, quora_scraping_service
 import config
@@ -88,11 +88,6 @@ def get_last_refreshed():
 @requires_auth
 def refresh_all():
     return Response(json.dumps(quora_scraping_service.refresh_all_stats()), status=200, mimetype='application/json')
-
-@app.route(base_url+'/automated-refresh-all', methods=['GET'])
-@validate_origin
-def automated_refresh_all():
-    return Response(json.dumps({}), status=200, mimetype='application/json')
 
 @app.route(base_url+'/keyword', methods=['GET'])
 @requires_auth
