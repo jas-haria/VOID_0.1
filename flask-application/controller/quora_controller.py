@@ -85,7 +85,7 @@ def get_last_refreshed():
     return Response(json.dumps(quora_service.get_last_refreshed()), status=200, mimetype='application/json')
 
 @app.route(base_url+'/refresh-all', methods=['GET'])
-@requires_auth
+#@requires_auth
 def refresh_all():
     return Response(json.dumps(quora_scraping_service.refresh_all_stats()), status=200, mimetype='application/json')
 
