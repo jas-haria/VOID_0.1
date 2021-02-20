@@ -182,18 +182,25 @@ def get_asked_questions_sample_excel():
     excel_writer = pandas.ExcelWriter(strIO, engine="xlsxwriter")
     dataframe.to_excel(excel_writer, sheet_name="sheet 1", index=False)
     worksheet = excel_writer.sheets["sheet 1"]
+    worksheet.write(0, 10, "Divisons (only for reference)")
+    worksheet.write_column('K2', division_name_list)
+    worksheet.write(0, 12, "Accounts (only for reference)")
+    worksheet.write_column('M2', account_name_list)
+    worksheet.set_column(10, 13, None, None, {'hidden': True})
     worksheet.data_validation(1, 0, 1001, 0, {'validate': 'length', 'criteria': '>', 'minimum': '5', 'input_message': 'Fill up to 1000 Rows only'})
-    worksheet.data_validation(1, 0, 1001, 1, {'validate': 'length', 'criteria': '>', 'minimum': '5', 'input_message': 'Text of the question as displayed on Quora'})
-    worksheet.data_validation(1, 1, 1001, 2, {'validate': 'list', 'source': division_name_list})
-    worksheet.data_validation(1, 2, 1001, 3, {'validate': 'list', 'source': account_name_list})
-    worksheet.data_validation(1, 3, 1001, 4, {'validate': 'date', 'criteria': '>', 'minimum': get_time_interval(TimePeriod.MONTH.value), 'input_title': 'Enter a date after',
+    worksheet.data_validation(1, 1, 1001, 1, {'validate': 'length', 'criteria': '>', 'minimum': '5', 'input_message': 'Text of the question as displayed on Quora'})
+    worksheet.data_validation(1, 2, 1001, 2, {'validate': 'list', 'source': '=$K$2:$K$' + str(len(division_name_list) + 1)})
+    worksheet.data_validation(1, 3, 1001, 3, {'validate': 'list', 'source': '=$M$2:$M$' + str(len(account_name_list) + 1)})
+    worksheet.data_validation(1, 4, 1001, 4, {'validate': 'date', 'criteria': '>', 'minimum': get_time_interval(TimePeriod.MONTH.value), 'input_title': 'Enter a date after',
                                               'input_message': get_time_interval(TimePeriod.MONTH.value).date().__format__('%d %b, %Y').__str__()})
     excel_writer.save()
     strIO.seek(0)
     return strIO
 
 def upload_asked_questions(file):
-    df = pandas.read_excel(file)
+    df = pandas.read_excel(file, engine='openpyxl')
+    df = df[quora_asked_question_excel_headers]
+    df = df.dropna(how='all')
     if set(df.columns.values.tolist()) != set(quora_asked_question_excel_headers) or df[quora_asked_question_excel_headers].isnull().values.any() or len(df.index) == 0 or len(df.index) > 1000:
         return False
     session = get_new_session()

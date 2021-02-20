@@ -143,10 +143,13 @@ def refresh_accounts_data(capture_all = False):
                 try:
                     last_date = datetime.strptime(last_date_string.strip(), '%B %d, %Y')
                 except ValueError:
-                    last_date = datetime.strptime(last_date_string.strip() + ', ' + str(datetime.now().year), '%B %d, %Y')
-                    if last_date.date() > datetime.now().date():
-                        last_date = last_date - relativedelta(years=1)
-                if last_date.date() < persisted_date[0]:
+                    try:
+                        last_date = datetime.strptime(last_date_string.strip() + ', ' + str(datetime.now().year), '%B %d, %Y')
+                        if last_date.date() > datetime.now().date():
+                            last_date = last_date - relativedelta(years=1)
+                    except ValueError:
+                        last_date = None
+                if last_date is not None and last_date.date() < persisted_date[0]:
                     break
                 new_height = driver.execute_script("return document.body.scrollHeight")
                 if new_height == last_height:

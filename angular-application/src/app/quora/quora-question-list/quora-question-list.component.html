@@ -28,7 +28,7 @@
         </div>
     </div>
     <div class="col-4" *ngIf="isLoggedInUserAdmin">
-        <div ngbDropdown placement="left" class="float-right"
+        <div ngbDropdown placement="bottom" class="float-right"
             *ngIf="['NEW','ASKED','REQUESTED'].includes(selectedType)">
             <button class="btn" [ngClass]="selectedQuestions?.length>0? 'btn-outline-default': 'disabled'"
                 [disabled]="selectedQuestions?.length==0" ngbDropdownToggle>
