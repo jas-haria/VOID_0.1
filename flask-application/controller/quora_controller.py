@@ -5,7 +5,7 @@ from distutils.util import strtobool
 
 from authentication.authenticator import requires_auth
 from controller import app_controller
-from service import quora_service, quora_scraping_service
+from service import quora_service
 import config
 
 app = app_controller.app
