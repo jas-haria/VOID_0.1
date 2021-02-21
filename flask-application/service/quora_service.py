@@ -19,6 +19,7 @@ def disregard_questions(question_ids_list):
         question.disregard = True
         session.add(question)
     session.commit()
+    session.close()
     return {}
 
 def update_qqad(question_ids_list, action, account_id):
@@ -33,6 +34,7 @@ def update_qqad(question_ids_list, action, account_id):
             qqad.action = action_object
             session.add(qqad)
     session.commit()
+    session.close()
     return {}
 
 def delete_qqad(question_ids_list, action, account_id):
@@ -43,6 +45,7 @@ def delete_qqad(question_ids_list, action, account_id):
         QuoraQuestionAccountDetails.account_id == account_id,
         QuoraQuestionAccountDetails.action_id == action_object.id)).delete(synchronize_session=False)
     session.commit()
+    session.close()
     return {}
 
 def add_pass_qqad(question_ids_list, account_id):
@@ -61,6 +64,7 @@ def add_pass_qqad(question_ids_list, account_id):
             qqad.action = passed_action_object
             session.add(qqad)
         session.commit()
+    session.close()
     return {}
 
 def get_questions(division_ids, time, page_number, page_size, action, account_id):
@@ -71,7 +75,9 @@ def get_questions(division_ids, time, page_number, page_size, action, account_id
                                                     (QuoraQuestion.disregard).is_(False),
                                                     ~QuoraQuestion.accounts.any()).order_by(desc(QuoraQuestion.id))
         length, paginated_query = paginate(query=query, page_number=int(page_number), page_limit=int(page_size))
-        return {'totalLength': length, 'content': convert_list_to_json(paginated_query.all())}
+        result = paginated_query.all()
+        session.close()
+        return {'totalLength': length, 'content': convert_list_to_json(result)}
     if action == QuoraQuestionAccountAction.REQUESTED.__str__():
         actions_to_ignore = [QuoraQuestionAccountAction.ASSIGNED, QuoraQuestionAccountAction.ANSWERED, QuoraQuestionAccountAction.EVALUATED, QuoraQuestionAccountAction.PASSED]
     elif action == QuoraQuestionAccountAction.ASSIGNED.__str__():
@@ -99,6 +105,7 @@ def get_questions(division_ids, time, page_number, page_size, action, account_id
     length, paginated_query = paginate(query=query.order_by(desc(QuoraQuestion.id)), page_number=int(page_number), page_limit=int(page_size))
     question_ids = paginated_query.all()
     questions = session.query(QuoraQuestion).filter(QuoraQuestion.id.in_(question_ids)).all()
+    session.close()
     return {'totalLength': length, 'content': convert_list_to_json(questions)}
 
 def get_asked_questions_stats(question_ids, last_week):
@@ -112,6 +119,7 @@ def get_asked_questions_stats(question_ids, last_week):
     for id in question_ids:
         question_stat = query.filter(QuoraAskedQuestionStats.question_id == id).order_by(desc(QuoraAskedQuestionStats.recorded_on)).first()
         stats.append(question_stat)
+    session.close()
     return convert_list_to_json(stats)
 
 def generate_pending_questions_df_for_excel(account_id):
@@ -141,6 +149,7 @@ def get_accounts(id):
     else:
         account = session.query(QuoraAccount).filter(QuoraAccount.id == id).first()
         response = account._asdict()
+    session.close()
     return response
 
 def get_quora_accounts_stats(account_id):
@@ -149,6 +158,7 @@ def get_quora_accounts_stats(account_id):
     if account_id is not None:
         query = query.filter(QuoraAccountStats.account_id == account_id)
     stats = query.filter(QuoraAccountStats.recorded_on > get_time_interval(TimePeriod.MONTH.value)).all()
+    session.close()
     return convert_list_to_json(stats)
 
 def get_quora_questions_count(action, account_id):
@@ -159,6 +169,7 @@ def get_quora_questions_count(action, account_id):
         query = query.filter(QuoraQuestionAccountDetails.account_id == account_id)
     details = query.filter(QuoraQuestionAccountDetails.action == action_object).filter(QuoraQuestion.asked_on > get_time_interval(TimePeriod.MONTH.value))\
         .group_by(QuoraQuestion.asked_on).all()
+    session.close()
     return convert_question_count_array_to_json(details)
 
 def convert_question_count_array_to_json(array):
@@ -195,6 +206,7 @@ def get_asked_questions_sample_excel():
                                               'input_message': get_time_interval(TimePeriod.MONTH.value).date().__format__('%d %b, %Y').__str__()})
     excel_writer.save()
     strIO.seek(0)
+    session.close()
     return strIO
 
 def upload_asked_questions(file):
@@ -228,12 +240,14 @@ def upload_asked_questions(file):
             qqad.account_id = account_id
             session.add(qqad)
     session.commit()
+    session.close()
     return True
 
 def get_last_refreshed():
     session = get_new_session()
     script = session.query(Script).filter(Script.name == 'Refresh_Quora_Stats').first()
     execution_log = session.query(ExecutionLog).filter(ExecutionLog.script_id == script.id).first()
+    session.close()
     if execution_log is None:
         return {}
     return execution_log._asdict()
@@ -241,12 +255,14 @@ def get_last_refreshed():
 def get_all_keywords():
     session = get_new_session()
     keywords = session.query(QuoraKeyword).order_by(QuoraKeyword.keyword).all()
+    session.close()
     return convert_list_to_json(keywords)
 
 def delete_keyword(keyword):
     session = get_new_session()
     session.query(QuoraKeyword).filter(QuoraKeyword.keyword.like(keyword)).delete(synchronize_session=False)
     session.commit()
+    session.close()
     return {}
 
 def add_keyword(keyword, division_id):
@@ -256,4 +272,5 @@ def add_keyword(keyword, division_id):
     new_keyword.keyword = keyword
     session.add(new_keyword)
     session.commit()
+    session.close()
     return new_keyword._asdict()

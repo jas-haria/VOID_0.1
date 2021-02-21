@@ -55,7 +55,7 @@ def refresh_data(time, put_todays_date):
     driver.quit()
     session.bulk_save_objects(fill_dates(question_list, put_todays_date, session))
     session.commit()
-
+    session.close()
     return {}
 
 def is_question_url(url):
@@ -75,7 +75,7 @@ def fill_missing_dates():
 
     session.bulk_save_objects(fill_dates(question_list, False, session))
     session.commit()
-
+    session.close()
     return {}
 
 def fill_dates(question_list, put_todays_date, session):
@@ -198,6 +198,7 @@ def refresh_accounts_data(capture_all = False):
                 break
     driver.quit()
     session.commit()
+    session.close()
     return {}
 
 # METHOD TO LOG INTO QUORA ACCOUNT
@@ -256,6 +257,7 @@ def pass_requested_questions():
             QuoraQuestionAccountDetails.account_id == account.id)).delete(synchronize_session=False)
         driver.quit()
         session.commit()
+        session.close()
     return {}
 
 # METHOD TO SCRAPE REQUESTED QUESTIONS
@@ -302,6 +304,7 @@ def refresh_requested_questions():
                 session.add(qqad)
         driver.quit()
     session.commit()
+    session.close()
     return {}
 
 # METHOD TO REFRESH ASKED QUESTIONS STATS
@@ -338,6 +341,7 @@ def refresh_asked_questions_stats():
 
     driver.quit()
     session.commit()
+    session.close()
     return {}
 
 # METHOD TO REFRESH ACCOUNT DATA FROM STATS PAGE
@@ -409,6 +413,7 @@ def refresh_accounts_stats():
         driver.quit()
 
     session.commit()
+    session.close()
     return {}
 
 # GET DATES ON XAXIS
@@ -467,6 +472,7 @@ def delete_old_data():
     session.query(QuoraQuestionAccountDetails).filter(QuoraQuestionAccountDetails.question_id.in_(question_ids)).delete(synchronize_session=False)
     session.query(QuoraQuestion).filter(QuoraQuestion.id.in_(question_ids)).delete(synchronize_session=False)
     session.commit()
+    session.close()
     return {}
 
 def refresh_all_stats():
@@ -496,12 +502,14 @@ def refresh_all_stats():
     execution_log.execution_time = datetime.now()
     session.add(execution_log)
     session.commit()
+    session.close()
     return execution_log._asdict()
 
 def test():
     session = get_new_session()
     script = session.query(Script).filter(Script.name == 'Refresh_Quora_Stats').first()
     execution_log = session.query(ExecutionLog).filter(ExecutionLog.script_id == script.id).first()
+    session.close()
     return execution_log._asdict()
 
 

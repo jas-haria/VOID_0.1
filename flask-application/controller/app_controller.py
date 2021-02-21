@@ -5,7 +5,6 @@ from werkzeug.exceptions import HTTPException
 app = Flask(__name__)
 
 
-
 @app.errorhandler(Exception)
 def handle_error(e):
     code = 500
