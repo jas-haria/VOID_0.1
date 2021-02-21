@@ -128,9 +128,10 @@ def refresh_accounts_data(capture_all = False):
     for account in accounts:
         if account.link == 'unavailable':
             continue
-        driver.get(account.link)
-        persisted_date = session.query(QuoraQuestion.asked_on).join(QuoraQuestionAccountDetails).filter(QuoraQuestionAccountDetails.account_id == account.id) \
-            .filter(QuoraQuestionAccountDetails.question_id == QuoraQuestion.id).filter(QuoraQuestionAccountDetails.action ==answered_action).order_by(desc(QuoraQuestion.asked_on)).first()
+        driver.get(account.link + '/answers')
+        persisted_date = session.query(QuoraQuestion.asked_on).join(QuoraQuestionAccountDetails).filter(and_(
+            QuoraQuestionAccountDetails.account_id == account.id,
+            QuoraQuestionAccountDetails.action == answered_action)).order_by(desc(QuoraQuestion.asked_on)).first()
         if capture_all is True or persisted_date is None or len(persisted_date) == 0:
             scroll_to_bottom(driver, config.load_time)
         else:
@@ -160,20 +161,21 @@ def refresh_accounts_data(capture_all = False):
             link = i.get('href')
             if not is_question_url(link):
                 continue
-            question = session.query(QuoraQuestion).filter(QuoraQuestion.question_url == link).first()
+            question_url = "https://www.quora.com" + link
+            question = session.query(QuoraQuestion).filter(QuoraQuestion.question_url == question_url).first()
             if question is None:
                 question = QuoraQuestion()
-                question.question_url = link.encode(config.encoding)
+                question.question_url = question_url.encode(config.encoding)
                 question.question_text = i.get_text().encode(config.encoding)
                 question.asked_on = datetime.now().date()
                 question.division = default_division
                 session.add(question)
-                qqad = QuoraQuestionAccountDetails()
+                qqad = None
             else:
-                qqad = session.query(QuoraQuestionAccountDetails).filter(
-                    QuoraQuestionAccountDetails.account == account).filter(
-                    QuoraQuestionAccountDetails.question == question) \
-                    .filter(QuoraQuestionAccountDetails.action == answered_action).first()
+                qqad = session.query(QuoraQuestionAccountDetails).filter(and_(
+                    QuoraQuestionAccountDetails.account_id == account.id,
+                    QuoraQuestionAccountDetails.question_id == question.id,
+                    QuoraQuestionAccountDetails.action_id == answered_action.id)).first()
             if qqad is None:
                 qqad = QuoraQuestionAccountDetails()
                 qqad.account = account
@@ -184,9 +186,9 @@ def refresh_accounts_data(capture_all = False):
         for i in soup.findAll('div'):
             if re.compile('^[0-9.,]+[mMkK]? Follower[s]?$').match(i.get_text()):
                 follower_count = get_number_from_string(replace_all(i.get_text(), {"Follower": "", "s": ""}))
-                follower_count_object = session.query(QuoraAccountStats).filter(
-                    QuoraAccountStats.recorded_on == datetime.now().date()).filter(
-                    QuoraAccountStats.account_id == account.id).first()
+                follower_count_object = session.query(QuoraAccountStats).filter(and_(
+                    QuoraAccountStats.recorded_on == datetime.now().date(),
+                    QuoraAccountStats.account_id == account.id)).first()
                 if follower_count_object is None:
                     follower_count_object = QuoraAccountStats()
                     follower_count_object.account = account
@@ -281,11 +283,17 @@ def refresh_requested_questions():
                 question = QuoraQuestion()
                 question.question_url = question_url.encode(config.encoding)
                 question.question_text = i.get_text().encode(config.encoding)
-                session.add(question)
                 question.division = default_division
-            question.asked_on = datetime.now().date()  # WE DONT HAVE DATE OF WHEN REQUEST WAS MADE, SO STORING LATEST DATE
-            qqad = session.query(QuoraQuestionAccountDetails).filter(QuoraQuestionAccountDetails.account == account).filter(QuoraQuestionAccountDetails.question == question)\
-                .filter(QuoraQuestionAccountDetails.action == requested_action).first()
+                question.asked_on = datetime.now().date()  # WE DONT HAVE DATE OF WHEN REQUEST WAS MADE, SO STORING LATEST DATE
+                session.add(question)
+                qqad = None
+            else:
+                if question.asked_on < get_time_interval(TimePeriod.MONTH.value).date():
+                    question.asked_on = datetime.now().date()  # WE DONT HAVE DATE OF WHEN REQUEST WAS MADE, SO STORING LATEST DATE
+                qqad = session.query(QuoraQuestionAccountDetails).filter(and_(
+                    QuoraQuestionAccountDetails.account_id == account.id,
+                    QuoraQuestionAccountDetails.question_id == question.id,
+                    QuoraQuestionAccountDetails.action_id == requested_action.id)).first()
             if qqad is None:
                 qqad = QuoraQuestionAccountDetails()
                 qqad.account = account

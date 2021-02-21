@@ -34,7 +34,7 @@ CREATE TABLE IF NOT EXISTS CENTER_LOCATIONS (
     CONSTRAINT PK_CENTER_LOCATION PRIMARY KEY (LOCATION_ID)
 );
 
-INSERT INTO DIVISIONS (DIVISION) VALUES ('Vidyalankar'), ('Science'), ('BSCIT'), ('GATE'), ('Engineering'), ('StudEase'), ('Admit Abroad');
+INSERT INTO DIVISIONS (DIVISION) VALUES ('Vidyalankar'), ('Science'), ('BSCIT'), ('GATE'), ('Engineering'), ('Infinite'), ('Admit Abroad');
 
 INSERT INTO QUORA_KEYWORDS (DIVISION, KEYWORD) VALUES (1, 'VIT Mumbai'), (1, 'Vidyalankar'), (1, 'vidyalankar college'), (1,'vidyalankar institute of technology'), (1,'vidyalankar classes'), (1,'Vidyalankar School of Information Technology'), (1,'Vidyalankar Diploma College'), (1,'Vidyalankar Polytechnic'),
  (2,'iit jee'), (2,'jee'),(2,'iit jee classes mumbai'), (2,'best neet classes mumbai'), (2,'best iit jee classes mumbai'), (2,'mht cet'), (2,'mh cet'), (2,'mhtcet classes mumbai'), (2,'best mht cet classes mumbai'), (2,'neet'), (2,'neet classes mumbai'), (2,'bitsat'), (2,'bitsat classes mumbai'), (2,'best bitsat classes mumbai'), (2,'bitsat preparation'),

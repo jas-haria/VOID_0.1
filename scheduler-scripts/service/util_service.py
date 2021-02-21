@@ -11,11 +11,11 @@ from model.enum import TimePeriod
 
 import config
 
+engine = create_engine(config.db_server_name + '://' + config.db_username + ':' + config.db_password + '@'
+                           + config.db_hostname + '/' + config.db_schema_name + '?charset=' + config.db_charset)
+engine.connect()
 
 def get_new_session():
-    engine = create_engine(config.db_server_name + '://' + config.db_username + ':' + config.db_password + '@'
-                           + config.db_hostname + '/' + config.db_schema_name + '?charset=' + config.db_charset)
-    engine.connect()
     Session = sessionmaker(bind=engine)
     return Session()
 

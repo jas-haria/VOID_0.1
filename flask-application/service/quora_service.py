@@ -148,7 +148,7 @@ def get_quora_accounts_stats(account_id):
     query = session.query(QuoraAccountStats)
     if account_id is not None:
         query = query.filter(QuoraAccountStats.account_id == account_id)
-    stats = query.filter(QuoraQuestion.asked_on > get_time_interval(TimePeriod.MONTH.value)).all()
+    stats = query.filter(QuoraAccountStats.recorded_on > get_time_interval(TimePeriod.MONTH.value)).all()
     return convert_list_to_json(stats)
 
 def get_quora_questions_count(action, account_id):
