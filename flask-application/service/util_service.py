@@ -64,6 +64,12 @@ def convert_list_to_json(list):
             json_list.append(item._asdict())
     return json_list
 
+def convert_question_count_array_to_json(array):
+    json = []
+    for item in array:
+        json.append({'date': str(item[1]), 'count': item[0]})
+    return json
+
 def paginate(query, page_number, page_limit):
     length = query.count()
     if page_number > 0:

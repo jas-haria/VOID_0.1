@@ -79,7 +79,6 @@ export class QuoraQuestionListComponent implements OnInit, OnDestroy {
     ).add(
       this._authService.userProfile$.subscribe(user => {
         this.isLoggedInUserAdmin = user ? user.admin: false;
-        console.log(1, this.isLoggedInUserAdmin, user)
       })
     );
   }

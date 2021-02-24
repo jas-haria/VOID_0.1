@@ -19,7 +19,6 @@ export class HttpRequestInterceptor implements HttpInterceptor {
                     console.error(`Backend returned code ${error.status}, body was: ${error.error}`);
                 }
                 this._httpInterceptorService.addErrors(error);
-                console.log('adding')
                 return EMPTY;
             })
         );

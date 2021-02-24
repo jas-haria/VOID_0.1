@@ -500,16 +500,18 @@ def refresh_all_stats():
     #delete_old_data()
 
     execution_log.execution_time = datetime.now()
+    response = execution_log._asdict()
     session.add(execution_log)
     session.commit()
     session.close()
-    return execution_log._asdict()
+    return response
 
 def test():
     session = get_new_session()
     script = session.query(Script).filter(Script.name == 'Refresh_Quora_Stats').first()
     execution_log = session.query(ExecutionLog).filter(ExecutionLog.script_id == script.id).first()
+    response = execution_log._asdict()
     session.close()
-    return execution_log._asdict()
+    return response
 
 

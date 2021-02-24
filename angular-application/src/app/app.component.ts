@@ -33,7 +33,7 @@ export class AppComponent implements OnInit, OnDestroy {
     ).add(
       this._httpRequestInterceptorService.getErrors().subscribe(error => {
         this._modalService.dismissAll();
-        this.showErrorPopup();
+        this.showErrorPopup(error);
       })
     );
   }
@@ -62,7 +62,7 @@ export class AppComponent implements OnInit, OnDestroy {
     modalRef.componentInstance.isLoading = true;
   }
 
-  showErrorPopup(): void {
+  showErrorPopup(error: any): void {
     this._modalService.dismissAll();
     let ngbModalOptions: NgbModalOptions = {
       backdrop: 'static',
@@ -71,13 +71,21 @@ export class AppComponent implements OnInit, OnDestroy {
     let modalRef = this._modalService.open(ModalComponent, ngbModalOptions);
     modalRef.componentInstance.headerClass = 'danger';
     modalRef.componentInstance.title = 'Oops';
-    modalRef.componentInstance.beforeBodyContentList = 'Something went wrong. You can try the following:';
-    modalRef.componentInstance.bodyContentList = [
-      'Check your internet connection',
-      'Check if both the servers are up',
-      'Restart your browser and your servers',
-      'Check if you provided the correct input'
-    ];
-    modalRef.componentInstance.afterBodyContentList = 'If everything fails, kindly pray';
+    modalRef.componentInstance.beforeBodyContentList = 'Something went wrong. The error is:';
+    if (error && error['error'] && error['error'] instanceof Object) {
+      let keys = Object.keys(error['error']);
+      keys.forEach(key => {
+        modalRef.componentInstance.bodyContentList = [
+          ...modalRef.componentInstance.bodyContentList,
+          key + ': ' + error['error'][key]
+        ]
+      })
+    }
+    else {
+      modalRef.componentInstance.bodyContentList = [
+        JSON.stringify(error)
+      ];
+    }
+    modalRef.componentInstance.afterBodyContentList = 'Please grab a screenshot and share with Aum or Jas.';
   }
 }
