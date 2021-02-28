@@ -1,5 +1,6 @@
 import { NgModule } from '@angular/core';
 import { CommonModule } from '@angular/common';
+import {MatChipsModule} from '@angular/material/chips';
 import { MatPaginatorModule } from "@angular/material/paginator";
 import { MatSortModule } from "@angular/material/sort";
 import { MatTableModule } from "@angular/material/table";
@@ -12,6 +13,8 @@ import { ChartComponent } from './components/chart/chart.component';
 import { TopCardComponent } from './components/top-card/top-card.component';
 import { ModalComponent } from './components/modal/modal.component';
 import { ClipboardModule } from '@angular/cdk/clipboard';
+import { MatFormFieldModule } from '@angular/material/form-field';
+
 
 
 @NgModule({
@@ -30,7 +33,9 @@ import { ClipboardModule } from '@angular/cdk/clipboard';
     MatPaginatorModule,
     MatSortModule,
     NgbModule,
-    ClipboardModule
+    ClipboardModule,
+    MatChipsModule,
+    MatFormFieldModule
   ],
   exports: [
     TableComponent,
@@ -41,7 +46,9 @@ import { ClipboardModule } from '@angular/cdk/clipboard';
     ChartComponent,
     TopCardComponent,
     ModalComponent,
-    ClipboardModule
+    ClipboardModule,
+    MatChipsModule,
+    MatFormFieldModule
   ],
   providers: []
 })

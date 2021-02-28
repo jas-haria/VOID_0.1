@@ -52,13 +52,13 @@ export class AppComponent implements OnInit, OnDestroy {
     let modalRef = this._modalService.open(ModalComponent, ngbModalOptions);
     modalRef.componentInstance.headerClass = 'default';
     modalRef.componentInstance.title = 'Loading...';
-    modalRef.componentInstance.beforeBodyContentList = 'This may take a while. Please ensure:';
+    modalRef.componentInstance.beforeBodyContentList = 'This may take a while. Please remember:';
     modalRef.componentInstance.bodyContentList = [
-      'Your machine is connected to the internet at all times',
-      'Your machine does not sleep due to inactivity',
-      'You do not close this window'
+      'Rome was not built in a day',
+      'Patience is bitter, but its fruit is sweet',
+      'The wait is long and full of terrors'
     ];
-    modalRef.componentInstance.afterBodyContentList = 'It will be worth the wait, really.'
+    modalRef.componentInstance.afterBodyContentList = 'The popup mostly closed before you read this'
     modalRef.componentInstance.isLoading = true;
   }
 

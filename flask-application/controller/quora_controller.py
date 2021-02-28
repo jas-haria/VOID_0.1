@@ -104,6 +104,17 @@ def delete_keyword():
 def add_keyword():
     return Response(json.dumps(quora_service.add_keyword(request.args.get('keyword'), request.args.get('division_id'))), status=200, mimetype='application/json')
 
+@app.route(base_url+'/archieved', methods=['GET'])
+@requires_auth
+def get_archieved():
+    return Response(json.dumps(quora_service.get_archieved_questions(ast.literal_eval(request.args.get('keywords')),  request.args.get('pageNumber'), request.args.get('pageSize'), request.args.get('action'), request.args.get('accountId'))), status=200, mimetype='application/json')
+
+@app.route(base_url+'/archieved', methods=['DELETE'])
+@requires_auth
+def delete_archieved():
+    return Response(json.dumps(quora_service.delete_archieved_question(request.args.get('questionId'), request.args.get('accountId'), request.args.get('action'))), status=200, mimetype='application/json')
+
+
 # @app.route(base_url+'/refreshQuestions', methods=['GET'])
 # def refresh_questions_data():
 #     return Response(json.dumps(quora_scraping_service.refresh_data('week', True)), status=200, mimetype='application/json')

@@ -4,7 +4,5 @@ export class QuoraAccount {
     last_name: string;
     email: string;
     password: string;
-    birth_date: string;
-    phone_number: string;
     link: string;
 }

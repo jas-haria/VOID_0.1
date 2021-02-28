@@ -134,11 +134,10 @@ class QuoraAccount(Base):
     last_name = Column('last_name', String(20))
     email = Column('email', String(50), nullable=False)
     password = Column('quora_password', String(20), nullable=False)
-    birth_date = Column('birth_date', DateTime)
-    phone_number = Column('phone_number', String(15))
     link = Column('link', String(200), nullable=False)
 
     questions = relationship('QuoraQuestionAccountDetails', back_populates='account')
+    archieved_questions = relationship('QuoraQuestionArchieveAccountDetails', back_populates='account')
 
     def __repr__(self):
         return '<Quora Account {}>'.format(self.email)
@@ -193,6 +192,40 @@ class QuoraAskedQuestionStats(Base):
 
     def __repr__(self):
         return '<Question - Recorded On {}>'.format(self.question_id - self.recorded_on)
+
+    def _asdict(self):
+        return _asdictmethod(self)
+
+class QuoraQuestionsArchieve(Base):
+    __tablename__ = "quora_questions_archieve"
+    __table_args__ = schema
+
+    id = Column('id', Integer, primary_key=True, nullable=False, autoincrement=True)
+    question_url = Column('question_url', String, nullable=False)
+    question_text = Column('question_text', String)
+
+    accounts = relationship('QuoraQuestionArchieveAccountDetails', back_populates='question')
+
+    def __repr__(self):
+        return '<Question {}>'.format(self.question_url)
+
+    def _asdict(self):
+        return _asdictmethod(self)
+
+class QuoraQuestionArchieveAccountDetails(Base):
+    __tablename__ = "quora_question_archieve_account_details"
+    __table_args__ = schema
+
+    question_id = Column('question_id', Integer, ForeignKey(config.db_schema_name + '.quora_questions_archieve.id'), primary_key=True)
+    account_id = Column('quora_account_id', Integer, ForeignKey(config.db_schema_name + '.quora_accounts.id'), primary_key=True)
+    action_id = Column('action_id', Integer, ForeignKey(config.db_schema_name + '.quora_question_account_actions.id'), primary_key=True)
+
+    question = relationship('QuoraQuestionsArchieve', back_populates='accounts')
+    account = relationship('QuoraAccount', back_populates='archieved_questions')
+    action = relationship('QuoraQuestionAccountActions')
+
+    def __repr__(self):
+        return '<Question - Account {}>'.format(self.question_id - self.account_id)
 
     def _asdict(self):
         return _asdictmethod(self)

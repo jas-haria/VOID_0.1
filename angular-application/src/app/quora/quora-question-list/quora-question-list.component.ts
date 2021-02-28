@@ -19,6 +19,7 @@ import { NgbModal, NgbModalOptions } from '@ng-bootstrap/ng-bootstrap';
 import { ModalComponent } from 'src/app/shared/components/modal/modal.component';
 import { AuthService } from 'src/app/shared/services/auth/auth.service';
 
+
 @Component({
   selector: 'app-quora-question-list',
   templateUrl: './quora-question-list.component.html',
@@ -78,7 +79,7 @@ export class QuoraQuestionListComponent implements OnInit, OnDestroy {
       })
     ).add(
       this._authService.userProfile$.subscribe(user => {
-        this.isLoggedInUserAdmin = user ? user.admin: false;
+        this.isLoggedInUserAdmin = user ? user.admin : false;
       })
     );
   }
@@ -168,7 +169,7 @@ export class QuoraQuestionListComponent implements OnInit, OnDestroy {
     if (this.selectedType == QuoraQuestionAccountAction.ASKED) {
       this.isCheckbox = true;
       this.displayedColumns = ["id", "question_text", "views", "followers", "answers", "recorded_on"];
-      this.displayedColumnsWidth = { "id": 10, "question_text": 45, "views": 10, "followers": 10, "answers": 10, "recorded_on": 15 }; //remaining 5 for checkbox
+      this.displayedColumnsWidth = { "id": 10, "question_text": 46, "views": 8, "followers": 8, "answers": 8, "recorded_on": 15 }; //remaining 5 for checkbox
       this.displayedColumnsHeaders = ["Id", "Question", "Views", "Followers", "Answers", "Recorded On"];
     }
     else {

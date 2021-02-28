@@ -12,6 +12,7 @@ import { QuoraAccountsStats } from '../shared/models/quora-accounts-stats.model'
 import { QuoraQuestionCount } from '../shared/models/quora-question-count.model';
 import { ExecutionLog } from '../shared/models/execution-log.model';
 import { QuoraKeyword } from '../shared/models/quora-keyword';
+import { QuoraArchievedQuestionResponse } from '../shared/models/quora_archieved_question_response.model';
 
 @Injectable({
   providedIn: 'root'
@@ -141,5 +142,25 @@ export class QuoraService {
     parameters['keyword'] = keyword;
     parameters['division_id'] = division_id;
     return <Observable<QuoraKeyword>>this._apiService.createRequest('post', this.baseUrl + '/keyword', parameters, null, false, null);
+  }
+
+  getArchievedQuestions(pageNumber: number, pageSize: number, qqaa: QuoraQuestionAccountAction, accountId: Number, keywords: string[]): Observable<Page<QuoraArchievedQuestionResponse>> {
+    let parameters = {};
+    parameters['pageNumber'] = pageNumber;
+    parameters['pageSize'] = pageSize;
+    parameters['action'] = qqaa
+    if (accountId) {
+      parameters['accountId'] = accountId;
+    }
+    parameters['keywords'] = keywords;
+    return <Observable<Page<QuoraArchievedQuestionResponse>>>this._apiService.createRequest('get', this.baseUrl + '/archieved', parameters, null, false, null);
+  }
+
+  deleteArchievedQuestionAndAccountAction(questionId: number, accountId: number, qqaa: QuoraQuestionAccountAction): Observable<any> {
+    let parameters = {};
+    parameters['questionId'] = questionId;
+    parameters['accountId'] = accountId;
+    parameters['action'] = qqaa;
+    return <Observable<any>>this._apiService.createRequest('delete', this.baseUrl + '/archieved', parameters, null, false, null);
   }
 }

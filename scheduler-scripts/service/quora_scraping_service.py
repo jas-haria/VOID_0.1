@@ -2,6 +2,7 @@ from sqlalchemy import asc, desc, and_
 from bs4 import BeautifulSoup
 from datetime import datetime
 from dateutil.relativedelta import relativedelta
+from selenium.webdriver.common.action_chains import ActionChains
 from selenium.webdriver.common.keys import Keys
 from selenium.webdriver.common.by import By
 from selenium.webdriver.support.ui import WebDriverWait
@@ -11,10 +12,10 @@ from selenium.common.exceptions import NoSuchElementException
 import time
 import re
 
-from model.quora_model import Division, QuoraKeyword, QuoraQuestion, Script, QuoraAccount, ExecutionLog, \
-    QuoraQuestionAccountDetails, QuoraQuestionAccountActions, QuoraAccountStats, QuoraAskedQuestionStats
+from model.quora_model import Division, QuoraKeyword, QuoraQuestion, Script, QuoraAccount, ExecutionLog, QuoraQuestionsArchieve, \
+    QuoraQuestionAccountDetails, QuoraQuestionAccountActions, QuoraAccountStats, QuoraAskedQuestionStats, QuoraQuestionArchieveAccountDetails
 from model.enum import TimePeriod, QuoraQuestionAccountAction
-from service.util_service import get_new_session, scroll_to_bottom, get_driver, replace_all, get_number_from_string, get_time_interval
+from service.util_service import get_new_session, scroll_to_bottom, get_driver, replace_all, get_number_from_string, get_time_interval, convert_list_to_json
 import config
 
 
@@ -170,18 +171,37 @@ def refresh_accounts_data(capture_all = False):
                 question.asked_on = datetime.now().date()
                 question.division = default_division
                 session.add(question)
+                archieved_question = None
                 qqad = None
             else:
+                archieved_question = session.query(QuoraQuestionsArchieve).filter(QuoraQuestionsArchieve.question_url == question_url).first()
                 qqad = session.query(QuoraQuestionAccountDetails).filter(and_(
                     QuoraQuestionAccountDetails.account_id == account.id,
                     QuoraQuestionAccountDetails.question_id == question.id,
                     QuoraQuestionAccountDetails.action_id == answered_action.id)).first()
+            if archieved_question is None:
+                archieved_question = QuoraQuestionsArchieve()
+                archieved_question.question_url = question.question_url
+                archieved_question.question_text = question.question_text
+                session.add(archieved_question)
+                qqaad = None
+            else:
+                qqaad = session.query(QuoraQuestionArchieveAccountDetails).filter(and_(
+                    QuoraQuestionArchieveAccountDetails.account_id == account.id,
+                    QuoraQuestionArchieveAccountDetails.question_id == archieved_question.id,
+                    QuoraQuestionArchieveAccountDetails.action_id == answered_action.id)).first()
             if qqad is None:
                 qqad = QuoraQuestionAccountDetails()
-                qqad.account = account
-                qqad.question = question
-                qqad.action = answered_action
+                qqad.account_id = account.id
+                qqad.question_id = question.id
+                qqad.action_id = answered_action.id
                 session.add(qqad)
+            if qqaad is None:
+                qqaad = QuoraQuestionArchieveAccountDetails()
+                qqaad.account_id = account.id
+                qqaad.question_id = archieved_question.id
+                qqaad.action_id = answered_action.id
+                session.add(qqaad)
         # GET FOLLOWERS COUNT
         for i in soup.findAll('div'):
             if re.compile('^[0-9.,]+[mMkK]? Follower[s]?$').match(i.get_text()):
@@ -230,6 +250,7 @@ def pass_requested_questions():
         login_to_account(driver, account)
         driver.get("https://www.quora.com/answer/requests")
         scroll_to_bottom(driver, config.load_time)
+        passed_question_ids = []
         for question in questions_to_pass:
             link_in_quora = replace_all(question.question_url, {"https://www.quora.com": ""})
             try:
@@ -249,15 +270,16 @@ def pass_requested_questions():
                         break
                     continue
                 if pass_element is not None:
-                    pass_element.click()
+                    ActionChains(driver).move_to_element(pass_element).click(pass_element).perform()
+                    passed_question_ids.append(question.id)
                     break
         session.query(QuoraQuestionAccountDetails).filter(and_(
-            QuoraQuestionAccountDetails.question_id.in_(q.id for q in questions_to_pass),
+            QuoraQuestionAccountDetails.question_id.in_(passed_question_ids),
             QuoraQuestionAccountDetails.action_id.in_([passed_action_object.id, requested_action_object.id]),
             QuoraQuestionAccountDetails.account_id == account.id)).delete(synchronize_session=False)
         driver.quit()
-        session.commit()
-        session.close()
+    session.commit()
+    session.close()
     return {}
 
 # METHOD TO SCRAPE REQUESTED QUESTIONS
@@ -349,19 +371,28 @@ def refresh_accounts_stats():
     session = get_new_session()
     accounts = session.query(QuoraAccount).all()
     for account in accounts:
-        if account.link == 'unavailable':
+        if account.link == 'unavailable' or account.id < 13:
             continue
+        stats_page_array = [[0, 'Views', None], [1, 'Upvotes', None], [2, 'Shares', None]]
         driver = get_driver()
         login_to_account(driver, account)
-        driver.get('https://quora.com/stats')
-        menu_list = driver.find_element_by_class_name("menu_link")
-        menu_list.click()
-        time.sleep(config.load_time)
-        last_week = driver.find_element_by_name("1")
-        last_week.click()
-        time.sleep(config.load_time)
+        for i in stats_page_array:
+            driver.get('https://quora.com/stats')
+            time.sleep(config.load_time*3)
+            menu_list = driver.find_elements_by_class_name("menu_link")[0]
+            menu_list.click()
+            last_week = driver.find_elements_by_name("1")[0]
+            last_week.click()
+            time.sleep(2)
+            if i[0] == 0:
+                i[2] = BeautifulSoup(driver.page_source, 'html.parser')
+            else:
+                next_stat_element = driver.find_elements_by_class_name("heads_up_item")[i[0]]
+                next_stat_element.click()
+                time.sleep(2)
+                i[2] = BeautifulSoup(driver.page_source, 'html.parser')
 
-        soup = BeautifulSoup(driver.page_source, 'html.parser')
+        soup = stats_page_array[1][2]
         stats_count = []
         for i in soup.findAll("a", attrs={"heads_up_item"}):
             for j in soup.findAll("p", attrs={"big_num"}):
@@ -371,7 +402,8 @@ def refresh_accounts_stats():
         xaxis_dates = []
         stats_arrays_object = {}
         quora_account_stats_array = []
-        for i in [[0, 'Views'], [1, 'Upvotes'], [2, 'Shares']]:
+        for i in stats_page_array:
+            soup = i[2]
             if get_number_from_string(stats_count[i[0]]) == float(0):
                 continue
             if xaxis_dates.__len__() == 0:
@@ -383,12 +415,6 @@ def refresh_accounts_stats():
                     quora_account_stats_array.append(qas)
 
             stats_arrays_object[i[1]] = get_qas_graph_data(soup)
-
-            if i[0] < 2:
-                next_stat_element = driver.find_elements_by_class_name("heads_up_item")[i[0]+1]
-                next_stat_element.click()
-                time.sleep(config.load_time)
-                soup = BeautifulSoup(driver.page_source, 'html.parser')
 
         count = 0
         for qas_element in quora_account_stats_array:
@@ -483,20 +509,20 @@ def refresh_all_stats():
         execution_log = ExecutionLog()
         execution_log.script_id = script.id
 
-    if execution_log.execution_time is None or execution_log.execution_time < get_time_interval(TimePeriod.DAY.value):
-        refresh_data(TimePeriod.WEEK.value, True)
-    else:
-        refresh_data(TimePeriod.DAY.value, True)
+    # if execution_log.execution_time is None or execution_log.execution_time < get_time_interval(TimePeriod.DAY.value):
+    #     refresh_data(TimePeriod.WEEK.value, True)
+    # else:
+    #     refresh_data(TimePeriod.DAY.value, True)
 
     if execution_log.execution_time is None:
         refresh_accounts_data(True)
     else:
         refresh_accounts_data(False)
 
-    pass_requested_questions()
-    refresh_requested_questions()
-    refresh_asked_questions_stats()
-    refresh_accounts_stats()
+    # pass_requested_questions()
+    # refresh_requested_questions()
+    # refresh_asked_questions_stats()
+    # refresh_accounts_stats()
     #delete_old_data()
 
     execution_log.execution_time = datetime.now()

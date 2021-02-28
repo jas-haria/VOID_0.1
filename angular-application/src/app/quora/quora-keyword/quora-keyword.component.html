@@ -25,7 +25,7 @@
                     <div class="d-flex justify-content-between">
                         {{ keyword.keyword }}
                         <i class="fas fa-trash" style="cursor: pointer;" (click)="deleteKeyword(keyword)"
-                            *ngIf="isLoggedInUserAdmin"></i>
+                            *ngIf="isLoggedInUserAdmin" placement="left" ngbTooltip="Delete Keyword"></i>
                     </div>
                 </li>
             </ul>

@@ -1,30 +1,43 @@
 <div class="table-responsive">
-  <table mat-table [dataSource]="dataSource" class="align-items-center" >
-      <ng-container *ngIf="isCheckbox" matColumnDef="select">
-        <th mat-header-cell *matHeaderCellDef class="align-middle thead-light" [style.width.%]="getColumnWidth('checkbox')">
-          <input type="checkbox" (change)="$event ? masterToggle() : null"
-                        [checked]="selection.hasValue() && isAllSelected()"
-                        [indeterminate]="selection.hasValue() && !isAllSelected()"
-                        class="mb-0 px-1">
-        </th>
-        <td mat-cell *matCellDef="let row" class="align-middle" [style.width.%]="getColumnWidth('checkbox')">
-          <input type="checkbox" (click)="$event.stopPropagation()"
-                        (change)="$event ? rowToggle(row) : null"
-                        [checked]="selection.isSelected(row)"
-                        class="mb-0 px-1">
-        </td>
-      </ng-container>
-      <ng-container [matColumnDef]="column" *ngFor="let column of getDisplayedColumns(false); let i=index">
-        <th mat-header-cell *matHeaderCellDef class="align-middle thead-light px-1" [style.width.%]="getColumnWidth(column)"><p class="mb-0">{{ displayedColumnsHeaders[i] }}</p></th>
-        <td mat-cell *matCellDef="let element" class="align-middle px-1" [style.width.%]="getColumnWidth(column)">
-          <p *ngIf="specialColumns.indexOf(column) == -1" class="mb-0">{{ element[column]? element[column] : 'N/A' }}</p>
-          <a *ngIf="column == 'question_text'" href="{{element['question_url']}}" target="_blank">
-              <p class="mb-0">{{ element[column] }}</p>
-          </a>
-        </td>
-      </ng-container>
-      <tr mat-header-row *matHeaderRowDef="getDisplayedColumns(true); sticky: true" class="thead-light"></tr>
-      <tr mat-row *matRowDef="let row; columns: getDisplayedColumns(true)"></tr>
+  <table mat-table [dataSource]="dataSource" class="align-items-center">
+    <ng-container *ngIf="isCheckbox" matColumnDef="select">
+      <th mat-header-cell *matHeaderCellDef class="align-middle thead-light"
+        [style.width.%]="getColumnWidth('checkbox')">
+        <input type="checkbox" (change)="$event ? masterToggle() : null"
+          [checked]="selection.hasValue() && isAllSelected()" [indeterminate]="selection.hasValue() && !isAllSelected()"
+          class="mb-0 px-1">
+      </th>
+      <td mat-cell *matCellDef="let row" class="align-middle" [style.width.%]="getColumnWidth('checkbox')">
+        <input type="checkbox" (click)="$event.stopPropagation()" (change)="$event ? rowToggle(row) : null"
+          [checked]="selection.isSelected(row)" class="mb-0 px-1">
+      </td>
+    </ng-container>
+    <ng-container [matColumnDef]="column" *ngFor="let column of getDisplayedColumns(false); let i=index">
+      <th mat-header-cell *matHeaderCellDef class="align-middle thead-light px-1"
+        [style.width.%]="getColumnWidth(column)">
+        <p class="mb-0">{{ displayedColumnsHeaders[i] }}</p>
+      </th>
+      <td mat-cell *matCellDef="let element" class="align-middle px-1" [style.width.%]="getColumnWidth(column)">
+        <p *ngIf="specialColumns.indexOf(column) == -1" class="mb-0">{{ element[column]? element[column] : 'N/A' }}</p>
+        <a *ngIf="column == 'question_text'" href="{{element['question_url']}}" target="_blank">
+          <p class="mb-0">{{ element[column] }}</p>
+        </a>
+        <div *ngIf="column == 'answered_by'">
+          <div *ngFor="let account of element[column]" class="d-flex flex-row justify-content-between">
+            <p>{{ account.name }}</p>
+            <div>
+              <a href="{{account.answer}}" target="_blank" placement="left" ngbTooltip="Go to Answer"><i
+                  class="fas fa-external-link-alt"></i></a>
+              &nbsp;&nbsp;
+              <i (click)="emitAction({'question_id': element['id'], 'account_id': account.id, 'action': 'ANSWERED'}, 'delete')" placement="left" ngbTooltip="Delete answer from Archieve"
+                *ngIf="isLoggedInUserAdmin" style="cursor: pointer;" class="fas fa-trash"></i>
+            </div>
+          </div>
+        </div>
+      </td>
+    </ng-container>
+    <tr mat-header-row *matHeaderRowDef="getDisplayedColumns(true); sticky: true" class="thead-light"></tr>
+    <tr mat-row *matRowDef="let row; columns: getDisplayedColumns(true)"></tr>
   </table>
 </div>
 <div class="bottom-sticky row">
@@ -45,14 +58,15 @@
       <div>
         <div class="d-flex flex-row justify-content-start align-items-center mt-2">
           <span class="mr-2">Go to page:</span>
-          <input type="text" class="form-control w-50" [value]="pageIndex + 1" (change)="changePageNumber($event.target.value - 1)">
+          <input type="text" class="form-control w-50" [value]="pageIndex + 1"
+            (change)="changePageNumber($event.target.value - 1)">
         </div>
       </div>
     </div>
   </div>
   <div class="col-4">
     <mat-paginator #paginator [length]="totalLength" [pageSize]="pageSize" [hidePageSize]="'true'"
-    [pageIndex]="pageIndex" [showFirstLastButtons]="showFirstLastButtons" (page)="paginationChange($event)">
+      [pageIndex]="pageIndex" [showFirstLastButtons]="showFirstLastButtons" (page)="paginationChange($event)">
     </mat-paginator>
   </div>
 </div>

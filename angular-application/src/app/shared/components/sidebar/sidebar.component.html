@@ -28,7 +28,7 @@
         <div *ngIf="expandedQuoraQuestions">
             <li class="nav-link" *ngFor="let tab of expandedQuoraQuestionsTab">
                 <a class="nav-link-inner--text" (click)="navigate('/quora/questions-list/' + tab.toLowerCase())">
-                     &nbsp; {{ tab.substring(0,1).toUpperCase() + tab.substring(1,tab.length).toLowerCase() + " Questions"  }}
+                     &nbsp; {{ tab.substring(0, 1).toUpperCase() + tab.substring(1, tab.length).toLowerCase() + " Questions"  }}
                 </a>
             </li>
         </div>
@@ -44,6 +44,21 @@
             <li class="nav-link" *ngFor="let account of quoraAccounts">
                 <a class="nav-link-inner--text" (click)="navigate('/quora/account/' + account.id)">
                      &nbsp; {{ account.first_name + " " + account.last_name }}
+                </a>
+            </li>
+        </div>
+        <li class="nav-link" style="cursor: pointer;" (click)="expandedArchieve = !expandedArchieve">
+            <a class="nav-link-inner--text">
+                <i class="ni ni-single-02 nav-link-icon"></i>
+                &nbsp; Archieve &nbsp;
+                <i class="ni ni-bold-right" *ngIf="!expandedArchieve"></i>
+                <i class="ni ni-bold-down" *ngIf="expandedArchieve"></i>
+            </a>
+        </li>
+        <div *ngIf="expandedArchieve">
+            <li class="nav-link" *ngFor="let tab of expandedArchieveQuestionsTab">
+                <a class="nav-link-inner--text" (click)="navigate('/quora/archieve/' + tab.toLowerCase())">
+                     &nbsp; {{ tab.substring(0, 1).toUpperCase() + tab.substring(1, tab.length).toLowerCase() + " Questions"}}
                 </a>
             </li>
         </div>

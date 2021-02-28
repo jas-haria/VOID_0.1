@@ -3,6 +3,7 @@ import { MatPaginator, PageEvent } from '@angular/material/paginator';
 import { SelectionModel } from '@angular/cdk/collections';
 import { MatRow } from '@angular/material/table';
 import { Subscription, Observable } from 'rxjs';
+import { AuthService } from '../../services/auth/auth.service';
 
 @Component({
   selector: 'app-table',
@@ -11,7 +12,7 @@ import { Subscription, Observable } from 'rxjs';
 })
 export class TableComponent implements OnInit, OnDestroy {
 
-  test:number = 10;
+  test: number = 10;
 
   subscription: Subscription = new Subscription();
   @ViewChild('paginator') public paginator: MatPaginator;
@@ -28,15 +29,24 @@ export class TableComponent implements OnInit, OnDestroy {
   @Input('showFirstLastButtons') public showFirstLastButtons: boolean;
   @Output() pageUpdateEvent: EventEmitter<PageEvent> = new EventEmitter();
   @Output() selectionEvent: EventEmitter<any[]> = new EventEmitter();
-  specialColumns = ["question_text"];
+  @Output() actionEvent: EventEmitter<any> = new EventEmitter();
+  specialColumns = ["question_text", "answered_by"];
   selection = new SelectionModel<any>(true, []);
-  
-  constructor() { }
+  isLoggedInUserAdmin: boolean = false;
+
+  constructor(private _authService: AuthService) { }
 
   ngOnInit(): void {
+    if (this.isCheckbox) {
+      this.subscription.add(
+        this.clearSelect.subscribe(input => {
+          this.selection.clear();
+        })
+      );
+    }
     this.subscription.add(
-      this.clearSelect.subscribe(input => {
-        this.selection.clear();
+      this._authService.userProfile$.subscribe(user => {
+        this.isLoggedInUserAdmin = user ? user.admin: false;
       })
     );
   }
@@ -54,8 +64,8 @@ export class TableComponent implements OnInit, OnDestroy {
 
   masterToggle() {
     this.isAllSelected() ?
-        this.selection.clear() :
-        this.dataSource.forEach(row => this.selection.select(row));
+      this.selection.clear() :
+      this.dataSource.forEach(row => this.selection.select(row));
     this.emitSelectionEvent();
   }
 
@@ -86,7 +96,7 @@ export class TableComponent implements OnInit, OnDestroy {
   }
 
   changePageSize(pageSize: number): void {
-    if (pageSize != this.pageSize){
+    if (pageSize != this.pageSize) {
       var pageEvent: PageEvent = new PageEvent();
       pageEvent.pageIndex = 0;
       pageEvent.pageSize = pageSize;
@@ -101,5 +111,14 @@ export class TableComponent implements OnInit, OnDestroy {
       pageEvent.pageSize = this.pageSize;
       this.paginationChange(pageEvent);
     }
+  }
+
+  emitAction(data: any, action: string): void {
+    this.actionEvent.emit(
+      {
+        data: data,
+        action: action
+      }
+    );
   }
 }

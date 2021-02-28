@@ -1,2 +1,5 @@
+#directories
+.idea
+
 #files
 accounts.sql

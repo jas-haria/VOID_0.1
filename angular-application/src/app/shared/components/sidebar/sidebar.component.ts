@@ -19,6 +19,8 @@ export class SidebarComponent implements OnInit {
   expandedQuoraQuestions: boolean = false;
   expandedQuoraQuestionsTab: string[] = [QuoraQuestionAccountAction.NEW, QuoraQuestionAccountAction.REQUESTED, QuoraQuestionAccountAction.ASKED];
   expandedQuoraAccounts: boolean = false;
+  expandedArchieve = false;
+  expandedArchieveQuestionsTab: string[] = [QuoraQuestionAccountAction.ANSWERED, QuoraQuestionAccountAction.ASKED]
   quoraAccounts: QuoraAccount[] = [];
 
   constructor(private _quoraService: QuoraService,

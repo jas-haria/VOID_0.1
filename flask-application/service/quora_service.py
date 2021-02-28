@@ -3,8 +3,8 @@ from sqlalchemy import asc, desc, func, and_
 import io
 import pandas
 
-from model.quora_model import Division, QuoraQuestion, Script, QuoraAccount, ExecutionLog, QuoraKeyword, \
-    QuoraQuestionAccountDetails, QuoraQuestionAccountActions, QuoraAccountStats, QuoraAskedQuestionStats
+from model.quora_model import Division, QuoraQuestion, Script, QuoraAccount, ExecutionLog, QuoraKeyword, QuoraQuestionsArchieve, \
+    QuoraQuestionAccountDetails, QuoraQuestionAccountActions, QuoraAccountStats, QuoraAskedQuestionStats, QuoraQuestionArchieveAccountDetails
 from model.enum import TimePeriod, QuoraQuestionAccountAction
 from service.util_service import get_new_session, paginate, convert_list_to_json, get_time_interval, convert_question_count_array_to_json
 import config
@@ -288,3 +288,48 @@ def add_keyword(keyword, division_id):
     session.commit()
     session.close()
     return response
+
+def get_archieved_questions(keywords, page_number, page_size, action, account_id):
+    session = get_new_session()
+    action_object = session.query(QuoraQuestionAccountActions).filter(QuoraQuestionAccountActions.action == action).first()
+    query = session.query(QuoraQuestionsArchieve).join(QuoraQuestionArchieveAccountDetails).filter(
+        QuoraQuestionArchieveAccountDetails.action_id == action_object.id)
+    if keywords is not None and len(keywords) > 0:
+        search_string = ''
+        for keyword in keywords:
+            search_string += keyword + ', '
+        search_string = search_string[:-2]
+        query = query.filter(QuoraQuestionsArchieve.question_text.match(search_string))
+    if account_id is not None:
+        query = query.filter(QuoraQuestionArchieveAccountDetails.account_id == account_id)
+    length, paginated_query = paginate(query=query, page_number=int(page_number), page_limit=int(page_size))
+    questions_array = paginated_query.all()
+    response_array = []
+    for question in questions_array:
+        response_object = {}
+        response_object['question_url'] = question.question_url
+        response_object['question_text'] = question.question_text
+        response_object['id'] = question.id
+        response_object['account_ids'] = []
+        for detail in question.accounts:
+            if detail.action_id == action_object.id:
+                response_object['account_ids'].append(detail.account_id)
+        response_array.append(response_object)
+    response = {'totalLength': length, 'content': response_array}
+    session.close()
+    return response
+
+def delete_archieved_question(question_id, account_id, action):
+    session = get_new_session()
+    action_object = session.query(QuoraQuestionAccountActions).filter(QuoraQuestionAccountActions.action.like(action)).first()
+    session.query(QuoraQuestionArchieveAccountDetails).filter(and_(
+        QuoraQuestionArchieveAccountDetails.question_id == question_id,
+        QuoraQuestionArchieveAccountDetails.account_id == account_id,
+        QuoraQuestionArchieveAccountDetails.action_id == action_object.id)).delete(synchronize_session=False)
+    remaining_details = session.query(QuoraQuestionArchieveAccountDetails).filter(
+        QuoraQuestionArchieveAccountDetails.question_id == question_id).all()
+    if remaining_details is None and len(remaining_details) == 0:
+        session.query(QuoraQuestionsArchieve).filter(QuoraQuestionsArchieve.id == question_id).delete(synchronize_session=False)
+    session.commit()
+    session.close()
+    return {}

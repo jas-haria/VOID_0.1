@@ -1,0 +1,49 @@
+<div class="row">
+    <div class="col-6"></div>
+    <div class="col-6">
+        <div class="btn-group float-right" *ngIf="accountId">
+            <button *ngFor="let type of typeDisplayArray" class="btn" (click)="modifySelectedType(type)"
+                [ngClass]="type==selectedType? 'btn-danger': 'btn-outline-danger'">
+                {{ type.substring(0,1).toUpperCase() + type.substring(1,type.length).toLowerCase() + " Questions Archieve" }}
+            </button>
+        </div>
+    </div>
+</div>
+<div class="row mt-2">
+    <div class="col-10">
+        <mat-form-field class="w-100">
+            <mat-chip-list #chipList>
+                <mat-chip *ngFor="let keyword of keywords" [selectable]="true" [removable]="true" class="btn-default">
+                    {{keyword}} &nbsp;
+                    <i class="fas fa-chevron-left" (click)="moveKeyword(keyword, true)" style="cursor:pointer;" placement="top" ngbTooltip="Move Left"></i>&nbsp;
+                    <i class="fas fa-chevron-right" (click)="moveKeyword(keyword, false)" style="cursor:pointer;" placement="top" ngbTooltip="Move Right"></i>&nbsp;
+                    <i class="fas fa-times" (click)="removeKeyword(keyword)" style="cursor:pointer;"></i>
+                </mat-chip>
+                <input placeholder="Add keywords to search (in order of priority)..." [matChipInputFor]="chipList"
+                    [matChipInputSeparatorKeyCodes]="separatorKeysCodes" [matChipInputAddOnBlur]="true"
+                    (matChipInputTokenEnd)="addKeyword($event)">
+            </mat-chip-list>
+        </mat-form-field>
+    </div>
+    <div class="col-2">
+        <button class="btn float-right" [ngClass]="disableRefreshButton? 'btn-default': 'btn-outline-primary'"
+            (click)="refreshKeywords()" [disabled]="disableRefreshButton">Refresh Questions</button>
+    </div>
+</div>
+<div class="card mt-4">
+    <div class="card-body">
+        <div *ngIf="dataSource && dataSource.length > 0; else noQuestions" class="d-flex flex-row">
+            <app-table [displayedColumns]="displayedColumns" [displayedColumnsHeaders]="displayedColumnsHeaders"
+                [displayedColumnsWidth]="displayedColumnsWidth" [dataSource]="dataSource" [totalLength]="totalLength"
+                [pageSizeOptions]="pageSizeOptions" [isCheckbox]="false" [pageIndex]="selectedPage"
+                (actionEvent)="actionEvent($event)" [pageSize]="selectedSize" [showFirstLastButtons]="true"
+                (pageUpdateEvent)="pageUpdateEvent($event)">
+            </app-table>
+        </div>
+        <ng-template #noQuestions>
+            <div class="pt-4">
+                <span>Oops! No questions fulfilled your search criteria</span>
+            </div>
+        </ng-template>
+    </div>
+</div>
