@@ -117,6 +117,9 @@ export class QuoraArchievedComponent implements OnInit, OnDestroy {
           if (this.selectedType == QuoraQuestionAccountAction.ANSWERED) {
             this.dataSource = response.content.map(question => this.mapQuestionForTable(question));
           }
+          else if (this.selectedType == QuoraQuestionAccountAction.ASKED) {
+            this.dataSource = [];
+          }
           this.totalLength = response.totalLength;
           this.disableRefreshButton = true;
           this._httpRequestInterceptorService.displaySpinner(false);
