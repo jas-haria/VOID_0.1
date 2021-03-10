@@ -38,7 +38,7 @@ def refresh_data(time, put_todays_date):
 
                 # GET EACH QUESTION LINK & QUESTION TEXT (REGEX CHECKS STARTING WITH / AND HAS MINIMUM 1 CHARACTER AFTER)
                 for link in soup.findAll('a', attrs={'target': '_blank'}):
-                    question_link = link['href']
+                    question_link = replace_all(link['href'], {"https://www.quora.com": ""})
                     # EXCLUDING URLS THAT ARE NOT QUESTIONS
                     if not is_question_url(question_link):
                         continue
@@ -159,7 +159,7 @@ def refresh_accounts_data(capture_all = False):
                 last_height = new_height
         soup = BeautifulSoup(driver.page_source, 'html.parser')
         for i in soup.findAll('a', attrs={"target": "_blank"}):
-            link = i.get('href')
+            link = replace_all(i.get('href'), {"https://www.quora.com": ""})
             if not is_question_url(link):
                 continue
             question_url = "https://www.quora.com" + link
@@ -252,12 +252,15 @@ def pass_requested_questions():
         scroll_to_bottom(driver, config.load_time)
         passed_question_ids = []
         for question in questions_to_pass:
-            link_in_quora = replace_all(question.question_url, {"https://www.quora.com": ""})
+            link_without_domain = replace_all(question.question_url, {"https://www.quora.com": ""})
             try:
-                link_element = driver.find_element_by_xpath("*//a[contains(@href, '" + link_in_quora + "')]")
+                link_element = driver.find_element_by_xpath("*//a[contains(@href, '" + question.question_url + "')]")
             except NoSuchElementException:
-                # IF QUESTION EXISTS BUT WAS NOT FOUND, IT'LL GET SCRAPED WITH REQUESTED QUESTIONS
-                continue
+                try:
+                    link_element = driver.find_element_by_xpath("*//a[contains(@href, '" + link_without_domain + "')]")
+                except NoSuchElementException:
+                    # IF QUESTION EXISTS BUT WAS NOT FOUND, IT'LL GET SCRAPED WITH REQUESTED QUESTIONS
+                    continue
             estimated_parent_elements = 6
             while True:
                 estimated_parent_elements -= 1
@@ -298,7 +301,7 @@ def refresh_requested_questions():
         soup = BeautifulSoup(driver.page_source, 'html.parser')
         # GET REQUESTED QUESTIONS
         for i in soup.findAll('a', attrs={'target': '_blank'}):
-            link = i.get('href')
+            link = replace_all(i.get('href'), {"https://www.quora.com": ""})
             if not is_question_url(link):
                 continue
             question_url = ("https://www.quora.com" + replace_all(link, {'/unanswered/': '/'}))
@@ -509,20 +512,20 @@ def refresh_all_stats():
         execution_log = ExecutionLog()
         execution_log.script_id = script.id
 
-    # if execution_log.execution_time is None or execution_log.execution_time < get_time_interval(TimePeriod.DAY.value):
-    #     refresh_data(TimePeriod.WEEK.value, True)
-    # else:
-    #     refresh_data(TimePeriod.DAY.value, True)
+    if execution_log.execution_time is None or execution_log.execution_time < get_time_interval(TimePeriod.DAY.value):
+        refresh_data(TimePeriod.WEEK.value, True)
+    else:
+        refresh_data(TimePeriod.DAY.value, True)
 
     if execution_log.execution_time is None:
         refresh_accounts_data(True)
     else:
         refresh_accounts_data(False)
 
-    # pass_requested_questions()
-    # refresh_requested_questions()
-    # refresh_asked_questions_stats()
-    # refresh_accounts_stats()
+    pass_requested_questions()
+    refresh_requested_questions()
+    refresh_asked_questions_stats()
+    refresh_accounts_stats()
     #delete_old_data()
 
     execution_log.execution_time = datetime.now()
