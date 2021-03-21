@@ -193,13 +193,13 @@ def refresh_accounts_data(capture_all = False):
             if qqad is None:
                 qqad = QuoraQuestionAccountDetails()
                 qqad.account_id = account.id
-                qqad.question_id = question.id
+                qqad.question = question
                 qqad.action_id = answered_action.id
                 session.add(qqad)
             if qqaad is None:
                 qqaad = QuoraQuestionArchieveAccountDetails()
                 qqaad.account_id = account.id
-                qqaad.question_id = archieved_question.id
+                qqaad.question = archieved_question
                 qqaad.action_id = answered_action.id
                 session.add(qqaad)
         # GET FOLLOWERS COUNT
@@ -323,9 +323,9 @@ def refresh_requested_questions():
                     QuoraQuestionAccountDetails.action_id == requested_action.id)).first()
             if qqad is None:
                 qqad = QuoraQuestionAccountDetails()
-                qqad.account = account
+                qqad.account_id = account.id
                 qqad.question = question
-                qqad.action = requested_action
+                qqad.action_id = requested_action.id
                 session.add(qqad)
         driver.quit()
     session.commit()
@@ -513,9 +513,9 @@ def refresh_all_stats():
         execution_log.script_id = script.id
 
     if execution_log.execution_time is None or execution_log.execution_time < get_time_interval(TimePeriod.DAY.value):
-        refresh_data(TimePeriod.WEEK.value, True)
+       refresh_data(TimePeriod.WEEK.value, True)
     else:
-        refresh_data(TimePeriod.DAY.value, True)
+       refresh_data(TimePeriod.DAY.value, True)
 
     if execution_log.execution_time is None:
         refresh_accounts_data(True)
@@ -542,5 +542,3 @@ def test():
     response = execution_log._asdict()
     session.close()
     return response
-
-
