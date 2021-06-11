@@ -171,18 +171,23 @@ def refresh_accounts_data(capture_all = False):
                 question.asked_on = datetime.now().date()
                 question.division = default_division
                 session.add(question)
-                archieved_question = None
                 qqad = None
             else:
-                archieved_question = session.query(QuoraQuestionsArchieve).filter(QuoraQuestionsArchieve.question_url == question_url).first()
                 qqad = session.query(QuoraQuestionAccountDetails).filter(and_(
                     QuoraQuestionAccountDetails.account_id == account.id,
                     QuoraQuestionAccountDetails.question_id == question.id,
                     QuoraQuestionAccountDetails.action_id == answered_action.id)).first()
+            if qqad is None:
+                qqad = QuoraQuestionAccountDetails()
+                qqad.account_id = account.id
+                qqad.question = question
+                qqad.action_id = answered_action.id
+                session.add(qqad)
+            archieved_question = session.query(QuoraQuestionsArchieve).filter(QuoraQuestionsArchieve.question_url == question_url).first()
             if archieved_question is None:
                 archieved_question = QuoraQuestionsArchieve()
-                archieved_question.question_url = question.question_url
-                archieved_question.question_text = question.question_text
+                archieved_question.question_url = question.question_url.encode(config.encoding)
+                archieved_question.question_text = question.question_text.encode(config.encoding)
                 session.add(archieved_question)
                 qqaad = None
             else:
@@ -190,12 +195,6 @@ def refresh_accounts_data(capture_all = False):
                     QuoraQuestionArchieveAccountDetails.account_id == account.id,
                     QuoraQuestionArchieveAccountDetails.question_id == archieved_question.id,
                     QuoraQuestionArchieveAccountDetails.action_id == answered_action.id)).first()
-            if qqad is None:
-                qqad = QuoraQuestionAccountDetails()
-                qqad.account_id = account.id
-                qqad.question = question
-                qqad.action_id = answered_action.id
-                session.add(qqad)
             if qqaad is None:
                 qqaad = QuoraQuestionArchieveAccountDetails()
                 qqaad.account_id = account.id
@@ -242,9 +241,22 @@ def pass_requested_questions():
     for account in accounts:
         if account.link == 'unavailable':
             continue
-        questions_to_pass = session.query(QuoraQuestion).join(QuoraQuestionAccountDetails).filter(QuoraQuestionAccountDetails.account_id == account.id)\
-            .filter(QuoraQuestionAccountDetails.action == passed_action_object).all()
-        if questions_to_pass is None or len(questions_to_pass) == 0:
+        passed_questions = session.query(QuoraQuestion).join(QuoraQuestionAccountDetails).filter(and_(
+            QuoraQuestionAccountDetails.account_id == account.id,
+            QuoraQuestionAccountDetails.action == passed_action_object
+        )).all()
+        requested_questions_to_pass = session.query(QuoraQuestion).join(QuoraQuestionAccountDetails).filter(and_(
+            QuoraQuestionAccountDetails.account_id == account.id,
+            QuoraQuestionAccountDetails.action == requested_action_object,
+            QuoraQuestion.asked_on < get_time_interval(TimePeriod.MONTH.value).date()
+        )).all()
+        questions_to_pass = []
+        for question in passed_questions:
+            questions_to_pass.append(question)
+        for question in requested_questions_to_pass:
+            if question.id not in (q.id for q in questions_to_pass):
+                questions_to_pass.append(question)
+        if questions_to_pass == [] or len(questions_to_pass) == 0:
             continue
         driver = get_driver()
         login_to_account(driver, account)
@@ -495,11 +507,22 @@ def get_qas_graph_data(soup):
 def delete_old_data():
     session = get_new_session()
     two_month_period = datetime.now() - relativedelta(months=2)
-    question_ids = session.query(QuoraQuestion.id).filter(QuoraQuestion.asked_on < two_month_period).all()
+    question_ids_query = session.query(QuoraQuestion.id).filter(QuoraQuestion.asked_on < two_month_period)
+    question_ids_subquery = question_ids_query.subquery()
     session.query(QuoraAccountStats).filter(QuoraAccountStats.recorded_on < two_month_period).delete(synchronize_session=False)
-    session.query(QuoraAskedQuestionStats).filter(QuoraAskedQuestionStats.question_id.in_(question_ids)).delete(synchronize_session=False)
-    session.query(QuoraQuestionAccountDetails).filter(QuoraQuestionAccountDetails.question_id.in_(question_ids)).delete(synchronize_session=False)
-    session.query(QuoraQuestion).filter(QuoraQuestion.id.in_(question_ids)).delete(synchronize_session=False)
+    session.query(QuoraAskedQuestionStats).filter(QuoraAskedQuestionStats.question_id.in_(question_ids_subquery)).delete(synchronize_session=False)
+    session.query(QuoraQuestionAccountDetails).filter(QuoraQuestionAccountDetails.question_id.in_(question_ids_subquery)).delete(synchronize_session=False)
+    question_ids_count = question_ids_query.count()
+    # NEED TO DELETE IN BATCHES AS ONLY 1000 RECORDS ARE RETURNED FROM SQL AT A TIME
+    while question_ids_count > 0:
+        if question_ids_count > 100:
+            question_ids = question_ids_query.limit(100).all()
+            question_ids_count = question_ids_count - 100
+        else:
+            question_ids = question_ids_query.limit(question_ids_count).all()
+            question_ids_count = 0
+        session.query(QuoraQuestion).filter(QuoraQuestion.id.in_(question_ids)).delete(synchronize_session=False)
+
     session.commit()
     session.close()
     return {}
@@ -526,7 +549,8 @@ def refresh_all_stats():
     refresh_requested_questions()
     refresh_asked_questions_stats()
     refresh_accounts_stats()
-    #delete_old_data()
+    delete_old_data()
+    session.execute("call " + config.db_schema_name + ".REFRESH_QUESTIONS_TABLE()")
 
     execution_log.execution_time = datetime.now()
     response = execution_log._asdict()
@@ -541,4 +565,4 @@ def test():
     execution_log = session.query(ExecutionLog).filter(ExecutionLog.script_id == script.id).first()
     response = execution_log._asdict()
     session.close()
-    return response
+    return {}
