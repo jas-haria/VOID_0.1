@@ -11,13 +11,14 @@ import { Page } from 'src/app/shared/models/page.model';
 import { PageEvent } from '@angular/material/paginator';
 import * as saveAS from 'file-saver';
 import { QuoraQuestionAccountAction } from 'src/app/shared/models/enums/quora-question-account-action.enum';
-import { QuoraAskedQuestionStats } from 'src/app/shared/models/quora-asked-question-stats.model';
 import { HeaderService } from 'src/app/shared/services/header/header.service';
 import { QuoraAccount } from 'src/app/shared/models/quora-account.model';
 import { HttpRequestInterceptorService } from 'src/app/shared/services/http-request-interceptor/http-request-interceptor.service';
 import { NgbModal, NgbModalOptions } from '@ng-bootstrap/ng-bootstrap';
 import { ModalComponent } from 'src/app/shared/components/modal/modal.component';
 import { AuthService } from 'src/app/shared/services/auth/auth.service';
+import { QuoraAskedQuestionArchieveStats } from 'src/app/shared/models/quora-asked-question-archieve-stats.model';
+import { QuoraArchievedQuestionResponse } from 'src/app/shared/models/quora_archieved_question_response.model';
 
 
 @Component({
@@ -108,6 +109,15 @@ export class QuoraQuestionListComponent implements OnInit, OnDestroy {
     );
   }
 
+  findArchievedQuestionIdForQuestion(question: QuoraQuestion, archievedQuestions: QuoraArchievedQuestionResponse[]): number {
+    for (let i = 0; i < archievedQuestions.length; i++) {
+      if (question.question_url == archievedQuestions[i].question_url) {
+        return archievedQuestions[i].id;
+      }
+    }
+    return 0;
+  }
+
   refreshDataSource(): void {
     this._httpRequestInterceptorService.displaySpinner(true);
     this.clearSelect.next();
@@ -115,12 +125,14 @@ export class QuoraQuestionListComponent implements OnInit, OnDestroy {
     this.subscription.add(
       this._quoraService.getQuestions(this.selectedPage, this.selectedSize, this.selectedDivisions, this.selectedTimePeriod, this.selectedType, this.accountId).subscribe((response: Page<QuoraQuestion>) => {
         if (this.selectedType == QuoraQuestionAccountAction.ASKED) {
-          this._quoraService.getAskedQuestionsStats(false, this.getIdsFromArray(response.content)).subscribe((stats: QuoraAskedQuestionStats[]) => {
-            this.dataSource = response.content.map(question => this.mapQuestionForTable(question,
-              stats.find((stat: QuoraAskedQuestionStats) => stat.question_id == question.id)
-            ));
-            this._httpRequestInterceptorService.displaySpinner(false);
-          })
+          this._quoraService.getAskedQuestionsStats(false, this.getIdsFromArray(response.content)).subscribe((stats: QuoraAskedQuestionArchieveStats[]) => {
+            this._quoraService.getArchievedQuestionsByQuestionId(this.getIdsFromArray(stats, 'question_id')).subscribe((archievedQuestions: QuoraArchievedQuestionResponse[]) => {
+              this.dataSource = response.content.map(question => this.mapQuestionForTable(question,
+                stats.find((stat: QuoraAskedQuestionArchieveStats) => stat.question_id == this.findArchievedQuestionIdForQuestion(question, archievedQuestions))
+              ));
+              this._httpRequestInterceptorService.displaySpinner(false);
+            });
+          });
         }
         else {
           this.dataSource = response.content.map(question => this.mapQuestionForTable(question, null));
@@ -190,10 +202,15 @@ export class QuoraQuestionListComponent implements OnInit, OnDestroy {
     this.selectedDivisions = this.getIdsFromArray(divisions);
   }
 
-  getIdsFromArray(arr: any[]): number[] {
+  getIdsFromArray(arr: any[], idString?: string): number[] {
     var result = [];
     arr.forEach(element => {
-      result.push(element.id);
+      if (idString) {
+        result.push(element[idString]);
+      }
+      else {
+        result.push(element.id);
+      }
     })
     return result;
   }
@@ -235,7 +252,7 @@ export class QuoraQuestionListComponent implements OnInit, OnDestroy {
     this.refreshPage();
   }
 
-  mapQuestionForTable(question: QuoraQuestion, askedQuestionStats: QuoraAskedQuestionStats): any {
+  mapQuestionForTable(question: QuoraQuestion, askedQuestionStats: QuoraAskedQuestionArchieveStats): any {
     if (this.selectedType == QuoraQuestionAccountAction.ASKED) {
       return {
         'id': question.id,

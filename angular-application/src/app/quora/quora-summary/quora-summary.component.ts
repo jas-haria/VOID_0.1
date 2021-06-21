@@ -6,7 +6,6 @@ import { Subscription, Subject, forkJoin } from 'rxjs';
 import * as saveAS from 'file-saver';
 import { QuoraQuestionAccountAction } from 'src/app/shared/models/enums/quora-question-account-action.enum';
 import { QuoraQuestionCount } from 'src/app/shared/models/quora-question-count.model';
-import { QuoraAskedQuestionStats } from 'src/app/shared/models/quora-asked-question-stats.model';
 import { ChartDetails } from 'src/app/shared/models/chart-details.model';
 import { TopCardDetails } from 'src/app/shared/models/topcard-details.model';
 import { NgbModal, NgbModalOptions } from '@ng-bootstrap/ng-bootstrap';
@@ -14,6 +13,7 @@ import { ModalComponent } from 'src/app/shared/components/modal/modal.component'
 import { HttpRequestInterceptorService } from 'src/app/shared/services/http-request-interceptor/http-request-interceptor.service';
 import { ExecutionLog } from 'src/app/shared/models/execution-log.model';
 import { AuthService } from 'src/app/shared/services/auth/auth.service';
+import { QuoraAskedQuestionArchieveStats } from 'src/app/shared/models/quora-asked-question-archieve-stats.model';
 
 @Component({
   selector: 'app-quora-summary',
@@ -221,7 +221,7 @@ export class QuoraSummaryComponent implements OnInit, OnDestroy, AfterViewInit {
     }
   }
 
-  setFromQuoraAskedQuestionStats(lastWeekAskedStats: QuoraAskedQuestionStats[], thisWeekAskedStats: QuoraAskedQuestionStats[]): void {
+  setFromQuoraAskedQuestionStats(lastWeekAskedStats: QuoraAskedQuestionArchieveStats[], thisWeekAskedStats: QuoraAskedQuestionArchieveStats[]): void {
     let viewsThisWeek = 0, followersThisWeek = 0, answersThisWeek = 0, viewsLastWeek = 0, followersLastWeek = 0, answersLastWeek = 0;
     let combinedMaxLength = lastWeekAskedStats.length > thisWeekAskedStats.length ? lastWeekAskedStats.length : thisWeekAskedStats.length;
     for (let i = 0; i < combinedMaxLength; i++) {

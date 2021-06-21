@@ -3,8 +3,10 @@ from sqlalchemy import asc, desc, func, and_
 import io
 import pandas
 
-from model.quora_model import Division, QuoraQuestion, Script, QuoraAccount, ExecutionLog, QuoraKeyword, QuoraQuestionsArchieve, \
-    QuoraQuestionAccountDetails, QuoraQuestionAccountActions, QuoraAccountStats, QuoraAskedQuestionStats, QuoraQuestionArchieveAccountDetails
+from model.quora_model import Division, QuoraQuestion, Script, QuoraAccount, ExecutionLog, QuoraKeyword, \
+    QuoraQuestionsArchieve, \
+    QuoraQuestionAccountDetails, QuoraQuestionAccountActions, QuoraAccountStats, \
+    QuoraQuestionArchieveAccountDetails, QuoraAskedQuestionArchieveStats
 from model.enum import TimePeriod, QuoraQuestionAccountAction
 from service.util_service import get_new_session, paginate, convert_list_to_json, get_time_interval, convert_question_count_array_to_json
 import config
@@ -82,7 +84,7 @@ def get_questions(division_ids, time, page_number, page_size, action, account_id
     session = get_new_session()
     if action == QuoraQuestionAccountAction.NEW.__str__():
         query = session.query(QuoraQuestion).filter(and_(QuoraQuestion.division_id.in_(division_ids)),
-                                                    QuoraQuestion.asked_on > get_time_interval(time),
+                                                    QuoraQuestion.asked_on > get_time_interval(time, 1),
                                                     (QuoraQuestion.disregard).is_(False),
                                                     ~QuoraQuestion.accounts.any()).order_by(desc(QuoraQuestion.id))
         length, paginated_query = paginate(query=query, page_number=int(page_number), page_limit=int(page_size))
@@ -108,7 +110,7 @@ def get_questions(division_ids, time, page_number, page_size, action, account_id
         query = query.filter(QuoraQuestion.id.notin_(questions_to_ignore))
     query = query.filter(and_(
         QuoraQuestion.division_id.in_(division_ids),
-        QuoraQuestion.asked_on > get_time_interval(time),
+        QuoraQuestion.asked_on > get_time_interval(time, 1),
         (QuoraQuestion.disregard).is_(False),
         QuoraQuestionAccountActions.action == action))
     if account_id is not None:
@@ -120,16 +122,19 @@ def get_questions(division_ids, time, page_number, page_size, action, account_id
     session.close()
     return response
 
-def get_asked_questions_stats(question_ids, last_week):
+def get_asked_questions_archieve_stats(question_ids, last_week):
     session = get_new_session()
     stats = []
     if question_ids is None:
-        question_ids = session.query(QuoraQuestion.id).filter(QuoraQuestion.asked_on > get_time_interval(TimePeriod.MONTH.value)).all()
-    query = session.query(QuoraAskedQuestionStats)
+        question_urls = session.query(QuoraQuestion.question_url).filter(QuoraQuestion.asked_on > get_time_interval(TimePeriod.MONTH.value, 1)).all()
+    else:
+        question_urls = session.query(QuoraQuestion.question_url).filter(QuoraQuestion.id.in_(question_ids)).all()
+    archieve_question_ids = session.query(QuoraQuestionsArchieve.id).filter(QuoraQuestionsArchieve.question_url.in_(question_urls)).all()
+    query = session.query(QuoraAskedQuestionArchieveStats)
     if last_week is True:
-        query = query.filter(QuoraAskedQuestionStats.recorded_on < get_time_interval(TimePeriod.WEEK.value))
-    for id in question_ids:
-        question_stat = query.filter(QuoraAskedQuestionStats.question_id == id).order_by(desc(QuoraAskedQuestionStats.recorded_on)).first()
+        query = query.filter(QuoraAskedQuestionArchieveStats.recorded_on < get_time_interval(TimePeriod.WEEK.value, 1))
+    for id in archieve_question_ids:
+        question_stat = query.filter(QuoraAskedQuestionArchieveStats.question_id == id).order_by(desc(QuoraAskedQuestionArchieveStats.recorded_on)).first()
         stats.append(question_stat)
     response = convert_list_to_json(stats)
     session.close()
@@ -170,7 +175,7 @@ def get_quora_accounts_stats(account_id):
     query = session.query(QuoraAccountStats)
     if account_id is not None:
         query = query.filter(QuoraAccountStats.account_id == account_id)
-    stats = query.filter(QuoraAccountStats.recorded_on > get_time_interval(TimePeriod.MONTH.value)).all()
+    stats = query.filter(QuoraAccountStats.recorded_on > get_time_interval(TimePeriod.MONTH.value, 1)).all()
     response = convert_list_to_json(stats)
     session.close()
     return response
@@ -183,7 +188,7 @@ def get_quora_questions_count(action, account_id):
         query = query.filter(QuoraQuestionAccountDetails.account_id == account_id)
     details = query.filter(and_(
         QuoraQuestionAccountDetails.action_id == action_object.id,
-        QuoraQuestion.asked_on > get_time_interval(TimePeriod.MONTH.value))).group_by(QuoraQuestion.asked_on).all()
+        QuoraQuestion.asked_on > get_time_interval(TimePeriod.MONTH.value, 1))).group_by(QuoraQuestion.asked_on).all()
     response = convert_question_count_array_to_json(details)
     session.close()
     return response
@@ -212,8 +217,8 @@ def get_asked_questions_sample_excel():
     worksheet.data_validation(1, 1, 1001, 1, {'validate': 'length', 'criteria': '>', 'minimum': '5', 'input_message': 'Text of the question as displayed on Quora'})
     worksheet.data_validation(1, 2, 1001, 2, {'validate': 'list', 'source': '=$K$2:$K$' + str(len(division_name_list) + 1)})
     worksheet.data_validation(1, 3, 1001, 3, {'validate': 'list', 'source': '=$M$2:$M$' + str(len(account_name_list) + 1)})
-    worksheet.data_validation(1, 4, 1001, 4, {'validate': 'date', 'criteria': '>', 'minimum': get_time_interval(TimePeriod.MONTH.value), 'input_title': 'Enter a date after',
-                                              'input_message': get_time_interval(TimePeriod.MONTH.value).date().__format__('%d %b, %Y').__str__()})
+    worksheet.data_validation(1, 4, 1001, 4, {'validate': 'date', 'criteria': '>', 'minimum': get_time_interval(TimePeriod.MONTH.value, 1), 'input_title': 'Enter a date after',
+                                              'input_message': get_time_interval(TimePeriod.MONTH.value, 1).date().__format__('%d %b, %Y').__str__()})
     excel_writer.save()
     strIO.seek(0)
     session.close()
@@ -249,6 +254,24 @@ def upload_asked_questions(file):
             qqad.action = asked_action_object
             qqad.account_id = account_id
             session.add(qqad)
+        persisted_archieved_question = session.query(QuoraQuestionsArchieve).filter(QuoraQuestionsArchieve.question_url.like(row['Question Url'])).first()
+        if persisted_archieved_question is None:
+            persisted_archieved_question = QuoraQuestionsArchieve()
+            persisted_archieved_question.question_url = row['Question Url'].encode(config.encoding)
+            persisted_archieved_question.question_text = row['Question Text'].encode(config.encoding)
+            session.add(persisted_archieved_question)
+            persisted_archieved_qqaad = None
+        else:
+            persisted_archieved_qqaad = session.query(QuoraQuestionArchieveAccountDetails).filter(and_(
+                QuoraQuestionArchieveAccountDetails.question_id == persisted_archieved_question.id,
+                QuoraQuestionArchieveAccountDetails.account_id == account_id,
+                QuoraQuestionArchieveAccountDetails.action_id == asked_action_object.id)).first()
+        if persisted_archieved_qqaad is None:
+            qqaad = QuoraQuestionArchieveAccountDetails()
+            qqaad.question = persisted_archieved_question
+            qqaad.action = asked_action_object
+            qqaad.account_id = account_id
+            session.add(qqaad)
     session.commit()
     session.close()
     return True
@@ -289,6 +312,13 @@ def add_keyword(keyword, division_id):
     session.close()
     return response
 
+def get_archieved_questions_by_question_id(question_ids):
+    session = get_new_session()
+    questions = session.query(QuoraQuestionsArchieve).filter(QuoraQuestionsArchieve.id.in_(question_ids)).all()
+    response = convert_list_to_json(questions)
+    session.close()
+    return response
+
 def get_archieved_questions(keywords, page_number, page_size, action, account_id):
     session = get_new_session()
     action_object = session.query(QuoraQuestionAccountActions).filter(QuoraQuestionAccountActions.action == action).first()
@@ -310,10 +340,20 @@ def get_archieved_questions(keywords, page_number, page_size, action, account_id
         response_object['question_url'] = question.question_url
         response_object['question_text'] = question.question_text
         response_object['id'] = question.id
-        response_object['account_ids'] = []
-        for detail in question.accounts:
-            if detail.action_id == action_object.id:
-                response_object['account_ids'].append(detail.account_id)
+        if action == QuoraQuestionAccountAction.ANSWERED.__str__():
+            response_object['answered_account_ids'] = []
+            for detail in question.accounts:
+                if detail.action_id == action_object.id:
+                    response_object['answered_account_ids'].append(detail.account_id)
+        elif action == QuoraQuestionAccountAction.ASKED.__str__():
+            for detail in question.accounts:
+                if detail.action_id == action_object.id:
+                    response_object['asked_account_id'] = detail.account_id
+                    break
+            stat = session.query(QuoraAskedQuestionArchieveStats).filter(QuoraAskedQuestionArchieveStats.question_id == question.id)\
+                .order_by(desc(QuoraAskedQuestionArchieveStats.recorded_on)).first()
+            if stat is not None:
+                response_object['asked_question_stats'] = stat._asdict()
         response_array.append(response_object)
     response = {'totalLength': length, 'content': response_array}
     session.close()
@@ -328,7 +368,9 @@ def delete_archieved_question(question_id, account_id, action):
         QuoraQuestionArchieveAccountDetails.action_id == action_object.id)).delete(synchronize_session=False)
     remaining_details = session.query(QuoraQuestionArchieveAccountDetails).filter(
         QuoraQuestionArchieveAccountDetails.question_id == question_id).all()
-    if remaining_details is None and len(remaining_details) == 0:
+    if (remaining_details is None or len(remaining_details) == 0):
+        session.query(QuoraAskedQuestionArchieveStats).filter(QuoraAskedQuestionArchieveStats.question_id == question_id)\
+            .delete(synchronize_session=False)
         session.query(QuoraQuestionsArchieve).filter(QuoraQuestionsArchieve.id == question_id).delete(synchronize_session=False)
     session.commit()
     session.close()

@@ -1,4 +1,4 @@
-export class QuoraAskedQuestionStats {
+export class QuoraAskedQuestionArchieveStats {
     question_id: number;
     recorded_on: Date;
     follower_count: number;

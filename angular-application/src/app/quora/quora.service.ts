@@ -7,12 +7,12 @@ import { Page } from '../shared/models/page.model';
 import { TimePeriod } from '../shared/models/enums/time-period.enum';
 import { QuoraAccount } from '../shared/models/quora-account.model';
 import { QuoraQuestionAccountAction } from '../shared/models/enums/quora-question-account-action.enum';
-import { QuoraAskedQuestionStats } from '../shared/models/quora-asked-question-stats.model';
 import { QuoraAccountsStats } from '../shared/models/quora-accounts-stats.model';
 import { QuoraQuestionCount } from '../shared/models/quora-question-count.model';
 import { ExecutionLog } from '../shared/models/execution-log.model';
 import { QuoraKeyword } from '../shared/models/quora-keyword';
 import { QuoraArchievedQuestionResponse } from '../shared/models/quora_archieved_question_response.model';
+import { QuoraAskedQuestionArchieveStats } from '../shared/models/quora-asked-question-archieve-stats.model';
 
 @Injectable({
   providedIn: 'root'
@@ -89,13 +89,13 @@ export class QuoraService {
 
   }
 
-  getAskedQuestionsStats(lastWeek: boolean, questionIds?: number[]): Observable<QuoraAskedQuestionStats[]> {
+  getAskedQuestionsStats(lastWeek: boolean, questionIds?: number[]): Observable<QuoraAskedQuestionArchieveStats[]> {
     let parameters = {};
     parameters['lastWeek'] = lastWeek;
     if (questionIds) {
       parameters['questionIds'] = questionIds;
     }
-    return <Observable<QuoraAskedQuestionStats[]>>this._apiService.createRequest('get', this.baseUrl + '/asked-questions-stats', parameters, null, false, null);
+    return <Observable<QuoraAskedQuestionArchieveStats[]>>this._apiService.createRequest('get', this.baseUrl + '/asked-questions-stats', parameters, null, false, null);
   }
 
   getAccountStats(accountId?: number): Observable<QuoraAccountsStats[]> {
@@ -154,6 +154,12 @@ export class QuoraService {
     }
     parameters['keywords'] = keywords;
     return <Observable<Page<QuoraArchievedQuestionResponse>>>this._apiService.createRequest('get', this.baseUrl + '/archieved', parameters, null, false, null);
+  }
+
+  getArchievedQuestionsByQuestionId(questionIds: number[]): Observable<QuoraArchievedQuestionResponse[]> {
+    let parameters = {};
+    parameters['questionIds'] = questionIds;
+    return <Observable<QuoraArchievedQuestionResponse[]>>this._apiService.createRequest('get', this.baseUrl + '/archieved-questions', parameters, null, false, null);
   }
 
   deleteArchievedQuestionAndAccountAction(questionId: number, accountId: number, qqaa: QuoraQuestionAccountAction): Observable<any> {

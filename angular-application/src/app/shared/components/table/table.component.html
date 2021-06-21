@@ -23,15 +23,24 @@
           <p class="mb-0">{{ element[column] }}</p>
         </a>
         <div *ngIf="column == 'answered_by'">
-          <div *ngFor="let account of element[column]" class="d-flex flex-row justify-content-between">
-            <p>{{ account.name }}</p>
+          <div *ngFor="let account of element[column]" class="d-flex flex-row justify-content-between align-items-center">
+            {{ account.name }}
             <div>
               <a href="{{account.answer}}" target="_blank" placement="left" ngbTooltip="Go to Answer"><i
                   class="fas fa-external-link-alt"></i></a>
               &nbsp;&nbsp;
-              <i (click)="emitAction({'question_id': element['id'], 'account_id': account.id, 'action': 'ANSWERED'}, 'delete')" placement="left" ngbTooltip="Delete answer from Archieve"
-                *ngIf="isLoggedInUserAdmin" style="cursor: pointer;" class="fas fa-trash"></i>
+              <i (click)="emitAction({'question_id': element['id'], 'account_id': account.id, 'action': 'ANSWERED'}, 'delete')"
+                placement="left" ngbTooltip="Delete answer from Archieve" *ngIf="isLoggedInUserAdmin"
+                style="cursor: pointer;" class="fas fa-trash"></i>
             </div>
+          </div>
+        </div>
+        <div *ngIf="column == 'asked_by'">
+          <div class="d-flex flex-row justify-content-between align-items-center">
+            {{ element[column]['name'] }}
+            <i (click)="emitAction({'question_id': element['id'], 'account_id': element[column]['id'], 'action': 'ASKED'}, 'delete')"
+              placement="left" ngbTooltip="Delete question from Archieve" *ngIf="isLoggedInUserAdmin"
+              style="cursor: pointer;" class="fas fa-trash"></i>
           </div>
         </div>
       </td>

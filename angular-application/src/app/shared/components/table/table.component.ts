@@ -30,7 +30,7 @@ export class TableComponent implements OnInit, OnDestroy {
   @Output() pageUpdateEvent: EventEmitter<PageEvent> = new EventEmitter();
   @Output() selectionEvent: EventEmitter<any[]> = new EventEmitter();
   @Output() actionEvent: EventEmitter<any> = new EventEmitter();
-  specialColumns = ["question_text", "answered_by"];
+  specialColumns = ["question_text", "answered_by", "asked_by"];
   selection = new SelectionModel<any>(true, []);
   isLoggedInUserAdmin: boolean = false;
 

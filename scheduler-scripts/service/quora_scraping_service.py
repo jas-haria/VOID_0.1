@@ -12,10 +12,12 @@ from selenium.common.exceptions import NoSuchElementException
 import time
 import re
 
-from model.quora_model import Division, QuoraKeyword, QuoraQuestion, Script, QuoraAccount, ExecutionLog, QuoraQuestionsArchieve, \
-    QuoraQuestionAccountDetails, QuoraQuestionAccountActions, QuoraAccountStats, QuoraAskedQuestionStats, QuoraQuestionArchieveAccountDetails
+from model.quora_model import Division, QuoraKeyword, QuoraQuestion, Script, QuoraAccount, ExecutionLog, \
+    QuoraQuestionsArchieve, \
+    QuoraQuestionAccountDetails, QuoraQuestionAccountActions, QuoraAccountStats, \
+    QuoraQuestionArchieveAccountDetails, QuoraAskedQuestionArchieveStats
 from model.enum import TimePeriod, QuoraQuestionAccountAction
-from service.util_service import get_new_session, scroll_to_bottom, get_driver, replace_all, get_number_from_string, get_time_interval, convert_list_to_json
+from service.util_service import get_new_session, scroll_to_bottom, get_driver, replace_all, get_number_from_string, get_time_interval
 import config
 
 
@@ -248,7 +250,7 @@ def pass_requested_questions():
         requested_questions_to_pass = session.query(QuoraQuestion).join(QuoraQuestionAccountDetails).filter(and_(
             QuoraQuestionAccountDetails.account_id == account.id,
             QuoraQuestionAccountDetails.action == requested_action_object,
-            QuoraQuestion.asked_on < get_time_interval(TimePeriod.MONTH.value).date()
+            QuoraQuestion.asked_on < get_time_interval(TimePeriod.MONTH.value, 1).date()
         )).all()
         questions_to_pass = []
         for question in passed_questions:
@@ -327,7 +329,7 @@ def refresh_requested_questions():
                 session.add(question)
                 qqad = None
             else:
-                if question.asked_on < get_time_interval(TimePeriod.MONTH.value).date():
+                if question.asked_on < get_time_interval(TimePeriod.MONTH.value, 1).date():
                     question.asked_on = datetime.now().date()  # WE DONT HAVE DATE OF WHEN REQUEST WAS MADE, SO STORING LATEST DATE
                 qqad = session.query(QuoraQuestionAccountDetails).filter(and_(
                     QuoraQuestionAccountDetails.account_id == account.id,
@@ -348,33 +350,35 @@ def refresh_requested_questions():
 def refresh_asked_questions_stats():
     session = get_new_session()
     driver = get_driver()
-    questions_details = session.query(QuoraQuestionAccountDetails).join(QuoraQuestionAccountActions).filter(QuoraQuestionAccountActions.action == QuoraQuestionAccountAction.ASKED).all()
+    questions_details = session.query(QuoraQuestionArchieveAccountDetails).join(QuoraQuestionAccountActions).filter(QuoraQuestionAccountActions.action == QuoraQuestionAccountAction.ASKED).all()
+
     for question_detail in questions_details:
         driver.get(question_detail.question.question_url)
         soup = BeautifulSoup(driver.page_source, 'html.parser')
-        qaqs = session.query(QuoraAskedQuestionStats).filter(QuoraAskedQuestionStats.question_id == question_detail.question_id).filter(QuoraAskedQuestionStats.recorded_on == datetime.now().date()).first()
-        if qaqs is None:
-            qaqs = QuoraAskedQuestionStats()
-            qaqs.question_id = question_detail.question_id
-            qaqs.recorded_on = datetime.now().date()
-            qaqs.answer_count = 0
-            qaqs.follower_count = 0
-            qaqs.view_count = 0
+        qaqas = session.query(QuoraAskedQuestionArchieveStats).filter(and_(
+            QuoraAskedQuestionArchieveStats.question_id == question_detail.question_id,
+            QuoraAskedQuestionArchieveStats.recorded_on == datetime.now().date())).first()
+        if qaqas is None:
+            qaqas = QuoraAskedQuestionArchieveStats()
+            qaqas.question_id = question_detail.question_id
+            qaqas.recorded_on = datetime.now().date()
+            qaqas.answer_count = 0
+            qaqas.follower_count = 0
+            qaqas.view_count = 0
         # GET NUMBER OF ANSWERS (MAXES OUT AT 100, THEN DISPLAYS 100+)
         for i in soup.findAll('div'):
             if re.compile('^[0-9]+[+]? Answer[s]?$').match(i.get_text()):
-                qaqs.answer_count = int(replace_all(i.get_text(), {'Answer': '', 's': '', ',': '', '+': ''}).strip())
+                qaqas.answer_count = int(replace_all(i.get_text(), {'Answer': '', 's': '', ',': '', '+': ''}).strip())
                 break
         driver.get(question_detail.question.question_url+'/log')
         soup = BeautifulSoup(driver.page_source, 'html.parser')
         # IDENTIFIES STATS PER QUESTION
         for i in soup.findAll('div'):
             if re.compile('^[0-9.,]+[mMkK]? Public Follower[s]?$').match(i.get_text()):
-                qaqs.follower_count = get_number_from_string(replace_all(i.get_text(), {'Public Follower': '', 's': ''}).strip())
+                qaqas.follower_count = get_number_from_string(replace_all(i.get_text(), {'Public Follower': '', 's': ''}).strip())
             if re.compile('^[0-9.,]+[mMkK]? View[s]?$').match(i.get_text()):
-                qaqs.view_count = get_number_from_string(replace_all(i.get_text(), {'View': '', 's': ''}).strip())
-        session.add(qaqs)
-        break
+                qaqas.view_count = get_number_from_string(replace_all(i.get_text(), {'View': '', 's': ''}).strip())
+        session.add(qaqas)
 
     driver.quit()
     session.commit()
@@ -506,11 +510,11 @@ def get_qas_graph_data(soup):
 
 def delete_old_data():
     session = get_new_session()
-    two_month_period = datetime.now() - relativedelta(months=2)
-    question_ids_query = session.query(QuoraQuestion.id).filter(QuoraQuestion.asked_on < two_month_period)
+    five_week_period = get_time_interval(TimePeriod.WEEK.value, 5)
+    question_ids_query = session.query(QuoraQuestion.id).filter(QuoraQuestion.asked_on < five_week_period)
     question_ids_subquery = question_ids_query.subquery()
-    session.query(QuoraAccountStats).filter(QuoraAccountStats.recorded_on < two_month_period).delete(synchronize_session=False)
-    session.query(QuoraAskedQuestionStats).filter(QuoraAskedQuestionStats.question_id.in_(question_ids_subquery)).delete(synchronize_session=False)
+    session.query(QuoraAccountStats).filter(QuoraAccountStats.recorded_on < five_week_period).delete(synchronize_session=False)
+    session.query(QuoraAskedQuestionArchieveStats).filter(QuoraAskedQuestionArchieveStats.recorded_on < five_week_period).delete(synchronize_session=False)
     session.query(QuoraQuestionAccountDetails).filter(QuoraQuestionAccountDetails.question_id.in_(question_ids_subquery)).delete(synchronize_session=False)
     question_ids_count = question_ids_query.count()
     # NEED TO DELETE IN BATCHES AS ONLY 1000 RECORDS ARE RETURNED FROM SQL AT A TIME
@@ -535,7 +539,7 @@ def refresh_all_stats():
         execution_log = ExecutionLog()
         execution_log.script_id = script.id
 
-    if execution_log.execution_time is None or execution_log.execution_time < get_time_interval(TimePeriod.DAY.value):
+    if execution_log.execution_time is None or execution_log.execution_time < get_time_interval(TimePeriod.DAY.value, 1):
        refresh_data(TimePeriod.WEEK.value, True)
     else:
        refresh_data(TimePeriod.DAY.value, True)

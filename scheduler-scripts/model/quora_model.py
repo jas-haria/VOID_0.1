@@ -178,17 +178,18 @@ class QuoraAccountStats(Base):
     def _asdict(self):
         return _asdictmethod(self)
 
-class QuoraAskedQuestionStats(Base):
-    __tablename__ = "quora_asked_questions_stats"
+
+class QuoraAskedQuestionArchieveStats(Base):
+    __tablename__ = "quora_asked_questions_archieve_stats"
     __table_args__ = schema
 
-    question_id = Column('question_id', Integer, ForeignKey(config.db_schema_name + '.quora_questions.id'), primary_key=True)
+    question_id = Column('question_id', Integer, ForeignKey(config.db_schema_name + '.quora_questions_archieve.id'), primary_key=True)
     recorded_on = Column('recorded_on', Date, primary_key=True)
     follower_count = Column('follower_count', Integer, default=0, nullable=False)
     view_count = Column('view_count', Integer, default=0, nullable=False)
     answer_count = Column('answer_count', Integer, default=0, nullable=False)
 
-    question = relationship('QuoraQuestion')
+    question = relationship('QuoraQuestionsArchieve')
 
     def __repr__(self):
         return '<Question - Recorded On {}>'.format(self.question_id - self.recorded_on)

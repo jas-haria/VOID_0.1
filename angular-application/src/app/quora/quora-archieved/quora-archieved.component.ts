@@ -115,10 +115,10 @@ export class QuoraArchievedComponent implements OnInit, OnDestroy {
     this.subscription.add(
         this._quoraService.getArchievedQuestions(this.selectedPage, this.selectedSize, this.selectedType, this.accountId, this.keywords).subscribe((response: Page<QuoraArchievedQuestionResponse>) => {
           if (this.selectedType == QuoraQuestionAccountAction.ANSWERED) {
-            this.dataSource = response.content.map(question => this.mapQuestionForTable(question));
+            this.dataSource = response.content.map(question => this.mapAnsweredQuestionForTable(question));
           }
           else if (this.selectedType == QuoraQuestionAccountAction.ASKED) {
-            this.dataSource = [];
+            this.dataSource = response.content.map(question => this.mapAskedQuestionForTable(question));
           }
           this.totalLength = response.totalLength;
           this.disableRefreshButton = true;
@@ -163,6 +163,11 @@ export class QuoraArchievedComponent implements OnInit, OnDestroy {
       this.displayedColumnsWidth = { "id": 10, "question_text": 70, "answered_by": 20 };
       this.displayedColumnsHeaders = ["Id", "Question", "Answerd By"]
     }
+    else if (this.selectedType == QuoraQuestionAccountAction.ASKED) {
+      this.displayedColumns = ["id", "question_text", "views", "followers", "answers", "recorded_on", "asked_by" ];
+      this.displayedColumnsWidth = { "id": 5, "question_text": 50, "views": 5, "followers": 5, "answers": 5, "recorded_on": 10, "asked_by": 20 };
+      this.displayedColumnsHeaders = ["Id", "Question", "Views", "Followers", "Answers", "Recorded On", "Asked By"];
+    }
   }
 
   setHeaderValue(): void {
@@ -194,9 +199,9 @@ export class QuoraArchievedComponent implements OnInit, OnDestroy {
     }
   }
 
-  mapQuestionForTable(question: QuoraArchievedQuestionResponse): any {
+  mapAnsweredQuestionForTable(question: QuoraArchievedQuestionResponse): any {
     let answered_by = []
-    question.account_ids.forEach(id => {
+    question.answered_account_ids.forEach(id => {
       let account = this.accounts.find(x => x.id === id);
       if (account) {
         let account_object = {}
@@ -211,6 +216,25 @@ export class QuoraArchievedComponent implements OnInit, OnDestroy {
       "question_text": question.question_text,
       "question_url": question.question_url,
       "answered_by": answered_by
+    }
+  }
+
+  mapAskedQuestionForTable(question: QuoraArchievedQuestionResponse): any {
+    let asked_by = {};
+    let account = this.accounts.find(x => x.id === question.asked_account_id);
+    if (account) {
+      asked_by['name'] = account.first_name + " " + account.last_name;
+      asked_by['id'] = account.id;
+    }
+    return {
+      "id": question.id,
+      "question_text": question.question_text,
+      "question_url": question.question_url,
+      "asked_by": asked_by,
+      "views": question.asked_question_stats? question.asked_question_stats.view_count: null,
+      "followers": question.asked_question_stats? question.asked_question_stats.follower_count: null,
+      "answers": question.asked_question_stats? question.asked_question_stats.answer_count: null,
+      "recorded_on": question.asked_question_stats? question.asked_question_stats.recorded_on: null
     }
   }
 
@@ -243,6 +267,10 @@ export class QuoraArchievedComponent implements OnInit, OnDestroy {
     modalRef.componentInstance.headerClass = 'danger';
     modalRef.componentInstance.title = 'Confirmation';
     modalRef.componentInstance.beforeBodyContentList = 'This action is irreversable. Are you sure you want to proceed?';
+    if (this.selectedType == QuoraQuestionAccountAction.ASKED) {
+      modalRef.componentInstance.bodyContentList = ['If this question was added in the last month,'
+      + ' its statistics will be lost from all other screens'];
+    }
     modalRef.componentInstance.showConfirm = true;
     return modalRef;
   }

@@ -1,4 +1,4 @@
-from flask import Response, request, send_file, g
+from flask import Response, request, send_file
 import json
 import ast
 from distutils.util import strtobool
@@ -44,7 +44,7 @@ def get_asked_questions_stats():
     questionIds = None
     if request.args.get('questionIds') is not None:
         questionIds = ast.literal_eval(request.args.get('questionIds'))
-    return Response(json.dumps(quora_service.get_asked_questions_stats(questionIds, bool(strtobool(request.args.get('lastWeek'))))), status=200, mimetype='application/json')
+    return Response(json.dumps(quora_service.get_asked_questions_archieve_stats(questionIds, bool(strtobool(request.args.get('lastWeek'))))), status=200, mimetype='application/json')
 
 # HAS SOME ISSUE
 @app.route(base_url+'/pending-questions-excel', methods=['GET'])
@@ -108,6 +108,11 @@ def add_keyword():
 @requires_auth
 def get_archieved():
     return Response(json.dumps(quora_service.get_archieved_questions(ast.literal_eval(request.args.get('keywords')),  request.args.get('pageNumber'), request.args.get('pageSize'), request.args.get('action'), request.args.get('accountId'))), status=200, mimetype='application/json')
+
+@app.route(base_url+'/archieved-questions', methods=['GET'])
+@requires_auth
+def get_archieved_questions_by_id():
+    return Response(json.dumps(quora_service.get_archieved_questions_by_question_id(ast.literal_eval(request.args.get('questionIds')))), status=200, mimetype='application/json')
 
 @app.route(base_url+'/archieved', methods=['DELETE'])
 @requires_auth

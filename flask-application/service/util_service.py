@@ -99,16 +99,16 @@ def get_number_from_string(num):
 
     return float(num)
 
-def get_time_interval(time):
+def get_time_interval(time, value):
     timedelta_value = None
     if time == TimePeriod.DAY.value:
-        timedelta_value = relativedelta(days=1)
+        timedelta_value = relativedelta(days=value)
 
     if time == TimePeriod.WEEK.value:
-        timedelta_value = relativedelta(weeks=1)
+        timedelta_value = relativedelta(weeks=value)
 
     if time == TimePeriod.MONTH.value:
-        timedelta_value = relativedelta(months=1)
+        timedelta_value = relativedelta(months=value)
 
     # RETURNING AN EXTRA DAY IN CASE OF OVERLAPPING TIMEZONES
     return datetime.now() - timedelta_value - relativedelta(days=1)
