@@ -188,8 +188,8 @@ def refresh_accounts_data(capture_all = False):
             archieved_question = session.query(QuoraQuestionsArchieve).filter(QuoraQuestionsArchieve.question_url == question_url).first()
             if archieved_question is None:
                 archieved_question = QuoraQuestionsArchieve()
-                archieved_question.question_url = question.question_url.encode(config.encoding)
-                archieved_question.question_text = question.question_text.encode(config.encoding)
+                archieved_question.question_url = question.question_url
+                archieved_question.question_text = question.question_text
                 session.add(archieved_question)
                 qqaad = None
             else:
@@ -390,7 +390,7 @@ def refresh_accounts_stats():
     session = get_new_session()
     accounts = session.query(QuoraAccount).all()
     for account in accounts:
-        if account.link == 'unavailable' or account.id < 13:
+        if account.link == 'unavailable':
             continue
         stats_page_array = [[0, 'Views', None], [1, 'Upvotes', None], [2, 'Shares', None]]
         driver = get_driver()
