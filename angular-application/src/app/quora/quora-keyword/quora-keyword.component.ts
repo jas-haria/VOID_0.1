@@ -1,11 +1,10 @@
 import { Component, OnDestroy, OnInit } from '@angular/core';
 import { NgbModal, NgbModalOptions } from '@ng-bootstrap/ng-bootstrap';
-import { forkJoin, Subscription } from 'rxjs';
+import { Subscription } from 'rxjs';
 import { DivisionService } from 'src/app/division/division.service';
 import { ModalComponent } from 'src/app/shared/components/modal/modal.component';
 import { Division } from 'src/app/shared/models/division.model';
 import { QuoraKeyword } from 'src/app/shared/models/quora-keyword';
-import { User } from 'src/app/shared/models/user.model';
 import { AuthService } from 'src/app/shared/services/auth/auth.service';
 import { HeaderService } from 'src/app/shared/services/header/header.service';
 import { QuoraService } from '../quora.service';
@@ -37,10 +36,12 @@ export class QuoraKeywordComponent implements OnInit, OnDestroy {
 
   getData(): void {
     this.subscription.add(
-      forkJoin([this._divisionService.getAllDivision(), this._quoraService.getKeywords()]).subscribe((response: any[]) => {
-        this.divisions = response[0];
-        this.keywords = response[1];
-        this.populateMap();
+      this._divisionService.getAllDivision().subscribe(response0 => {
+        this._quoraService.getKeywords().subscribe(response1 => {
+          this.divisions = response0;
+          this.keywords = response1;
+          this.populateMap();
+        })
       })
     ).add(
       this._authService.userProfile$.subscribe(user => {

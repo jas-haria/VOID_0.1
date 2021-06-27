@@ -2,7 +2,7 @@ import { Component, OnInit, OnDestroy } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
 import { QuoraService } from '../quora.service';
 import { DivisionService } from 'src/app/division/division.service';
-import { Subscription, Subject, forkJoin } from 'rxjs';
+import { Subscription, Subject } from 'rxjs';
 import { Division } from 'src/app/shared/models/division.model';
 import { TimePeriod } from 'src/app/shared/models/enums/time-period.enum';
 import { QuoraQuestion } from 'src/app/shared/models/quora-question.model';
@@ -55,6 +55,8 @@ export class QuoraQuestionListComponent implements OnInit, OnDestroy {
   selectedSize: number = this.pageSizeOptions[0];
   selectedQuestions: any[] = [];
 
+  alreadyExecuting = false;
+
 
   constructor(private _route: ActivatedRoute,
     private _router: Router,
@@ -68,15 +70,14 @@ export class QuoraQuestionListComponent implements OnInit, OnDestroy {
   ngOnInit(): void {
     this._httpRequestInterceptorService.displaySpinner(true);
     this.subscription.add(
-      forkJoin([
-        this._divisionService.getAllDivision(), //0
-        this._quoraService.getAccounts()        //1
-      ]).subscribe((response: any[]) => {
-        this.initialiseDivisions(response[0]);
-        this.routeListner();
-        this.accountArray = response[1];
-        this.setHeaderValue();
-        this._httpRequestInterceptorService.displaySpinner(false);
+      this._divisionService.getAllDivision().subscribe(response0 => {
+        this._quoraService.getAccounts().subscribe(response1 => {
+          this.initialiseDivisions(response0);
+          this.routeListner();
+          this.accountArray = response1;
+          this.setHeaderValue();
+          this._httpRequestInterceptorService.displaySpinner(false);
+        })
       })
     ).add(
       this._authService.userProfile$.subscribe(user => {
@@ -119,28 +120,34 @@ export class QuoraQuestionListComponent implements OnInit, OnDestroy {
   }
 
   refreshDataSource(): void {
-    this._httpRequestInterceptorService.displaySpinner(true);
-    this.clearSelect.next();
-    this.selectedQuestions = [];
-    this.subscription.add(
-      this._quoraService.getQuestions(this.selectedPage, this.selectedSize, this.selectedDivisions, this.selectedTimePeriod, this.selectedType, this.accountId).subscribe((response: Page<QuoraQuestion>) => {
-        if (this.selectedType == QuoraQuestionAccountAction.ASKED) {
-          this._quoraService.getAskedQuestionsStats(false, this.getIdsFromArray(response.content)).subscribe((stats: QuoraAskedQuestionArchieveStats[]) => {
-            this._quoraService.getArchievedQuestionsByQuestionId(this.getIdsFromArray(stats, 'question_id')).subscribe((archievedQuestions: QuoraArchievedQuestionResponse[]) => {
-              this.dataSource = response.content.map(question => this.mapQuestionForTable(question,
-                stats.find((stat: QuoraAskedQuestionArchieveStats) => stat.question_id == this.findArchievedQuestionIdForQuestion(question, archievedQuestions))
-              ));
-              this._httpRequestInterceptorService.displaySpinner(false);
+    if (!this.alreadyExecuting) {
+      //to avoid multiple concurrent api calls
+      this._httpRequestInterceptorService.displaySpinner(true);
+      this.clearSelect.next();
+      this.selectedQuestions = [];
+      this.alreadyExecuting = true;
+      this.subscription.add(
+        this._quoraService.getQuestions(this.selectedPage, this.selectedSize, this.selectedDivisions, this.selectedTimePeriod, this.selectedType, this.accountId).subscribe((response: Page<QuoraQuestion>) => {
+          if (this.selectedType == QuoraQuestionAccountAction.ASKED) {
+            this._quoraService.getAskedQuestionsStats(false, this.getIdsFromArray(response.content)).subscribe((stats: QuoraAskedQuestionArchieveStats[]) => {
+              this._quoraService.getArchievedQuestionsByQuestionId(this.getIdsFromArray(stats, 'question_id')).subscribe((archievedQuestions: QuoraArchievedQuestionResponse[]) => {
+                this.dataSource = response.content.map(question => this.mapQuestionForTable(question,
+                  stats.find((stat: QuoraAskedQuestionArchieveStats) => stat.question_id == this.findArchievedQuestionIdForQuestion(question, archievedQuestions))
+                ));
+                this._httpRequestInterceptorService.displaySpinner(false);
+                this.alreadyExecuting = false;
+              });
             });
-          });
-        }
-        else {
-          this.dataSource = response.content.map(question => this.mapQuestionForTable(question, null));
-          this._httpRequestInterceptorService.displaySpinner(false);
-        }
-        this.totalLength = response.totalLength;
-      })
-    );
+          }
+          else {
+            this.dataSource = response.content.map(question => this.mapQuestionForTable(question, null));
+            this._httpRequestInterceptorService.displaySpinner(false);
+            this.alreadyExecuting = false;
+          }
+          this.totalLength = response.totalLength;
+        })
+      );
+    }
   }
 
   refreshPage(pageNumber?: number): void {

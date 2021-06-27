@@ -1,7 +1,7 @@
 import { Component, OnInit, OnDestroy, AfterViewInit } from '@angular/core';
 import { HeaderService } from 'src/app/shared/services/header/header.service';
 import { ActivatedRoute } from '@angular/router';
-import { Subscription, Subject, forkJoin } from 'rxjs';
+import { Subscription, Subject } from 'rxjs';
 import { QuoraService } from '../quora.service';
 import { QuoraAccount } from 'src/app/shared/models/quora-account.model';
 import { QuoraAccountsStats } from 'src/app/shared/models/quora-accounts-stats.model';
@@ -62,7 +62,7 @@ export class QuoraAccountComponent implements OnInit, OnDestroy, AfterViewInit {
       })
     ).add(
       this._authService.userProfile$.subscribe(user => {
-        this.isLoggedInUserAdmin = user ? user.admin: false;
+        this.isLoggedInUserAdmin = user ? user.admin : false;
       })
     );
   }
@@ -108,16 +108,17 @@ export class QuoraAccountComponent implements OnInit, OnDestroy, AfterViewInit {
 
   loadData(): void {
     this.subscription.add(
-      forkJoin([
-        this._quoraService.getAccountStats(this.account.id),                                          //0
-        this._quoraService.getQuestionsCount(QuoraQuestionAccountAction.REQUESTED, this.account.id),  //1
-        this._quoraService.getQuestionsCount(QuoraQuestionAccountAction.ANSWERED, this.account.id),   //2
-        this._quoraService.getQuestionsCount(QuoraQuestionAccountAction.ASSIGNED, this.account.id)    //3
-      ]).subscribe((response: any[]) => {
-        this.setQuoraAccountStatsDetails(response[0]);
-        this.setAnsweredRequestedGraph(response[2], response[1]);
-        this.setAnswersTopCard(response[2], response[3]);
-        this._httpRequestInterceptorService.displaySpinner(false);
+      this._quoraService.getAccountStats(this.account.id).subscribe(response0 => {
+        this._quoraService.getQuestionsCount(QuoraQuestionAccountAction.REQUESTED, this.account.id).subscribe(response1 => {
+          this._quoraService.getQuestionsCount(QuoraQuestionAccountAction.ANSWERED, this.account.id).subscribe(response2 => {
+            this._quoraService.getQuestionsCount(QuoraQuestionAccountAction.ASSIGNED, this.account.id).subscribe(response3 => {
+              this.setQuoraAccountStatsDetails(response0);
+              this.setAnsweredRequestedGraph(response2, response1);
+              this.setAnswersTopCard(response2, response3);
+              this._httpRequestInterceptorService.displaySpinner(false);
+            })
+          })
+        })
       })
     );
   }

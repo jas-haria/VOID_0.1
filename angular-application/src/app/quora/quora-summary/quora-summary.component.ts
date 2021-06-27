@@ -2,7 +2,7 @@ import { Component, OnInit, OnDestroy, AfterViewInit, ViewChild, TemplateRef, Ng
 import { QuoraService } from '../quora.service';
 import { HeaderService } from 'src/app/shared/services/header/header.service';
 import { QuoraAccountsStats } from 'src/app/shared/models/quora-accounts-stats.model';
-import { Subscription, Subject, forkJoin } from 'rxjs';
+import { Subscription, Subject } from 'rxjs';
 import * as saveAS from 'file-saver';
 import { QuoraQuestionAccountAction } from 'src/app/shared/models/enums/quora-question-account-action.enum';
 import { QuoraQuestionCount } from 'src/app/shared/models/quora-question-count.model';
@@ -63,7 +63,7 @@ export class QuoraSummaryComponent implements OnInit, OnDestroy, AfterViewInit {
     this.loadData();
     this.subscription.add(
       this._authService.userProfile$.subscribe(user => {
-        this.isLoggedInUserAdmin = user ? user.admin: false;
+        this.isLoggedInUserAdmin = user ? user.admin : false;
       })
     )
   }
@@ -111,22 +111,27 @@ export class QuoraSummaryComponent implements OnInit, OnDestroy, AfterViewInit {
   loadData(): void {
     this._httpRequestInterceptorService.displaySpinner(true);
     this.subscription.add(
-      forkJoin([
-        this._quoraService.getLastRefreshed(),                                          //0
-        this._quoraService.getAccountStats(),                                           //1
-        this._quoraService.getQuestionsCount(QuoraQuestionAccountAction.ANSWERED),      //2
-        this._quoraService.getQuestionsCount(QuoraQuestionAccountAction.ASKED),         //3
-        this._quoraService.getQuestionsCount(QuoraQuestionAccountAction.REQUESTED),     //4
-        this._quoraService.getQuestionsCount(QuoraQuestionAccountAction.ASSIGNED),      //5
-        this._quoraService.getAskedQuestionsStats(true),                                //6
-        this._quoraService.getAskedQuestionsStats(false)                                //7
-      ]).subscribe((response: any[]) => {
-        this.setAskedProgressBarValue(response[3]);
-        this.setFromAnsweredAssignedRequestedCount(response[2], response[5], response[4]);
-        this.setFromQuoraAccountStatsDetails(response[1]);
-        this.setFromQuoraAskedQuestionStats(response[6], response[7]);
-        this.lastRefreshed = response[0];
-        this._httpRequestInterceptorService.displaySpinner(false);
+      this._quoraService.getLastRefreshed().subscribe(response0 => {
+        this._quoraService.getAccountStats().subscribe(response1 => {
+          this._quoraService.getQuestionsCount(QuoraQuestionAccountAction.ANSWERED).subscribe(response2 => {
+            this._quoraService.getQuestionsCount(QuoraQuestionAccountAction.ASKED).subscribe(response3 => {
+              this._quoraService.getQuestionsCount(QuoraQuestionAccountAction.REQUESTED).subscribe(response4 => {
+                this._quoraService.getQuestionsCount(QuoraQuestionAccountAction.ASSIGNED).subscribe(response5 => {
+                  this._quoraService.getAskedQuestionsStats(true).subscribe(response6 => {
+                    this._quoraService.getAskedQuestionsStats(false).subscribe(response7 => {
+                      this.setAskedProgressBarValue(response3);
+                      this.setFromAnsweredAssignedRequestedCount(response2, response5, response4);
+                      this.setFromQuoraAccountStatsDetails(response1);
+                      this.setFromQuoraAskedQuestionStats(response6, response7);
+                      this.lastRefreshed = response0;
+                      this._httpRequestInterceptorService.displaySpinner(false);
+                    })
+                  })
+                })
+              })
+            })
+          })
+        })
       })
     );
   }
